@@ -19,10 +19,10 @@ export function TagInput({ value, onChange, placeholder = "Type and press Enter"
   };
 
   return (
-    <div className="rounded-xl border border-[#E3E3E3] bg-[#F4F4F4] p-2">
+    <div className="rounded-xl border border-[#e9e7f0] bg-[#f8f7fb] p-2">
       <div className="flex flex-wrap gap-2">
         {value.map((tag) => (
-          <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-[#B5FF2D] px-3 py-1 text-xs font-semibold text-black">
+          <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-[#6D3BF5] px-3 py-1 text-xs font-semibold text-white">
             {tag}
             <button type="button" onClick={() => onChange(value.filter((t) => t !== tag))} aria-label={`Remove ${tag}`}>
               <X className="h-3 w-3" />
