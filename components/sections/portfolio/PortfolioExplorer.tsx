@@ -27,8 +27,8 @@ export function PortfolioExplorer({ items }: { items: Portfolio[] }) {
               className={cn(
                 "rounded-full px-4 py-2 text-sm font-medium transition",
                 active === f
-                  ? "bg-[#B5FF2D] text-black"
-                  : "border border-[#E3E3E3] text-[#5A5A5A] hover:bg-[#F4F4F4]"
+                  ? "bg-[#6D3BF5] text-white"
+                  : "border border-[#e9e7f0] text-[#4a4756] hover:bg-[#f8f7fb]"
               )}
             >
               {f}
@@ -62,7 +62,7 @@ export function PortfolioExplorer({ items }: { items: Portfolio[] }) {
         </motion.div>
 
         {filtered.length === 0 && (
-          <p className="py-16 text-center text-[#9A9A9A]">No case studies in this category yet.</p>
+          <p className="py-16 text-center text-[#767287]">No case studies in this category yet.</p>
         )}
       </div>
     </section>

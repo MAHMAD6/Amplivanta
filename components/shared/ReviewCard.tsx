@@ -22,19 +22,19 @@ export function ReviewCard({
   className,
 }: ReviewCardProps) {
   return (
-    <div className={cn("flex h-full flex-col rounded-2xl border border-[#E3E3E3] bg-white p-6", className)}>
+    <div className={cn("flex h-full flex-col rounded-2xl border border-[#e9e7f0] bg-white p-6", className)}>
       <div className="mb-4 flex gap-1">
         {Array.from({ length: 5 }).map((_, i) => (
           <Star
             key={i}
             className={cn(
               "h-4 w-4",
-              i < rating ? "fill-[#B5FF2D] text-[#B5FF2D]" : "fill-none text-[#E3E3E3]"
+              i < rating ? "fill-amber-400 text-amber-400" : "fill-[#e9e7f0] text-[#e9e7f0]"
             )}
           />
         ))}
       </div>
-      <p className="flex-1 italic text-[#5A5A5A]">&ldquo;{content}&rdquo;</p>
+      <p className="flex-1 italic text-[#4a4756]">&ldquo;{content}&rdquo;</p>
       <div className="mt-6 flex items-center gap-3">
         {avatar ? (
           <Image
@@ -45,13 +45,13 @@ export function ReviewCard({
             className="h-10 w-10 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1A3C2B] text-sm font-bold text-[#B5FF2D]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0d0b18] text-sm font-bold text-[#6D3BF5]">
             {name.charAt(0)}
           </div>
         )}
         <div>
-          <p className="text-sm font-semibold text-[#0A0A0A]">{name}</p>
-          <p className="text-xs text-[#5A5A5A]">
+          <p className="text-sm font-semibold text-[#14121f]">{name}</p>
+          <p className="text-xs text-[#4a4756]">
             {role}, {company}
           </p>
         </div>

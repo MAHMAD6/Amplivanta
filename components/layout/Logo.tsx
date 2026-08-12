@@ -10,7 +10,7 @@ export function Logo({ dark = false, className }: { dark?: boolean; className?: 
       <span
         className={cn(
           "font-display text-xl font-bold tracking-tight",
-          dark ? "text-white" : "text-[#0A0A0A]"
+          dark ? "text-white" : "text-[#14121f]"
         )}
       >
         {SITE_SHORT}

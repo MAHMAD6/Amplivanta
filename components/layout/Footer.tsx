@@ -14,7 +14,7 @@ const socials = [
 
 export function Footer() {
   return (
-    <footer className="bg-[#1A3C2B] text-white">
+    <footer className="bg-[#0d0b18] text-white">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
           <div>
@@ -30,7 +30,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="text-white/70 transition hover:text-[#B5FF2D]"
+                  className="text-white/70 transition hover:text-[#6D3BF5]"
                 >
                   <Icon className="h-5 w-5" />
                 </a>
@@ -71,7 +71,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[#2A4A38] pt-6 text-sm text-white/60 md:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[#26233a] pt-6 text-sm text-white/60 md:flex-row">
           <p>© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/privacy" className="transition hover:text-white">Privacy Policy</Link>

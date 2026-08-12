@@ -12,8 +12,8 @@ interface TeamCardProps {
 
 export function TeamCard({ name, role, bio, image, linkedin, twitter }: TeamCardProps) {
   return (
-    <div className="group overflow-hidden rounded-2xl border border-[#E3E3E3] bg-white transition-shadow hover:shadow-xl">
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#1A3C2B] to-[#0F2A1D]">
+    <div className="group overflow-hidden rounded-2xl border border-[#e9e7f0] bg-white transition-shadow hover:shadow-xl">
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-[#0d0b18] to-[#0d0b18]">
         {image ? (
           <Image
             src={image}
@@ -24,26 +24,26 @@ export function TeamCard({ name, role, bio, image, linkedin, twitter }: TeamCard
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <span className="font-display text-5xl font-bold text-[#B5FF2D]/80">{name.charAt(0)}</span>
+            <span className="font-display text-5xl font-bold text-[#6D3BF5]/80">{name.charAt(0)}</span>
           </div>
         )}
         <div className="absolute inset-x-0 bottom-0 flex translate-y-full gap-3 bg-black/40 p-3 backdrop-blur-sm transition-transform group-hover:translate-y-0">
           {linkedin && (
             <a href={linkedin} target="_blank" rel="noopener noreferrer" aria-label={`${name} on LinkedIn`}>
-              <Linkedin className="h-5 w-5 text-white hover:text-[#B5FF2D]" />
+              <Linkedin className="h-5 w-5 text-white hover:text-[#6D3BF5]" />
             </a>
           )}
           {twitter && (
             <a href={twitter} target="_blank" rel="noopener noreferrer" aria-label={`${name} on Twitter`}>
-              <Twitter className="h-5 w-5 text-white hover:text-[#B5FF2D]" />
+              <Twitter className="h-5 w-5 text-white hover:text-[#6D3BF5]" />
             </a>
           )}
         </div>
       </div>
       <div className="p-5">
-        <h3 className="font-display text-lg font-bold text-[#0A0A0A]">{name}</h3>
-        <p className="text-sm font-medium text-[#B5FF2D]">{role}</p>
-        {bio && <p className="mt-2 text-sm text-[#5A5A5A]">{bio}</p>}
+        <h3 className="font-display text-lg font-bold text-[#14121f]">{name}</h3>
+        <p className="text-sm font-medium text-[#6D3BF5]">{role}</p>
+        {bio && <p className="mt-2 text-sm text-[#4a4756]">{bio}</p>}
       </div>
     </div>
   );

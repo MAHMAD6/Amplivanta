@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
-import { Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Manrope, JetBrains_Mono, Inter } from "next/font/google";
 import { SITE_NAME, SITE_DESCRIPTION, SITE_URL, SITE_TAGLINE } from "@/lib/constants";
 import "./globals.css";
 
-const syne = Syne({
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--font-clash",
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-dm-sans",
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -24,6 +17,13 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -31,6 +31,11 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
   openGraph: {
     title: `${SITE_NAME} — ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
@@ -50,7 +55,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmSans.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${manrope.variable} ${jetbrains.variable} ${inter.variable}`}>
       <body className="font-body antialiased">
         <script
           type="application/ld+json"

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import { Star, Users, ThumbsUp } from "lucide-react";
 import { ReviewsGrid } from "@/components/sections/reviews/ReviewsGrid";
-import { SubmitReviewForm } from "@/components/sections/reviews/SubmitReviewForm";
 import { CtaBanner } from "@/components/sections/home/CtaBanner";
 import { getReviews } from "@/lib/data";
 
@@ -17,37 +17,60 @@ export default async function ReviewsPage() {
       : "5.0";
 
   const stats = [
-    { value: `${avg}/5`, label: "Average Rating" },
-    { value: `${reviews.length}+`, label: "Happy Clients" },
-    { value: "100%", label: "Recommend Rate" },
+    { value: `${avg}/5`, label: "Average Rating", icon: Star },
+    { value: `${reviews.length}+`, label: "Happy Clients", icon: Users },
+    { value: "100%", label: "Recommend Rate", icon: ThumbsUp },
   ];
 
   return (
     <>
-      <section className="bg-[#1A3C2B] px-4 pt-36 pb-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#B5FF2D]">
+      <section className="relative overflow-hidden bg-[#f8f7fb] px-4 pt-36 pb-20 sm:px-6 lg:px-8">
+        {/* ambient glow */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute left-1/2 top-0 h-96 w-96 -translate-x-1/2 -translate-y-1/3 rounded-full bg-[#6D3BF5]/10 blur-[110px]" />
+          <div className="absolute right-10 top-20 h-64 w-64 rounded-full bg-[#E8398F]/10 blur-[100px]" />
+        </div>
+        <div className="relative mx-auto max-w-4xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#e3d9fb] bg-[#faf7ff] px-3 py-[7px] text-[12.5px] font-bold uppercase tracking-[0.02em] text-[#6D3BF5]">
+            <span className="bg-grad-brand-2 h-3 w-3 rounded-full" />
             Testimonials
           </span>
-          <h1 className="mt-4 font-display text-4xl font-bold text-white md:text-6xl">
-            Loved by <span className="text-[#B5FF2D]">Our Clients</span>
+          <h1 className="mt-5 font-display text-4xl font-extrabold tracking-tight text-[#14121f] md:text-6xl">
+            Loved by <span className="text-gradient">Our Clients</span>
           </h1>
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {stats.map((s) => (
-              <div key={s.label} className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                <p className="font-mono text-3xl font-bold text-[#B5FF2D]">{s.value}</p>
-                <p className="mt-1 text-sm text-white/70">{s.label}</p>
-              </div>
+          <p className="mx-auto mt-5 max-w-xl text-lg text-[#767287]">
+            Real results, real words. See why teams choose to build and grow with us.
+          </p>
+          <div className="mt-5 flex items-center justify-center gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
             ))}
+            <span className="ml-2 text-sm font-semibold text-[#4a4756]">{avg} average</span>
+          </div>
+
+          <div className="mt-12 grid gap-4 sm:grid-cols-3">
+            {stats.map((s) => {
+              const Icon = s.icon;
+              return (
+                <div
+                  key={s.label}
+                  className="group rounded-2xl border border-[#e9e7f0] bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-[#e3ddf5] hover:shadow-[0_16px_34px_-18px_rgba(30,20,60,0.25)]"
+                >
+                  <div className="ic-violet mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full transition group-hover:scale-105">
+                    <Icon className="h-5 w-5 text-white" />
+                  </div>
+                  <p className="font-display text-3xl font-extrabold text-[#14121f]">{s.value}</p>
+                  <p className="mt-1 text-sm text-[#767287]">{s.label}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
       <ReviewsGrid reviews={reviews} />
 
-      <section className="bg-[#F4F4F4] px-4 py-20 sm:px-6 lg:px-8">
-        <SubmitReviewForm />
-      </section>
+
 
       <CtaBanner />
     </>

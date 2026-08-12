@@ -58,7 +58,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       aria-label={label}
       className={cn(
         "flex h-8 w-8 items-center justify-center rounded-lg transition",
-        active ? "bg-[#B5FF2D] text-black" : "text-[#5A5A5A] hover:bg-[#F4F4F4]"
+        active ? "bg-[#6D3BF5] text-white" : "text-[#4a4756] hover:bg-[#f8f7fb]"
       )}
     >
       {children}
@@ -66,8 +66,8 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   );
 
   return (
-    <div className="rounded-xl border border-[#E3E3E3] bg-white">
-      <div className="flex flex-wrap gap-1 border-b border-[#E3E3E3] p-2">
+    <div className="rounded-xl border border-[#e9e7f0] bg-white">
+      <div className="flex flex-wrap gap-1 border-b border-[#e9e7f0] p-2">
         <Btn label="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
           <Bold className="h-4 w-4" />
         </Btn>

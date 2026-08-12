@@ -28,12 +28,12 @@ export function BlogExplorer({ posts }: { posts: BlogPost[] }) {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9A9A9A]" />
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#767287]" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search articles..."
-              className="w-full rounded-full border border-[#E3E3E3] bg-[#F4F4F4] py-3 pl-11 pr-4 text-sm focus:border-[#B5FF2D] focus:outline-none"
+              className="w-full rounded-full border border-[#e9e7f0] bg-[#f8f7fb] py-3 pl-11 pr-4 text-sm focus:border-[#6D3BF5] focus:outline-none"
             />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -44,8 +44,8 @@ export function BlogExplorer({ posts }: { posts: BlogPost[] }) {
                 className={cn(
                   "rounded-full px-4 py-2 text-sm font-medium transition",
                   category === c
-                    ? "bg-[#B5FF2D] text-black"
-                    : "border border-[#E3E3E3] text-[#5A5A5A] hover:bg-[#F4F4F4]"
+                    ? "bg-[#6D3BF5] text-white"
+                    : "border border-[#e9e7f0] text-[#4a4756] hover:bg-[#f8f7fb]"
                 )}
               >
                 {c}
@@ -54,7 +54,7 @@ export function BlogExplorer({ posts }: { posts: BlogPost[] }) {
           </div>
         </div>
 
-        <p className="mt-6 text-sm text-[#9A9A9A]">
+        <p className="mt-6 text-sm text-[#767287]">
           Showing {filtered.length} article{filtered.length !== 1 ? "s" : ""}
         </p>
 
@@ -74,7 +74,7 @@ export function BlogExplorer({ posts }: { posts: BlogPost[] }) {
         </div>
 
         {filtered.length === 0 && (
-          <p className="py-16 text-center text-[#9A9A9A]">No articles found. Try a different search.</p>
+          <p className="py-16 text-center text-[#767287]">No articles found. Try a different search.</p>
         )}
       </div>
     </section>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ScrollProgress } from "@/components/shared/ScrollProgress";
 import { BlogCard } from "@/components/shared/BlogCard";
+import { ShareArticleButtons } from "@/components/shared/ShareArticleButtons";
 import { getPosts, getPostBySlug } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 
@@ -47,7 +48,7 @@ export default async function BlogPostPage({
       <ScrollProgress />
 
       {/* Cover */}
-      <section className="relative flex h-[42vh] min-h-[320px] items-end overflow-hidden bg-[#1A3C2B] px-4 sm:px-6 lg:px-8">
+      <section className="relative flex h-[42vh] min-h-[320px] items-end overflow-hidden bg-[#0d0b18] px-4 sm:px-6 lg:px-8">
         {post.coverImage && (
           <Image
             src={post.coverImage}
@@ -62,7 +63,7 @@ export default async function BlogPostPage({
         <div className="relative mx-auto w-full max-w-4xl pb-10">
           <div className="flex flex-wrap gap-2">
             {post.tags.map((t) => (
-              <span key={t} className="rounded-full bg-[#B5FF2D] px-3 py-1 text-xs font-semibold text-black">
+              <span key={t} className="rounded-full bg-[#6D3BF5] px-3 py-1 text-xs font-semibold text-white">
                 {t}
               </span>
             ))}
@@ -82,44 +83,27 @@ export default async function BlogPostPage({
           <article className="prose max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
 
           <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
-            <div className="rounded-2xl border border-[#E3E3E3] bg-white p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#9A9A9A]">Written by</p>
+            <div className="rounded-2xl border border-[#e9e7f0] bg-white p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#767287]">Written by</p>
               <div className="mt-3 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1A3C2B] text-sm font-bold text-[#B5FF2D]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0d0b18] text-sm font-bold text-[#6D3BF5]">
                   {post.author.charAt(0)}
                 </span>
-                <p className="font-semibold text-[#0A0A0A]">{post.author}</p>
+                <p className="font-semibold text-[#14121f]">{post.author}</p>
               </div>
             </div>
-            <div className="rounded-2xl border border-[#E3E3E3] bg-white p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[#9A9A9A]">Share</p>
-              <div className="mt-3 flex flex-col gap-2 text-sm">
-                <a
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#5A5A5A] hover:text-[#0A0A0A]"
-                >
-                  Share on Twitter
-                </a>
-                <a
-                  href="https://www.linkedin.com/sharing/share-offsite/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#5A5A5A] hover:text-[#0A0A0A]"
-                >
-                  Share on LinkedIn
-                </a>
-              </div>
+            <div className="rounded-2xl border border-[#e9e7f0] bg-white p-6">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#767287]">Share Article</p>
+              <ShareArticleButtons title={post.title} />
             </div>
           </aside>
         </div>
       </section>
 
       {/* Related */}
-      <section className="bg-[#F4F4F4] px-4 py-16 sm:px-6 lg:px-8">
+      <section className="bg-[#f8f7fb] px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <h2 className="font-display text-2xl font-bold text-[#0A0A0A]">Related Articles</h2>
+          <h2 className="font-display text-2xl font-bold text-[#14121f]">Related Articles</h2>
           <div className="mt-8 grid gap-8 md:grid-cols-3">
             {related.map((p) => (
               <BlogCard
@@ -135,7 +119,7 @@ export default async function BlogPostPage({
             ))}
           </div>
           <div className="mt-10">
-            <Link href="/blog" className="text-sm font-semibold text-[#0A0A0A] hover:text-[#8fd620]">
+            <Link href="/blog" className="text-sm font-semibold text-[#14121f] hover:text-lime-ink">
               ← Back to all articles
             </Link>
           </div>

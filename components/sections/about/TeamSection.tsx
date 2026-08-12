@@ -10,8 +10,8 @@ export function TeamSection({ team }: { team: TeamMember[] }) {
         <ScrollReveal>
           <div className="text-center">
             <SectionLabel label="Our Team" variant="lime" />
-            <h2 className="mx-auto mt-4 max-w-2xl font-display text-4xl font-bold text-[#0A0A0A] md:text-5xl">
-              Meet the <span className="text-[#B5FF2D]">Team</span>
+            <h2 className="mx-auto mt-4 max-w-2xl font-display text-4xl font-bold text-[#14121f] md:text-5xl">
+              Meet the <span className="text-[#6D3BF5]">Team</span>
             </h2>
           </div>
         </ScrollReveal>

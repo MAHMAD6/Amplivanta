@@ -7,12 +7,16 @@ import type { Portfolio } from "@/types";
 
 export function PortfolioPreview({ items }: { items: Portfolio[] }) {
   return (
-    <section className="bg-[#F4F4F4] px-4 py-20 sm:px-6 lg:px-8">
+    <section className="bg-[#f8f7fb] px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <ScrollReveal>
-          <SectionLabel label="Our Work" variant="lime" />
-          <h2 className="mt-4 max-w-3xl font-display text-4xl font-bold leading-tight text-[#0A0A0A] md:text-5xl">
-            Our Services Deliver the <span className="text-[#B5FF2D]">Best Results</span> for Your Business
+          <SectionLabel label="Case Studies" variant="lime" />
+          <h2 className="mt-4 max-w-3xl font-display text-4xl font-bold leading-tight text-[#14121f] md:text-5xl">
+            Our Work Delivers Measurable{" "}
+            <span className="relative inline-block px-1">
+              <span className="relative z-10 text-[#14121f]">Revenue Growth</span>
+              <span className="absolute bottom-1.5 left-0 h-3.5 w-full bg-[#6D3BF5] -z-0 rounded-sm" />
+            </span>
           </h2>
         </ScrollReveal>
 
@@ -34,7 +38,7 @@ export function PortfolioPreview({ items }: { items: Portfolio[] }) {
         <div className="mt-10 text-center">
           <Link
             href="/portfolio"
-            className="inline-flex items-center gap-2 rounded-full bg-[#0A0A0A] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#1A1A1A]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#14121f] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#26233a]"
           >
             View All Case Studies <ArrowRight className="h-4 w-4" />
           </Link>

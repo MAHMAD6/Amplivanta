@@ -1,165 +1,170 @@
-"use client";
-
 import Link from "next/link";
-import Image from "next/image";
-import { motion } from "framer-motion";
-import { Star, ArrowRight, TrendingUp, Sparkles } from "lucide-react";
-import { SERVICES_LIST } from "@/lib/constants";
-import { SITE_IMAGES, MOCK_REVIEWS } from "@/lib/mock-data";
+import {
+  Sparkles,
+  ArrowRight,
+  Play,
+  CheckCircle2,
+  Home,
+  MessageSquare,
+  TrendingUp,
+  FileText,
+  Settings,
+  Bell,
+  Search,
+} from "lucide-react";
+import { Eyebrow } from "@/components/shared/Eyebrow";
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.12 } },
-};
-const item = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-};
+const TRUST = ["No credit card required", "Set up in minutes", "Cancel anytime"];
+
+const NAV = [
+  { icon: Home, label: "Overview", active: true },
+  { icon: MessageSquare, label: "AI Chat" },
+  { icon: TrendingUp, label: "Growth Insights" },
+  { icon: FileText, label: "Reports" },
+  { icon: Settings, label: "Settings" },
+];
+
+const STATS = [
+  { label: "Organic Traffic", value: "32,752", delta: "+10%", cls: "text-[#1FAE6A]" },
+  { label: "Conversions", value: "1,248", delta: "+24%", cls: "text-[#1FAE6A]" },
+  { label: "ROAS", value: "4.6x", delta: "+16%", cls: "text-[#F5731A]" },
+  { label: "Leads", value: "842", delta: "+21%", cls: "text-[#6D3BF5]" },
+];
 
 export function HeroSection() {
-  const avatars = MOCK_REVIEWS.slice(0, 4);
-
   return (
-    <section className="relative flex min-h-screen items-center overflow-hidden px-4 pt-28 pb-16 sm:px-6 lg:px-8">
-      {/* animated background accents */}
+    <section className="relative overflow-hidden px-4 pt-32 pb-14 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -left-32 top-10 h-80 w-80 rounded-full bg-[#B5FF2D]/25 blur-3xl"
-        />
-        <motion.div
-          animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-[#1A3C2B]/10 blur-3xl"
-        />
+        <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-[#6D3BF5]/10 blur-[110px]" />
+        <div className="absolute -right-32 top-40 h-96 w-96 rounded-full bg-[#E8398F]/10 blur-[110px]" />
       </div>
 
-      <div className="mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-[1.35fr_1fr] lg:items-center">
-        {/* Left */}
-        <motion.div variants={container} initial="hidden" animate="show">
-          <motion.div variants={item} className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E3E3E3] bg-white/70 px-4 py-1.5 text-sm font-medium text-[#0A0A0A] backdrop-blur">
-            <Sparkles className="h-4 w-4 text-[#8fd620]" />
-            Full-service digital marketing agency
-          </motion.div>
+      <div className="mx-auto grid max-w-7xl items-start gap-9 lg:grid-cols-[1.02fr_1.28fr]">
+        {/* ---- copy ---- */}
+        <div>
+          <Eyebrow label="AI-Powered Business Growth Platform" />
+          <h1 className="mt-5 font-display text-[2.6rem] font-extrabold leading-[1.04] tracking-tight text-[#14121f] sm:text-5xl lg:text-[3.5rem]">
+            Engineer Smarter<br />
+            <span className="text-gradient">Growth</span> with <span className="text-gradient">AI.</span>
+          </h1>
+          <p className="mt-5 max-w-[460px] text-[16.5px] leading-[1.65] text-[#767287]">
+            The all-in-one AI platform that combines intelligence, automation, and
+            the right tools to help businesses{" "}
+            <b className="font-bold text-[#4a4756]">attract more customers, convert faster,</b>{" "}
+            and grow sustainably.
+          </p>
 
-          <motion.div variants={item} className="no-scrollbar mb-6 flex gap-4 overflow-x-auto">
-            {SERVICES_LIST.map((s) => (
-              <span key={s.number} className="flex shrink-0 items-baseline gap-1 text-sm font-medium text-[#5A5A5A]">
-                {s.label}
-                <sup className="font-mono text-xs text-[#8fd620]">{s.number}</sup>
-              </span>
-            ))}
-          </motion.div>
-
-          <motion.h1
-            variants={item}
-            className="font-display text-5xl font-bold leading-[1.05] tracking-tight text-[#0A0A0A] sm:text-6xl lg:text-7xl"
-          >
-            Your business success{" "}
-            <span className="relative whitespace-nowrap">
-              <span className="relative z-10">starts here</span>
-              <span className="absolute bottom-1.5 left-0 -z-0 h-4 w-full bg-[#B5FF2D]/60" />
-            </span>
-          </motion.h1>
-
-          <motion.p variants={item} className="mt-6 max-w-md text-lg text-[#5A5A5A]">
-            Grow your client base with Amplivanta and targeted strategies that turn attention into revenue.
-          </motion.p>
-
-          <motion.div variants={item} className="mt-8 flex flex-wrap gap-4">
+          <div className="mt-7 flex flex-wrap gap-3.5">
             <Link
               href="/contact"
-              className="group inline-flex items-center gap-2 rounded-full bg-[#B5FF2D] px-7 py-3.5 font-semibold text-black shadow-lg shadow-[#B5FF2D]/30 transition-all hover:-translate-y-0.5 hover:bg-[#a0e828] hover:shadow-xl"
+              className="bg-grad-brand-2 group inline-flex items-center gap-2 rounded-[10px] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_20px_-6px_rgba(109,59,245,0.55)] transition-all hover:-translate-y-0.5"
             >
-              Get a Free Proposal
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              Start Engineering Growth
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/portfolio"
-              className="inline-flex items-center gap-2 rounded-full border border-[#0A0A0A]/15 bg-white/60 px-7 py-3.5 font-semibold text-[#0A0A0A] backdrop-blur transition-all hover:-translate-y-0.5 hover:border-[#0A0A0A]/30"
+              className="inline-flex items-center gap-2 rounded-[10px] border border-[#e9e7f0] bg-white px-5 py-3.5 text-[15px] font-semibold text-[#14121f] transition hover:border-[#cfcbe0]"
             >
-              See Our Work
+              <Play className="h-3.5 w-3.5 fill-current" /> Watch Demo
             </Link>
-          </motion.div>
-
-          {/* social proof */}
-          <motion.div variants={item} className="mt-10 flex flex-wrap items-center gap-5">
-            <div className="flex -space-x-3">
-              {avatars.map((r) => (
-                <Image
-                  key={r.id}
-                  src={r.avatar as string}
-                  alt={r.name}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 rounded-full border-2 border-white object-cover"
-                />
-              ))}
-            </div>
-            <div>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-[#B5FF2D] text-[#B5FF2D]" />
-                ))}
-                <span className="ml-1 text-sm font-bold text-[#0A0A0A]">4.9/5</span>
-              </div>
-              <p className="text-xs text-[#5A5A5A]">Trusted by 50+ growing brands</p>
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* Right */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7, delay: 0.25 }}
-          className="relative"
-        >
-          <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-[#1A3C2B] shadow-2xl">
-            <Image
-              src={SITE_IMAGES.hero}
-              alt="Marketing team collaborating"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 40vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
           </div>
 
-          {/* Floating card bottom-left */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="absolute -bottom-6 -left-4 w-56 rounded-2xl border border-[#E3E3E3] bg-white/95 p-4 shadow-xl backdrop-blur"
-          >
-            <div className="flex items-center gap-2">
-              <div className="flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-3.5 w-3.5 fill-[#B5FF2D] text-[#B5FF2D]" />
-                ))}
-              </div>
-              <span className="font-mono text-sm font-bold">9.6</span>
-            </div>
-            <p className="mt-2 text-xs text-[#5A5A5A]">
-              Creating impactful digital experiences for your business!
-            </p>
-          </motion.div>
+          <div className="mt-6 flex flex-wrap gap-6">
+            {TRUST.map((t) => (
+              <span key={t} className="flex items-center gap-1.5 text-[13px] font-semibold text-[#4a4756]">
+                <CheckCircle2 className="h-4 w-4 text-[#6D3BF5]" /> {t}
+              </span>
+            ))}
+          </div>
+        </div>
 
-          {/* Floating card top-right */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.75 }}
-            className="absolute -right-2 top-8 w-44 rounded-2xl bg-[#B5FF2D] p-4 shadow-xl"
-          >
-            <TrendingUp className="h-5 w-5 text-black" />
-            <p className="mt-2 font-display text-2xl font-bold text-black">$150B+</p>
-            <p className="text-xs font-medium text-black/70">Case results driven for our clients</p>
-          </motion.div>
-        </motion.div>
+        {/* ---- dashboard mock ---- */}
+        <div className="grid grid-cols-1 overflow-hidden rounded-[22px] border border-[#e9e7f0] bg-white shadow-[0_30px_70px_-25px_rgba(30,20,60,0.28),0_4px_18px_-6px_rgba(30,20,60,0.08)] sm:grid-cols-[178px_1fr]">
+          {/* sidebar */}
+          <div className="hidden flex-col border-r border-[#e9e7f0] bg-[#fafafd] p-4 sm:flex">
+            <div className="mb-5 flex items-center gap-2">
+              <span className="bg-grad-brand-2 h-6 w-6 rounded-md" />
+              <span className="font-display text-sm font-extrabold text-[#14121f]">Amplivanta</span>
+            </div>
+            <nav className="flex flex-col gap-1">
+              {NAV.map(({ icon: Icon, label, active }) => (
+                <span
+                  key={label}
+                  className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold ${
+                    active ? "bg-[#6D3BF5]/10 text-[#6D3BF5]" : "text-[#5c586c]"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                </span>
+              ))}
+            </nav>
+          </div>
+
+          {/* main */}
+          <div className="min-w-0 p-4 sm:p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="font-display text-[15px] font-extrabold text-[#14121f]">Good morning, Alex! 👋</span>
+              <div className="flex items-center gap-3 text-[#8b879a]">
+                <Search className="h-3.5 w-3.5" />
+                <Bell className="h-3.5 w-3.5" />
+                <span className="h-6 w-6 rounded-full bg-gradient-to-br from-[#F5A623] to-[#F57C1A]" />
+              </div>
+            </div>
+
+            <div className="mb-3 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 rounded-full bg-[#eef8f1] px-2.5 py-1 text-[10.5px] font-bold text-[#1FAE6A]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#1FAE6A]" /> AI Advisor active
+              </span>
+              <span className="rounded-lg border border-[#e9e7f0] px-2.5 py-1 text-[10.5px] font-semibold text-[#5c586c]">
+                May 2024
+              </span>
+            </div>
+
+            {/* stat grid */}
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+              {STATS.map((s) => (
+                <div key={s.label} className="rounded-xl border border-[#e9e7f0] p-3">
+                  <p className="text-[10px] font-semibold text-[#8b879a]">{s.label}</p>
+                  <p className="mt-1 font-display text-[19px] font-extrabold text-[#14121f]">{s.value}</p>
+                  <p className={`text-[9px] font-bold ${s.cls}`}>{s.delta}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* chart */}
+            <div className="mt-3 rounded-xl border border-[#e9e7f0] p-3.5">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11.5px] font-extrabold text-[#14121f]">Performance Trend</span>
+                <span className="text-[9.5px] font-bold text-[#6D3BF5]">View report</span>
+              </div>
+              <svg viewBox="0 0 300 90" className="h-24 w-full" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="amp-hero-area" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6D3BF5" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#6D3BF5" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M0 70 L40 60 L80 64 L120 42 L160 48 L200 30 L240 36 L300 16 L300 90 L0 90 Z" fill="url(#amp-hero-area)" />
+                <path d="M0 70 L40 60 L80 64 L120 42 L160 48 L200 30 L240 36 L300 16" fill="none" stroke="#6D3BF5" strokeWidth="2" />
+                <path d="M0 80 L40 76 L80 72 L120 66 L160 68 L200 58 L240 60 L300 50" fill="none" stroke="#F5731A" strokeWidth="2" />
+              </svg>
+            </div>
+
+            {/* recommendation */}
+            <div className="mt-3 rounded-xl border border-[#e9e7f0] p-3.5">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="ic-violet flex h-5 w-5 items-center justify-center rounded-md">
+                  <Sparkles className="h-3 w-3 text-white" />
+                </span>
+                <span className="text-[11px] font-bold text-[#14121f]">Top AI Recommendation</span>
+              </div>
+              <p className="text-[10.5px] leading-snug text-[#8b879a]">
+                Optimize 3 underperforming landing pages to lift conversions an estimated <b className="text-[#1FAE6A]">+18%</b>.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

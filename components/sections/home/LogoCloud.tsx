@@ -1,17 +1,69 @@
-const BRANDS = ["TechCorp", "GreenLeaf", "UrbanFit", "NorthStar", "Bloom", "Stackly", "Vertex", "Lumen"];
+const TOP_BRANDS_ROW_1 = [
+  "Stripe",
+  "Shopify",
+  "Figma",
+  "Vercel",
+  "Linear",
+  "Supabase",
+  "Notion",
+  "Intercom",
+];
 
-function Row({ reverse = false }: { reverse?: boolean }) {
-  const items = [...BRANDS, ...BRANDS];
+const TOP_BRANDS_ROW_2 = [
+  "HubSpot",
+  "Airtable",
+  "Zapier",
+  "Algolia",
+  "Retool",
+  "Segment",
+  "Brevo",
+  "PostHog",
+];
+
+function Row({ items, reverse = false }: { items: string[]; reverse?: boolean }) {
   return (
-    <div className="flex overflow-hidden">
+    <div className="relative flex overflow-hidden select-none py-1">
+      {/* Subtle edge fade masks for smooth transition */}
+      <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-20 bg-gradient-to-r from-[#f8f7fb]/80 to-transparent" />
+      <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-20 bg-gradient-to-l from-[#f8f7fb]/80 to-transparent" />
+
       <div
-        className="flex shrink-0 items-center gap-16 pr-16"
-        style={{ animation: `marquee 25s linear infinite${reverse ? " reverse" : ""}` }}
+        className={`flex shrink-0 items-center gap-14 pr-14 ${
+          reverse ? "animate-marquee-reverse" : "animate-marquee"
+        }`}
+        style={{
+          animationDuration: "28s",
+          animationTimingFunction: "linear",
+          animationIterationCount: "infinite",
+          animationDirection: reverse ? "reverse" : "normal",
+        }}
       >
-        {items.map((brand, i) => (
+        {items.concat(items).map((brand, i) => (
           <span
-            key={`${brand}-${i}`}
-            className="whitespace-nowrap font-display text-2xl font-bold text-[#9A9A9A] transition-colors hover:text-[#0A0A0A]"
+            key={`row1-${brand}-${i}`}
+            className="whitespace-nowrap font-display text-2xl font-bold tracking-tight text-[#767287] transition-colors duration-300 hover:text-[#0d0b18]"
+          >
+            {brand}
+          </span>
+        ))}
+      </div>
+
+      <div
+        aria-hidden="true"
+        className={`flex shrink-0 items-center gap-14 pr-14 ${
+          reverse ? "animate-marquee-reverse" : "animate-marquee"
+        }`}
+        style={{
+          animationDuration: "28s",
+          animationTimingFunction: "linear",
+          animationIterationCount: "infinite",
+          animationDirection: reverse ? "reverse" : "normal",
+        }}
+      >
+        {items.concat(items).map((brand, i) => (
+          <span
+            key={`row2-${brand}-${i}`}
+            className="whitespace-nowrap font-display text-2xl font-bold tracking-tight text-[#767287] transition-colors duration-300 hover:text-[#0d0b18]"
           >
             {brand}
           </span>
@@ -23,13 +75,15 @@ function Row({ reverse = false }: { reverse?: boolean }) {
 
 export function LogoCloud() {
   return (
-    <section className="border-y border-[#E3E3E3] bg-white py-14">
-      <p className="mb-8 text-center text-sm font-semibold uppercase tracking-widest text-[#9A9A9A]">
-        Trusted by leading brands
-      </p>
-      <div className="space-y-6">
-        <Row />
-        <Row reverse />
+    <section className="border-y border-[#e9e7f0]/80 bg-[#f8f7fb]/50 py-12">
+      <div className="mb-6 text-center">
+        <span className="inline-block rounded-full border border-[#e9e7f0] bg-white px-3.5 py-1 text-xs font-bold uppercase tracking-widest text-[#4a4756] shadow-2xs">
+          Trusted by 50+ Leading Brands & Fast-Growing Startups
+        </span>
+      </div>
+      <div className="space-y-4">
+        <Row items={TOP_BRANDS_ROW_1} />
+        <Row items={TOP_BRANDS_ROW_2} reverse />
       </div>
     </section>
   );

@@ -12,22 +12,22 @@ const VALUES = [
 
 export function ValuesSection() {
   return (
-    <section className="bg-[#F4F4F4] px-4 py-20 sm:px-6 lg:px-8">
+    <section className="bg-[#f8f7fb] px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <ScrollReveal>
           <div className="text-center">
             <SectionLabel label="Our Values" variant="lime" />
-            <h2 className="mx-auto mt-4 max-w-2xl font-display text-4xl font-bold text-[#0A0A0A] md:text-5xl">
-              What Makes Us <span className="text-[#B5FF2D]">Stand Out</span>
+            <h2 className="mx-auto mt-4 max-w-2xl font-display text-4xl font-bold text-[#14121f] md:text-5xl">
+              What Makes Us <span className="text-[#6D3BF5]">Stand Out</span>
             </h2>
           </div>
         </ScrollReveal>
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {VALUES.map((v, i) => (
             <ScrollReveal key={v.title} delay={i * 0.08}>
-              <div className="h-full rounded-2xl border border-[#E3E3E3] bg-white p-6">
-                <h3 className="font-display text-lg font-bold text-[#0A0A0A]">{v.title}</h3>
-                <p className="mt-2 text-sm text-[#5A5A5A]">{v.desc}</p>
+              <div className="h-full rounded-2xl border border-[#e9e7f0] bg-white p-6">
+                <h3 className="font-display text-lg font-bold text-[#14121f]">{v.title}</h3>
+                <p className="mt-2 text-sm text-[#4a4756]">{v.desc}</p>
               </div>
             </ScrollReveal>
           ))}
