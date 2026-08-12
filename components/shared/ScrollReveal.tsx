@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
 import type { ReactNode } from "react";
 
 type Direction = "up" | "down" | "left" | "right";
@@ -15,10 +14,10 @@ interface ScrollRevealProps {
 }
 
 const offset: Record<Direction, { x?: number; y?: number }> = {
-  up: { y: 30 },
-  down: { y: -30 },
-  left: { x: 30 },
-  right: { x: -30 },
+  up: { y: 40 },
+  down: { y: -40 },
+  left: { x: 40 },
+  right: { x: -40 },
 };
 
 export function ScrollReveal({
@@ -28,15 +27,14 @@ export function ScrollReveal({
   duration = 0.6,
   className,
 }: ScrollRevealProps) {
-  const { ref, inView } = useInView({ threshold: 0.15, triggerOnce: true });
   const from = offset[direction];
 
   return (
     <motion.div
-      ref={ref}
       initial={{ opacity: 0, ...from }}
-      animate={inView ? { opacity: 1, x: 0, y: 0 } : {}}
-      transition={{ duration, delay, ease: "easeOut" }}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={className}
     >
       {children}

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <!-- Dark green background container -->
+  <rect width="100%" height="100%" rx="160" fill="#1A3C2B"/>
+
+  <!-- Background Layer: The inverted 'V' creating the main structure of the 'A' (Solid White) -->
+  <path d="M 120 640 L 360 140 L 440 140 L 680 640 L 590 640 L 400 245 L 210 640 Z" fill="#ffffff" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- Foreground Layer: Data Bars and Upward Arrow Swoosh (Solid White) -->
+  <g fill="#ffffff" stroke="#ffffff" stroke-width="4" stroke-linejoin="round">
+    
+    <!-- Leftmost Bar (Shortest) -->
+    <path d="M 270 548               Q 270 540 278 540               L 308 540               Q 316 540 316 548               L 316 640               L 270 640 Z"/>
+             
+    <!-- Middle Bar -->
+    <path d="M 328 458               Q 328 450 336 450               L 366 450               Q 374 450 374 458               L 374 640               L 328 640 Z"/>
+             
+    <!-- Rightmost Bar continuously morphing into the sweeping arrow -->
+    <path d="M 386 640              L 386 358               Q 386 350 394 350               L 424 350               Q 432 350 432 358               L 432 500              A 280 280 0 0 0 660 270              L 640 250               L 750 215               L 715 325               L 695 305              A 330 330 0 0 1 386 640 Z"/>
+  </g>
+</svg>

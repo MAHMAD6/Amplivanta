@@ -2,21 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
-
+/* Amplivanta design system — violet / pink / orange gradient brand */
 :root {
-  --lime-primary: #B5FF2D;
-  --lime-hover: #a0e828;
-  --green-dark: #1A3C2B;
-  --green-darker: #0F2A1D;
-  --green-border: #2A4A38;
-  --brand-black: #0A0A0A;
-  --brand-gray: #5A5A5A;
-  --brand-muted: #9A9A9A;
-  --brand-surface: #F4F4F4;
-  --brand-border: #E3E3E3;
-  --font-display: 'DM Sans', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
+  /* Brand */
+  --violet: #6D3BF5;
+  --violet-dark: #5B2FE0;
+  --purple: #9B3BF5;
+  --pink: #E8398F;
+  --orange: #F5731A;
+  --green: #1FAE6A;
+
+  /* Gradients */
+  --grad-brand: linear-gradient(90deg, #6D3BF5, #E8398F, #F5731A);
+  --grad-brand-2: linear-gradient(135deg, #6D3BF5, #C43BE0, #F5731A);
+  --grad-cta: linear-gradient(100deg, #5B2FE0 0%, #9B2FD8 45%, #E04A2F 100%);
+
+  /* Neutrals */
+  --ink: #14121f;
+  --ink-soft: #4a4756;
+  --muted: #767287;
+  --line: #e9e7f0;
+  --bg-soft: #f8f7fb;
+  --card: #ffffff;
+  --navy: #0d0b18;
+  --navy-border: #26233a;
+
+  /* Legacy aliases (kept so older utility names resolve to the new palette) */
+  --lime-primary: #6D3BF5;
+  --lime-hover: #5B2FE0;
+  --lime-ink: #5B2FE0;
+  --green-dark: #0d0b18;
+  --green-darker: #0d0b18;
+  --green-border: #26233a;
+  --brand-black: #14121f;
+  --brand-gray: #4a4756;
+  --brand-muted: #767287;
+  --brand-surface: #f8f7fb;
+  --brand-border: #e9e7f0;
+
+  --font-display: var(--font-manrope), 'Manrope', sans-serif;
+  --font-body: var(--font-inter), 'Inter', sans-serif;
 }
 
 * {
@@ -31,31 +56,202 @@ html {
 
 body {
   background: #ffffff;
-  color: var(--brand-black);
+  color: var(--ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: var(--lime-primary);
-  color: var(--brand-black);
+  background: rgba(109, 59, 245, 0.18);
+  color: var(--ink);
+}
+
+/* Consistent, visible keyboard focus on all interactive elements */
+:where(a, button, [role="button"], input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
+/* On dark surfaces a lighter ring reads better */
+.bg-\[\#0d0b18\] :where(a, button, [role="button"], input, textarea, select, summary):focus-visible,
+.bg-\[\#14121f\] :where(a, button, [role="button"], input, textarea, select, summary):focus-visible {
+  outline-color: #b79bff;
+}
+
+/* Prevent iOS Safari auto-zoom on focus: form controls must be >=16px on mobile.
+   Desktop keeps the intended smaller sizing above 640px. */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea:not([hidden]),
+  select:not([hidden]) {
+    font-size: 16px;
+  }
 }
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #B5FF2D; border-radius: 3px; }
+::-webkit-scrollbar-track { background: #f1f0f7; }
+::-webkit-scrollbar-thumb { background: var(--violet); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--violet-dark); }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ---------- Gradient helpers ---------- */
+.text-gradient {
+  background: var(--grad-brand-2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-gradient-brand {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.bg-grad-brand { background: var(--grad-brand); }
+.bg-grad-brand-2 { background: var(--grad-brand-2); }
+.bg-grad-cta { background: var(--grad-cta); }
+.border-gradient {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    var(--grad-brand-2) border-box;
+}
+
+/* Amplivanta feature-icon gradient tiles */
+.ic-violet  { background: linear-gradient(135deg, #7B4CF0, #5B2FE0); }
+.ic-pink    { background: linear-gradient(135deg, #F0507A, #E8398F); }
+.ic-green   { background: linear-gradient(135deg, #3BC48A, #1FAE6A); }
+.ic-blue    { background: linear-gradient(135deg, #4C9CF0, #2F6FE0); }
+.ic-magenta { background: linear-gradient(135deg, #D63BC4, #B02FA8); }
+.ic-indigo  { background: linear-gradient(135deg, #6D6CF0, #4B4AE0); }
+.ic-amber   { background: linear-gradient(135deg, #F5A623, #F5731A); }
+.ic-teal    { background: linear-gradient(135deg, #2FC4C4, #1FA0A0); }
+
 /* Blog prose styles */
-.prose h2 { font-size: 1.75rem; font-weight: 700; margin: 2rem 0 1rem; color: #0A0A0A; }
-.prose h3 { font-size: 1.375rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #0A0A0A; }
-.prose p { color: #5A5A5A; line-height: 1.8; margin-bottom: 1.25rem; }
-.prose ul { list-style: disc; padding-left: 1.5rem; color: #5A5A5A; margin-bottom: 1.25rem; }
-.prose ol { list-style: decimal; padding-left: 1.5rem; color: #5A5A5A; margin-bottom: 1.25rem; }
+.prose h2 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; margin: 2rem 0 1rem; color: var(--ink); }
+.prose h3 { font-family: var(--font-display); font-size: 1.375rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: var(--ink); }
+.prose p { color: var(--ink-soft); line-height: 1.8; margin-bottom: 1.25rem; }
+.prose ul { list-style: disc; padding-left: 1.5rem; color: var(--ink-soft); margin-bottom: 1.25rem; }
+.prose ol { list-style: decimal; padding-left: 1.5rem; color: var(--ink-soft); margin-bottom: 1.25rem; }
 .prose li { margin-bottom: 0.5rem; }
-.prose blockquote { border-left: 4px solid #B5FF2D; padding-left: 1.5rem; color: #0A0A0A; font-style: italic; font-size: 1.125rem; margin: 2rem 0; }
-.prose a { color: #B5FF2D; text-decoration: underline; }
-.prose code { background: #F4F4F4; padding: 2px 6px; border-radius: 4px; font-size: 0.875em; }
+.prose blockquote { border-left: 4px solid var(--violet); padding-left: 1.5rem; color: var(--ink); font-style: italic; font-size: 1.125rem; margin: 2rem 0; }
+.prose a { color: var(--violet); text-decoration: underline; text-underline-offset: 2px; font-weight: 500; }
+.prose a:hover { color: var(--pink); }
+.prose code { background: var(--bg-soft); padding: 2px 6px; border-radius: 4px; font-size: 0.875em; }
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes marqueeReverse {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+.animate-marquee-reverse {
+  animation: marqueeReverse 30s linear infinite;
+}
+
+/* Enterprise typography for Admin panel (Inter + system-ui) */
+.admin-ui,
+.admin-ui *,
+.admin-ui button,
+.admin-ui input,
+.admin-ui select,
+.admin-ui textarea,
+.admin-ui .font-display,
+.admin-ui .font-serif,
+.admin-ui h1,
+.admin-ui h2,
+.admin-ui h3,
+.admin-ui h4,
+.admin-ui h5,
+.admin-ui h6 {
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  letter-spacing: -0.012em;
+}
+
+.admin-ui .font-mono,
+.admin-ui code,
+.admin-ui kbd {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+/* Sonner toast styling — Amplivanta */
+[data-sonner-toaster] {
+  font-family: var(--font-body), 'Inter', sans-serif !important;
+}
+
+[data-sonner-toast] {
+  background: #ffffff !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 1rem !important;
+  padding: 1rem 1.25rem !important;
+  box-shadow: 0 20px 40px -15px rgba(30, 20, 60, 0.28), 0 0 0 1px rgba(109, 59, 245, 0.06) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+  color: var(--ink) !important;
+  letter-spacing: -0.01em !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: var(--muted) !important;
+  font-size: 0.785rem !important;
+  margin-top: 0.25rem !important;
+  line-height: 1.4 !important;
+}
+
+[data-sonner-toast][data-type="success"] {
+  border-color: rgba(31, 174, 106, 0.35) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: var(--green) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: #ef4444 !important;
+}
+
+[data-sonner-toast] [data-button] {
+  background: var(--grad-brand-2) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.35rem 0.75rem !important;
+  font-size: 0.75rem !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-sonner-toast] [data-button]:hover {
+  filter: brightness(1.05) !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-sonner-toast] [data-close-button] {
+  background: var(--bg-soft) !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 9999px !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: #efeef6 !important;
+  color: var(--ink) !important;
+}

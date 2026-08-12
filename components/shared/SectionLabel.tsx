@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Eyebrow } from "./Eyebrow";
 
 interface SectionLabelProps {
   label: string;
@@ -6,22 +7,22 @@ interface SectionLabelProps {
   className?: string;
 }
 
+/**
+ * Section eyebrow. The "light" and "lime" variants render the Amplivanta
+ * gradient-dot pill; "dark" (used on dark surfaces) is plain violet-tinted text.
+ */
 export function SectionLabel({ label, variant = "light", className }: SectionLabelProps) {
-  const styles: Record<string, string> = {
-    light: "bg-[#F4F4F4] text-[#0A0A0A]",
-    lime: "bg-[#B5FF2D] text-black",
-    dark: "text-[#B5FF2D] bg-transparent px-0",
-  };
-
-  return (
-    <span
-      className={cn(
-        "inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest",
-        styles[variant],
-        className
-      )}
-    >
-      {label}
-    </span>
-  );
+  if (variant === "dark") {
+    return (
+      <span
+        className={cn(
+          "inline-block text-xs font-bold uppercase tracking-[0.14em] text-[#b79bff]",
+          className
+        )}
+      >
+        {label}
+      </span>
+    );
+  }
+  return <Eyebrow label={label} className={className} />;
 }

@@ -19,7 +19,7 @@ export function AnimatedCounter({
   duration = 1500,
   className,
 }: AnimatedCounterProps) {
-  const { ref, inView } = useInView({ threshold: 0.4, triggerOnce: true });
+  const { ref, inView } = useInView({ threshold: 0, triggerOnce: true });
   const current = useAnimatedCounter(value, duration, inView);
 
   return (
