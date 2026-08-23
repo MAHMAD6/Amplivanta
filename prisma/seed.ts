@@ -272,19 +272,20 @@ async function main() {
     },
   });
 
-  // 3. Plans
+  // 3. Plans — stripePriceId pulled from env so real Stripe Prices wire up
+  //    without code changes (leave unset to run the local no-charge fallback).
   const plans = [
-    { id: "free", name: "Free", price: 0, features: ["1 user", "250 contacts", "500 emails/month"] },
-    { id: "starter", name: "Starter", price: 49, features: ["3 users", "2,500 contacts", "10,000 emails/month"] },
-    { id: "growth", name: "Growth", price: 149, features: ["10 users", "15,000 contacts", "50,000 emails/month"] },
-    { id: "enterprise", name: "Enterprise", price: 499, features: ["Unlimited users", "100k+ contacts", "Dedicated IP"] },
+    { id: "free", name: "Free", price: 0, features: ["1 user", "250 contacts", "500 emails/month"], stripePriceId: null },
+    { id: "starter", name: "Starter", price: 49, features: ["3 users", "2,500 contacts", "10,000 emails/month"], stripePriceId: process.env.STRIPE_PRICE_STARTER ?? null },
+    { id: "growth", name: "Growth", price: 149, features: ["10 users", "15,000 contacts", "50,000 emails/month"], stripePriceId: process.env.STRIPE_PRICE_GROWTH ?? null },
+    { id: "enterprise", name: "Enterprise", price: 499, features: ["Unlimited users", "100k+ contacts", "Dedicated IP"], stripePriceId: process.env.STRIPE_PRICE_ENTERPRISE ?? null },
   ];
 
   for (const p of plans) {
     await db.plan.upsert({
       where: { id: p.id },
-      update: { name: p.name, price: p.price, features: p.features },
-      create: { id: p.id, name: p.name, price: p.price, features: p.features },
+      update: { name: p.name, price: p.price, features: p.features, stripePriceId: p.stripePriceId },
+      create: { id: p.id, name: p.name, price: p.price, features: p.features, stripePriceId: p.stripePriceId },
     });
   }
 

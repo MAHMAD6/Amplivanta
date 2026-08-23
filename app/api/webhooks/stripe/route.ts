@@ -46,9 +46,29 @@ export async function POST(req: Request) {
     }
     case "invoice.paid":
     case "invoice.payment_failed": {
-      const inv = event.data.object as { id: string; amount_paid?: number; currency?: string; status?: string };
-      // Best-effort record; workspace resolved via subscription mapping is left to a fuller impl.
-      void inv;
+      const inv = event.data.object as {
+        id: string;
+        amount_paid?: number;
+        amount_due?: number;
+        subscription?: string;
+        invoice_pdf?: string;
+      };
+      // Resolve the workspace via the subscription mapping, then record the invoice.
+      if (typeof inv.subscription === "string") {
+        const sub = await db.subscription.findFirst({ where: { stripeSubscriptionId: inv.subscription } });
+        if (sub) {
+          const paid = event.type === "invoice.paid";
+          await db.invoice.create({
+            data: {
+              workspaceId: sub.workspaceId,
+              subscriptionId: sub.id,
+              amount: (inv.amount_paid ?? inv.amount_due ?? 0) / 100,
+              status: paid ? "paid" : "failed",
+              pdfUrl: inv.invoice_pdf ?? null,
+            },
+          });
+        }
+      }
       break;
     }
   }

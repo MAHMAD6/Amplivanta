@@ -41,6 +41,48 @@ function shortDate(d: Date) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+export interface BillingPlan {
+  id: string;
+  name: string;
+  price: number;
+  features: string[];
+}
+export interface BillingData {
+  planName: string | null;
+  currentPlanId: string | null;
+  renewal: Date | null;
+  plans: BillingPlan[];
+  invoices: { id: string; amount: number; status: string; createdAt: Date }[];
+  live: boolean;
+}
+
+/** Subscription + plans + invoices for the billing page. Falls back to empty when unauthenticated. */
+export async function loadBilling(): Promise<BillingData> {
+  const ctx = await ctxOrNull();
+  const empty: BillingData = { planName: null, currentPlanId: null, renewal: null, plans: [], invoices: [], live: false };
+  if (!ctx) return empty;
+  try {
+    const [subscription, plans] = await Promise.all([
+      db.subscription.findFirst({
+        where: { workspaceId: ctx.workspaceId },
+        include: { plan: true, invoices: { orderBy: { createdAt: "desc" }, take: 12 } },
+        orderBy: { createdAt: "desc" },
+      }),
+      db.plan.findMany({ orderBy: { price: "asc" } }),
+    ]);
+    return {
+      planName: subscription?.plan?.name ?? null,
+      currentPlanId: subscription?.planId ?? null,
+      renewal: subscription?.currentPeriodEnd ?? null,
+      plans: plans.map((p) => ({ id: p.id, name: p.name, price: p.price, features: p.features })),
+      invoices: (subscription?.invoices ?? []).map((i) => ({ id: i.id, amount: i.amount, status: i.status, createdAt: i.createdAt })),
+      live: true,
+    };
+  } catch {
+    return empty;
+  }
+}
+
 /** Workspace pipeline stages as {value:id,label:name} for form selects. Empty when unauthenticated. */
 export async function loadStageOptions(): Promise<{ value: string; label: string }[]> {
   const ctx = await ctxOrNull();
