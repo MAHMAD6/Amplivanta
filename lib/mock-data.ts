@@ -2,7 +2,7 @@ import type { Service, Portfolio, BlogPost, Review, TeamMember } from "@/types";
 
 const now = new Date();
 
-export const MOCK_SERVICES: Service[] = [
+export const SERVICES: Service[] = [
   {
     id: "1",
     slug: "social-media-marketing",
@@ -131,7 +131,7 @@ export const MOCK_SERVICES: Service[] = [
   },
 ];
 
-export const MOCK_PORTFOLIO: Portfolio[] = [
+export const PORTFOLIO: Portfolio[] = [
   {
     id: "1",
     slug: "brand-revamp-techcorp",
@@ -286,7 +286,7 @@ const blogBody = `
 <p>Do these three things well and you will outperform competitors spreading themselves thin across every channel.</p>
 `;
 
-export const MOCK_BLOG: BlogPost[] = [
+export const BLOGPOST: BlogPost[] = [
   {
     id: "1",
     slug: "digital-marketing-trends-2026",
@@ -353,7 +353,7 @@ export const MOCK_BLOG: BlogPost[] = [
   },
 ];
 
-export const MOCK_REVIEWS: Review[] = [
+export const REVIEWS: Review[] = [
   { id: "1", name: "Sarah Chen", company: "TechCorp", role: "CMO", content: "Amplivanta transformed our social presence. The results speak for themselves — engagement up, leads flowing.", rating: 5, avatar: null, isFeatured: true, isApproved: true, createdAt: now, updatedAt: now },
   { id: "2", name: "James Rivera", company: "GreenLeaf", role: "Founder", content: "Our organic traffic tripled in six months. Best marketing investment we have made.", rating: 5, avatar: null, isFeatured: true, isApproved: true, createdAt: now, updatedAt: now },
   { id: "3", name: "Emily Zhang", company: "UrbanFit", role: "Head of Growth", content: "5x ROAS during our biggest season. The team is sharp, responsive, and genuinely cares.", rating: 5, avatar: null, isFeatured: true, isApproved: true, createdAt: now, updatedAt: now },
@@ -364,7 +364,7 @@ export const MOCK_REVIEWS: Review[] = [
   { id: "8", name: "Chris Park", company: "Lumen", role: "COO", content: "Amplivanta feels like an extension of our own team. Results-obsessed in the best way.", rating: 5, avatar: null, isFeatured: false, isApproved: true, createdAt: now, updatedAt: now },
 ];
 
-export const MOCK_TEAM: TeamMember[] = [
+export const TEAMMEMBER: TeamMember[] = [
   { id: "1", name: "Ava Mitchell", role: "Founder & CEO", bio: "15 years building brands that people love. Obsessed with measurable growth.", image: null, linkedin: "https://linkedin.com", twitter: "https://twitter.com", order: 1, isActive: true },
   { id: "2", name: "Marcus Lee", role: "Head of SEO", bio: "Technical SEO wizard who has ranked hundreds of sites on page one.", image: null, linkedin: "https://linkedin.com", twitter: "https://twitter.com", order: 2, isActive: true },
   { id: "3", name: "Priya Nair", role: "Creative Director", bio: "Turns ideas into scroll-stopping visuals and stories.", image: null, linkedin: "https://linkedin.com", twitter: "https://twitter.com", order: 3, isActive: true },
@@ -427,21 +427,27 @@ const TEAM_IMAGES = [
   "1519085360753-af0119f7cbe7", // man portrait
 ];
 
-MOCK_SERVICES.forEach((s, i) => {
+SERVICES.forEach((s, i) => {
   s.image = unsplash(SERVICE_IMAGES[i % SERVICE_IMAGES.length], 800);
 });
-MOCK_PORTFOLIO.forEach((p, i) => {
+PORTFOLIO.forEach((p, i) => {
   p.coverImage = unsplash(PORTFOLIO_IMAGES[i % PORTFOLIO_IMAGES.length], 1200);
 });
-MOCK_BLOG.forEach((b, i) => {
+BLOGPOST.forEach((b, i) => {
   b.coverImage = unsplash(BLOG_IMAGES[i % BLOG_IMAGES.length], 1200);
 });
-MOCK_TEAM.forEach((t, i) => {
+TEAMMEMBER.forEach((t, i) => {
   t.image = unsplash(TEAM_IMAGES[i % TEAM_IMAGES.length], 600);
 });
-MOCK_REVIEWS.forEach((r, i) => {
+REVIEWS.forEach((r, i) => {
   r.avatar = unsplash(TEAM_IMAGES[i % TEAM_IMAGES.length], 200);
 });
+
+export const MOCK_SERVICES = SERVICES;
+export const MOCK_PORTFOLIO = PORTFOLIO;
+export const MOCK_BLOG = BLOGPOST;
+export const MOCK_TEAM = TEAMMEMBER;
+export const MOCK_REVIEWS = REVIEWS;
 
 // Imagery for static marketing sections (hero, about, CTA).
 export const SITE_IMAGES = {

@@ -13,7 +13,13 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const contact = await db.contact.create({ data: parsed.data });
+    const { company, ...rest } = parsed.data;
+    const contact = await db.contact.create({
+      data: {
+        ...rest,
+        companyName: company,
+      },
+    });
     console.log(`📧 New contact submission from ${contact.email}`);
     return NextResponse.json({ success: true, id: contact.id }, { status: 201 });
   } catch {

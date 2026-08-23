@@ -91,7 +91,7 @@ export const PLATFORM_META: Record<
   telegram: { label: "Telegram", color: "#229ED9", glyph: "TG" },
 };
 
-export const AVAILABLE_TASKS: Task[] = [
+export const TASKS: Task[] = [
   { id: "t1", platform: "youtube", title: "Subscribe channel", action: "Subscribe to the channel", earn: 0.72, timeEstimate: "1 min" },
   { id: "t2", platform: "facebook", title: "Follow this page", action: "Follow the page", earn: 0.38, timeEstimate: "1 min" },
   { id: "t3", platform: "tiktok", title: "Like and save video", action: "Like and save the video", earn: 0.19, timeEstimate: "1 min" },
@@ -105,14 +105,14 @@ export const AVAILABLE_TASKS: Task[] = [
   { id: "t11", platform: "tiktok", title: "Follow this user", action: "Follow the user", earn: 0.37, timeEstimate: "1 min" },
 ];
 
-export const MY_TASKS: MyTask[] = [
+export const MYTASKS: MyTask[] = [
   { id: "m1", platform: "facebook", title: "Like this post on Facebook", reward: 0.75, date: "02 Sep", status: "completed" },
   { id: "m2", platform: "youtube", title: "Subscribe channel", reward: 0.38, date: "02 Sep", status: "pending" },
   { id: "m3", platform: "instagram", title: "Comment on this post", reward: 0.78, date: "02 Sep", status: "declined" },
   { id: "m4", platform: "tiktok", title: "Follow this user on TikTok", reward: 0.45, date: "02 Sep", status: "completed" },
 ];
 
-export const RECENT_ACTIVITY: Activity[] = [
+export const ACTIVITY: Activity[] = [
   { id: "a1", platform: "tiktok", label: "Like Post", amount: 0.45 },
   { id: "a2", platform: "facebook", label: "Like Post", amount: 0.67 },
   { id: "a3", platform: "instagram", label: "Comment", amount: 0.28 },
@@ -139,7 +139,7 @@ export const PAYMENT_METHODS = [
 
 export const WITHDRAW_PRESETS = [5, 10, 15, 20, 50, 100, 500, 1000];
 
-export const NOTIFICATIONS: AppNotification[] = [
+export const APPNOTIFICATIONS: AppNotification[] = [
   { id: "n1", kind: "task", title: "Task Approved · FB Like", detail: "Reward $0.75", time: "2h ago", group: "Recent" },
   { id: "n2", kind: "withdraw", title: "Withdrawal Approved", detail: "$50 sent to PayPal", time: "1d ago", group: "Recent" },
   { id: "n3", kind: "order", title: "Order #ORD20250907", detail: "Completed successfully", time: "2d ago", group: "Yesterday" },
@@ -147,7 +147,7 @@ export const NOTIFICATIONS: AppNotification[] = [
 ];
 
 export const REQUEST_SERVICES = ["Likes", "Followers", "Comments", "Subs"] as const;
-export const REQUEST_PLATFORMS: Platform[] = [
+export const PLATFORMS: Platform[] = [
   "youtube", "facebook", "instagram", "tiktok", "linkedin", "telegram", "whatsapp",
 ];
 

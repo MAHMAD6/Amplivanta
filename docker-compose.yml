@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: amplivanta-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: impressa_db
+    # Host port 5544 avoids colliding with other local Postgres stacks on 5432.
+    ports:
+      - "5544:5432"
+    volumes:
+      - amplivanta_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d impressa_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Cache / queue backend from DB-Flow.docx (used by workers and rate limiting).
+  redis:
+    image: redis:7-alpine
+    container_name: amplivanta-redis
+    restart: unless-stopped
+    ports:
+      - "6390:6379"
+    volumes:
+      - amplivanta_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  amplivanta_pgdata:
+  amplivanta_redisdata:

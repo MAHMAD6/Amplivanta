@@ -105,3 +105,10 @@ desktop.ini
 *.njsproj
 *.sln
 *.sw?
+
+# ---------------------------------------------------------------------------
+# Local reference / scratch (not part of the app)
+# ---------------------------------------------------------------------------
+/--todelete/
+/changes-required/
+PLAN.md
