@@ -23,8 +23,13 @@ export function middleware(req: NextRequest) {
     req.cookies.has("__Secure-authjs.session-token");
 
   if (!hasSession) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
+    // Behind a reverse proxy the standalone server's own origin is internal
+    // (e.g. localhost:3100), so build the redirect from the proxy's forwarded
+    // host/proto, falling back to the Host header, then the request origin.
+    const fwdHost = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+    const fwdProto = req.headers.get("x-forwarded-proto") ?? req.nextUrl.protocol.replace(":", "");
+    const base = fwdHost ? `${fwdProto}://${fwdHost}` : req.nextUrl.origin;
+    const url = new URL("/login", base);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);
   }
