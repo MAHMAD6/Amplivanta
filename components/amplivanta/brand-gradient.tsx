@@ -12,8 +12,8 @@ export function GradientText({
   return (
     <span
       className={cn(
-        "inline-block bg-clip-text pb-[0.08em] text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]",
-        variant === "diagonal" ? "bg-grad-brand-2" : "bg-grad-brand",
+        "inline-block pb-[0.08em] [box-decoration-break:clone] [-webkit-box-decoration-break:clone]",
+        variant === "diagonal" ? "text-gradient" : "text-gradient-brand",
         className
       )}
     >

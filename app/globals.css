@@ -98,20 +98,22 @@ body {
 
 /* ---------- Gradient helpers ---------- */
 .text-gradient {
-  background: var(--grad-brand-2);
+  background-image: var(--grad-brand-2);
   -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .text-gradient-brand {
-  background: var(--grad-brand);
+  background-image: var(--grad-brand);
   -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
 }
-.bg-grad-brand { background: var(--grad-brand); }
-.bg-grad-brand-2 { background: var(--grad-brand-2); }
-.bg-grad-cta { background: var(--grad-cta); }
+.bg-grad-brand { background-image: var(--grad-brand); }
+.bg-grad-brand-2 { background-image: var(--grad-brand-2); }
+.bg-grad-cta { background-image: var(--grad-cta); }
 .border-gradient {
   border: 1px solid transparent;
   background:
