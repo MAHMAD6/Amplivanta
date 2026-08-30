@@ -124,10 +124,10 @@ function DashboardPreview() {
             </PanelCard>
 
             <PanelCard title="Top Opportunity">
-              <div className="text-[10.5px] font-semibold text-ink">Product-Led Onboarding</div>
-              <div className="mt-1 text-[9px] font-medium text-royal-blue">Medium Impact</div>
+              <div className="text-[10px] font-semibold text-ink-soft">No opportunities yet</div>
+              <p className="mt-1 text-[9px] leading-snug text-ink-muted">Connect your data and we&apos;ll surface your highest-priority opportunity.</p>
               <span className="mt-2 inline-flex items-center gap-1 text-[9px] font-semibold text-royal-blue">
-                Learn more <ArrowRight className="h-2.5 w-2.5" />
+                Connect data <ArrowRight className="h-2.5 w-2.5" />
               </span>
             </PanelCard>
 
