@@ -30,7 +30,10 @@ export function middleware(req: NextRequest) {
     const fwdProto = req.headers.get("x-forwarded-proto") ?? req.nextUrl.protocol.replace(":", "");
     const base = fwdHost ? `${fwdProto}://${fwdHost}` : req.nextUrl.origin;
     const url = new URL("/login", base);
-    url.searchParams.set("callbackUrl", pathname);
+    // Preserve the requested path (incl. query) so the sign-in form can send
+    // the user back to it. Param name `next` matches the layout guards + form.
+    const nextPath = pathname + req.nextUrl.search;
+    url.searchParams.set("next", nextPath);
     return NextResponse.redirect(url);
   }
 

@@ -9,7 +9,10 @@ import { Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 export function AuthSignInForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/app";
+  // Accept `next` (also legacy `callbackUrl`), but only allow same-site paths —
+  // reject absolute/protocol-relative URLs to prevent open-redirect.
+  const rawNext = params.get("next") || params.get("callbackUrl") || "/app";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/app";
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
