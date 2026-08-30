@@ -12,6 +12,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Marketing palette (marketing pages) — restored after identity transition
+        "deep-navy": "#0B2350",
+        "royal-blue": "#1D5FD6",
+        "royal-soft": "#4C86E8",
+        "royal-tint": "#EAF1FD",
+        "orange-cta": "#F26522",
         // Amplivanta brand
         violet: {
           DEFAULT: "#6D3BF5",
