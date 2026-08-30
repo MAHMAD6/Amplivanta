@@ -11,9 +11,9 @@ const SIMPLE_DOCS: Record<string, { title: string; body: string[] }> = {
     "You can manage cookie preferences from the footer link on any marketing page.",
   ]},
   compliance: { title: "Compliance", body: [
-    "Amplivanta is SOC 2 Type II and ISO 27001 certified, and GDPR- and CCPA-compliant.",
-    "Sub-processors, DPA, and security reports are available on request via the Trust Center.",
-    "Enterprise customers can choose data residency in US, EU, or APAC.",
+    "Amplivanta is built with security and privacy in mind. We apply industry-standard practices including encryption in transit and at rest, role-based access controls, tenant isolation, and consent-aware data handling.",
+    "We are committed to handling personal data in line with applicable data-protection laws. Our Privacy Policy and Data Processing Agreement describe how we process and protect your information.",
+    "Our current sub-processor list, DPA, and information about our security practices are available on request via the Trust Center. Formal certifications and regional data-residency options will be published here as they become available.",
   ]},
 };
 

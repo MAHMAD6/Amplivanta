@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Rocket, BarChart3, ShieldCheck, Star, CalendarDays, Users2, MonitorPlay, ArrowRight, Mail, Phone, CalendarCheck } from "lucide-react";
+import { Rocket, BarChart3, ShieldCheck, Star, CalendarDays, Users2, MonitorPlay, ArrowRight, Mail, CalendarCheck } from "lucide-react";
 import { MarketingDemoForm } from "@/components/amplivanta/marketing-demo-form";
 
 export const metadata: Metadata = { title: "Book a Demo — Amplivanta" };
@@ -16,7 +16,6 @@ const EXPECT = [
   { icon: MonitorPlay, title: "Demo", desc: "See Amplivanta in action customized for you." },
   { icon: Rocket, title: "Grow", desc: "Get a roadmap to engineer your growth." },
 ];
-const LOGOS = ["TechNova", "BrightPath", "GrowthHub", "NextWave", "Velocity", "InnovateX"];
 
 export default function DemoPage() {
   return (
@@ -39,8 +38,8 @@ export default function DemoPage() {
             <div className="mt-8 flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-royal-tint text-royal-blue"><ShieldCheck className="h-5 w-5" /></span>
               <div>
-                <div className="text-[12.5px] font-semibold text-deep-navy">Trusted by growth-focused teams worldwide</div>
-                <div className="flex items-center gap-1 text-[12px] text-ink-soft"><span className="flex text-amber-400">{"★★★★★"}</span> 4.9/5 based on customer reviews</div>
+                <div className="text-[12.5px] font-semibold text-deep-navy">A demo tailored to your goals</div>
+                <div className="text-[12px] text-ink-soft">We handle your information in accordance with our Privacy Policy.</div>
               </div>
             </div>
           </div>
@@ -71,20 +70,9 @@ export default function DemoPage() {
             <h2 className="text-[18px] font-bold text-deep-navy">Prefer to Talk Now?</h2>
             <p className="mt-0.5 text-[13px] text-ink-soft">Reach out directly to our team.</p>
             <div className="mt-6 space-y-4">
-              <Contact icon={Mail} title="sales@amplivanta.com" desc="We typically reply within a few hours." />
-              <Contact icon={Phone} title="+1 (833) AMPLI-VA (267-5482)" desc="Mon – Fri, 9am – 6pm ET" />
-              <Contact icon={CalendarCheck} title="Schedule a Call" desc="Choose a time on our calendar." />
+              <Contact icon={Mail} title="sales@amplivanta.com" desc="Send us a note and our team will get back to you by email." />
+              <Contact icon={CalendarCheck} title="Schedule a Call" desc="Choose a time that works for you." />
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Logos */}
-      <section className="bg-white pb-10">
-        <div className="mx-auto max-w-[1200px] px-4 lg:px-8">
-          <p className="text-center text-[13px] font-semibold text-ink-muted">Trusted by companies across industries</p>
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-12 gap-y-4 opacity-70">
-            {LOGOS.map((l) => <span key={l} className="text-[16px] font-bold text-deep-navy/60">{l}</span>)}
           </div>
         </div>
       </section>

@@ -38,7 +38,7 @@ export function MarketingFooter() {
               © {new Date().getFullYear()} Amplivanta. All rights reserved.
             </p>
             <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/60">
-              <ShieldCheck aria-hidden className="h-3.5 w-3.5" /> Enterprise-Grade Security
+              <ShieldCheck aria-hidden className="h-3.5 w-3.5" /> Security-first by design
             </div>
           </div>
 
@@ -89,12 +89,12 @@ export function MarketingFooter() {
         </div>
       </div>
 
-      {/* Compliance badges — SECURE · COMPLIANT · RELIABLE */}
+      {/* Security practices (no unverified certification claims) */}
       <div className="border-t border-white/10">
         <div className="mx-auto max-w-[1280px] px-4 py-8 lg:px-8">
-          <p className="text-center text-[11px] font-bold uppercase tracking-[0.25em] text-white/50">Secure · Compliant · Reliable</p>
+          <p className="text-center text-[11px] font-bold uppercase tracking-[0.25em] text-white/50">Built with security &amp; privacy in mind</p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-            {COMPLIANCE.map((c) => (
+            {PRACTICES.map((c) => (
               <div key={c.title} className="flex items-center gap-2 text-white/70">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20"><ShieldCheck aria-hidden className="h-4 w-4" /></span>
                 <div className="leading-tight"><div className="text-[12.5px] font-bold text-white">{c.title}</div><div className="text-[10.5px] text-white/50">{c.tag}</div></div>
@@ -150,11 +150,11 @@ export function MarketingFooter() {
   );
 }
 
-const COMPLIANCE = [
-  { title: "SOC 2", tag: "Compliant" },
-  { title: "GDPR", tag: "Compliant" },
-  { title: "ISO 27001", tag: "Certified" },
-  { title: "99.9%", tag: "Uptime SLA" },
-  { title: "HIPAA", tag: "Compliant" },
-  { title: "CCPA", tag: "Compliant" },
+// Practice-based statements only — no certification/compliance claims until
+// those certifications and contracts are actually held (see launch audit).
+const PRACTICES = [
+  { title: "Encryption", tag: "In transit & at rest" },
+  { title: "Access controls", tag: "Role-based permissions" },
+  { title: "Tenant isolation", tag: "Workspace-scoped data" },
+  { title: "Privacy by design", tag: "Consent-aware handling" },
 ];

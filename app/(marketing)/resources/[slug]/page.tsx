@@ -16,12 +16,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 const BROWSE = [
-  { icon: LayoutTemplate, label: "All Resources", count: 243 },
-  { icon: Newspaper, label: "Blog", count: 102 },
-  { icon: FileText, label: "Guides", count: 34 },
-  { icon: BookOpen, label: "Whitepapers", count: 18 },
-  { icon: Presentation, label: "Webinars", count: 27 },
-  { icon: PlayCircle, label: "Case Studies", count: 22 },
+  { icon: LayoutTemplate, label: "All Resources" },
+  { icon: Newspaper, label: "Blog" },
+  { icon: FileText, label: "Guides" },
+  { icon: BookOpen, label: "Whitepapers" },
+  { icon: Presentation, label: "Webinars" },
+  { icon: PlayCircle, label: "Case Studies" },
 ];
 const TOPICS = ["Marketing Automation", "Growth Strategy", "Analytics & Reporting", "CRM & Pipeline", "AI & Intelligence", "Social Publishing"];
 const SECTIONS = [
@@ -50,7 +50,7 @@ export default async function ResourcePage({ params }: { params: Promise<{ slug:
           <div className="mt-3 flex h-9 items-center gap-2 rounded-lg border border-line bg-bg-soft px-2.5"><Search className="h-3.5 w-3.5 text-ink-muted" /><input placeholder="Search resources…" className="min-w-0 flex-1 bg-transparent text-[12px] focus:outline-none" /></div>
           <ul className="mt-3 space-y-0.5">
             {BROWSE.map((b) => (
-              <li key={b.label}><span className="flex items-center justify-between rounded-lg px-2.5 py-2 text-[12.5px] text-ink-soft hover:bg-bg-soft"><span className="flex items-center gap-2"><b.icon className="h-4 w-4 text-royal-blue" /> {b.label}</span><span className="text-[11px] text-ink-muted">{b.count}</span></span></li>
+              <li key={b.label}><span className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-[12.5px] text-ink-soft hover:bg-bg-soft"><b.icon className="h-4 w-4 text-royal-blue" /> {b.label}</span></li>
             ))}
           </ul>
           <div className="mt-6 text-[11px] font-bold uppercase tracking-wider text-ink-muted">Popular Topics</div>

@@ -3,9 +3,9 @@ import { ArrowRight, Rocket, Users, TrendingUp } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
 
 const STATS = [
-  { icon: Rocket, num: "10K+", lbl: "Businesses Growing" },
-  { icon: Users, num: "2M+", lbl: "Leads Generated" },
-  { icon: TrendingUp, num: "$250M+", lbl: "Revenue Driven" },
+  { icon: Rocket, num: "AI-native", lbl: "Growth engine" },
+  { icon: Users, num: "All-in-one", lbl: "Marketing + CRM" },
+  { icon: TrendingUp, num: "Measurable", lbl: "Real outcomes" },
 ];
 
 export function CtaBanner() {
@@ -19,7 +19,7 @@ export function CtaBanner() {
               Ready to Engineer Your Next<br className="hidden sm:block" /> Stage of Growth?
             </h2>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/90">
-              Join thousands of businesses using Amplivanta to automate, optimize, and scale.
+              Join growth teams using Amplivanta to automate, optimize, and scale.
             </p>
             <Link
               href="/contact"

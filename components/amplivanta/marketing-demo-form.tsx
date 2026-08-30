@@ -40,10 +40,10 @@ export function MarketingDemoForm() {
   return (
     <div className="rounded-3xl border border-line bg-white p-6 shadow-card lg:p-8">
       <h2 className="font-display text-2xl font-extrabold text-deep-navy">Book Your Demo</h2>
-      <p className="mt-1 text-[13.5px] text-ink-soft">Fill out the form and our team will get back to you within 1 business day.</p>
+      <p className="mt-1 text-[13.5px] text-ink-soft">Fill out the form and our team will get back to you by email.</p>
       {ok && (
         <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-          <Check className="h-4 w-4" /> Thanks — we&apos;ll be in touch within 1 business day to schedule your demo.
+          <Check className="h-4 w-4" /> Thanks — we&apos;ll be in touch by email to schedule your demo.
         </div>
       )}
       <form onSubmit={onSubmit} className="mt-5 space-y-4">

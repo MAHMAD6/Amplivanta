@@ -9,17 +9,16 @@ export const MODULE_PAGES: Record<string, MarketingPageProps> = {
     ctas: [{ label: "Start Free", href: "/signup", primary: true }, { label: "Watch Demo", href: "/demo" }],
     bullets: ["Personalized to your data", "Explains its reasoning", "Handoffs into every module"],
     stats: [
-      { value: "3.2×", label: "Faster decisions" },
-      { value: "47%", label: "More qualified leads" },
-      { value: "$180K", label: "Avg. revenue lift" },
-      { value: "12 min", label: "To first insight" },
+      { value: "Prioritized", label: "Growth actions" },
+      { value: "Evidence-backed", label: "Recommendations" },
+      { value: "One-click", label: "Execution" },
+      { value: "Explainable", label: "Confidence" },
     ],
     features: [
       { title: "Conversational asks", desc: "Ask in plain language — 'why did leads drop?' — get a scored answer with sources.", icon: MessageSquare },
       { title: "Growth score & radar", desc: "See a live health score across acquisition, activation, revenue, retention.", icon: Target },
       { title: "Take-Action controls", desc: "Turn any recommendation into a campaign, landing page, email or automation.", icon: Bot },
     ],
-    quote: { text: "The AI Advisor spotted a channel we'd overlooked. Two weeks later it drove 40% of our new pipeline.", author: "Priya Ramesh", role: "Head of Growth, NextGen" },
   },
   "growth-audit": {
     eyebrow: "Growth Audit™",
@@ -141,7 +140,7 @@ export const INDUSTRY_PAGES: Record<string, MarketingPageProps> = {
   healthcare: {
     eyebrow: "Healthcare",
     title: <>Compliant marketing that respects patient trust.</>,
-    subtitle: "HIPAA-ready consent capture, audit-ready workflows, and content approval built in.",
+    subtitle: "Consent-aware workflows, controlled approvals, and content governance built in.",
     ctas: [{ label: "Talk to Sales", href: "/contact?intent=enterprise", primary: true }],
     features: [
       { title: "Compliance-first", desc: "Consent logging, double opt-in, redacted audit trail.", icon: ShieldCheck },
@@ -174,7 +173,7 @@ export const INDUSTRY_PAGES: Record<string, MarketingPageProps> = {
   "financial-services": {
     eyebrow: "Financial Services",
     title: <>Grow AUM. Stay auditable.</>,
-    subtitle: "Consent capture, disclosure workflows, and audit-grade record keeping for regulated marketing.",
+    subtitle: "Structured consent, disclosure workflows, and activity records for regulated marketing.",
     ctas: [{ label: "Talk to Sales", href: "/contact?intent=enterprise", primary: true }],
     features: [
       { title: "Disclosure control", desc: "Require disclosures per audience, region, or product.", icon: ShieldCheck },
@@ -250,10 +249,10 @@ export const COMPANY_PAGES: Record<string, MarketingPageProps> = {
     subtitle: "Amplivanta was built by growth operators for growth operators. We believe the future of marketing is AI-native, transparent, and honest about what works.",
     ctas: [{ label: "Careers", href: "/company/careers", primary: true }, { label: "Contact", href: "/contact" }],
     stats: [
-      { value: "10K+", label: "Businesses" },
-      { value: "2M+", label: "Leads generated" },
-      { value: "$250M+", label: "Revenue driven" },
-      { value: "48", label: "Countries served" },
+      { value: "AI-native", label: "By design" },
+      { value: "All-in-one", label: "Growth platform" },
+      { value: "Transparent", label: "About what works" },
+      { value: "Operator-built", label: "For growth teams" },
     ],
     quote: { text: "We don't ship what we wouldn't run our own business on. Every feature ships with governance, not against it.", author: "Amplivanta Founding Team", role: "Product & Engineering" },
   },

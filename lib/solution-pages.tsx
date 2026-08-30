@@ -400,9 +400,9 @@ export const SOLUTION_DETAIL_PAGES: Record<string, SolutionPageProps> = {
     outcomesTitle: "Real Intelligence. Real Business Impact.",
     outcomesBlurb: "See how teams use Growth Intelligence to drive measurable results.",
     outcomes: [
-      { title: "+18% Revenue", desc: "D2C apparel brand improved ROAS and conversion rate through AI-prioritized campaigns.", icon: DollarSign },
-      { title: "$420K Pipeline", desc: "B2B tech company identified and acted on high-impact opportunities across the journey.", icon: TrendingUp },
-      { title: "+14% Conversion", desc: "Healthcare provider personalized nurture flows and improved lead-to-booking conversion.", icon: Target },
+      { title: "Grow Revenue", desc: "Improve ROAS and conversion rate through AI-prioritized campaigns.", icon: DollarSign },
+      { title: "Build Pipeline", desc: "Identify and act on high-impact opportunities across the journey.", icon: TrendingUp },
+      { title: "Lift Conversion", desc: "Personalize nurture flows to improve lead-to-booking conversion.", icon: Target },
     ],
     ctaTitle: "Ready to Unlock Your Next Growth Opportunity?",
     ctaBlurb: "Start your Growth Audit and discover what's limiting your growth and how to fix it.",
@@ -507,7 +507,7 @@ export const SOLUTION_DETAIL_PAGES: Record<string, SolutionPageProps> = {
       { title: "Lead Management", desc: "Capture, score and segment leads to deliver the right message at the right time.", icon: UserCheck },
       { title: "Landing Pages & Forms", desc: "Build high-converting pages and forms without code.", icon: FileText },
       { title: "Analytics & Reports", desc: "Track performance and prove ROI with detailed insights.", icon: BarChart3 },
-      { title: "Integrations", desc: "Connect with 1,000+ apps and tools you already use.", icon: Layers },
+      { title: "Integrations", desc: "Connect with the apps and tools you already use.", icon: Layers },
     ],
     howItWorks: [
       { title: "Capture & Segment", desc: "Collect leads and segment your audience for targeted communications.", icon: Users },
@@ -625,7 +625,7 @@ export const SOLUTION_DETAIL_PAGES: Record<string, SolutionPageProps> = {
     featuresTitle: "Everything you need to create and scale",
     features: [
       { title: "AI Content Generator", desc: "Generate on-brand images, graphics, and copy in seconds.", icon: Sparkles },
-      { title: "Template Library", desc: "Access 1,000+ professional templates for any campaign.", icon: LayoutTemplate },
+      { title: "Template Library", desc: "Access a growing library of professional templates for any campaign.", icon: LayoutTemplate },
       { title: "Brand Kit", desc: "Manage logos, colors, fonts, and brand assets in one place.", icon: Palette },
       { title: "Asset Library", desc: "Organize, tag, and find all your assets in one central library.", icon: Layers },
       { title: "Collaboration & Approval", desc: "Comment, review, and approve with role-based workflows.", icon: Users },
