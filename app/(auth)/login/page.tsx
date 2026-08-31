@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { LogIn, UserPlus, TrendingUp, ShieldCheck, LifeBuoy, Lock, Layers, Headphones, ArrowRight } from "lucide-react";
 import { LogoMark } from "@/components/layout/LogoMark";
@@ -68,7 +69,11 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="lg:pt-2"><AuthSignInForm /></div>
+            <div className="lg:pt-2">
+              <Suspense fallback={<div className="min-h-[420px] rounded-2xl border border-line bg-white shadow-card" />}>
+                <AuthSignInForm />
+              </Suspense>
+            </div>
           </div>
 
           <p className="mt-10 text-center text-[13px] text-ink-muted">By signing in, you agree to our <Link href="/legal/terms" className="font-semibold text-royal-blue">Terms of Service</Link> and <Link href="/legal/privacy" className="font-semibold text-royal-blue">Privacy Policy</Link>.</p>
