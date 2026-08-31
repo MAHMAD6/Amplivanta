@@ -18,6 +18,13 @@ const config: Config = {
         "royal-soft": "#4C86E8",
         "royal-tint": "#EAF1FD",
         "orange-cta": "#F26522",
+        "orange-cta-hover": "#D8551A",
+        // Surface + line tokens referenced across components but never defined
+        soft: "#f8f7fb",
+        "bg-soft": "#f8f7fb",
+        "deep-panel": "#0A1E42",
+        "deep-line": "#1E3A6B",
+        border: "#e9e7f0",
         // Amplivanta brand
         violet: {
           DEFAULT: "#6D3BF5",
