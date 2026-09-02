@@ -19,6 +19,10 @@ const config: Config = {
         "royal-tint": "#EAF1FD",
         "orange-cta": "#F26522",
         "orange-cta-hover": "#D8551A",
+        // Super Admin shell (approved handoff brand color) — scoped to /super
+        "admin-navy": "#071F45",
+        "admin-navy-soft": "#0B2B5C",
+        "admin-navy-line": "#16325F",
         // Surface + line tokens referenced across components but never defined
         soft: "#f8f7fb",
         "bg-soft": "#f8f7fb",
