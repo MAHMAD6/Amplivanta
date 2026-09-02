@@ -43,33 +43,48 @@ already exist in the product.
    layout's `SUPER_ADMIN` check, and `grantAccessCredit` re-checks the role in the server
    action. A reason is mandatory and every grant writes a `PlatformAuditLog` row (rule 11).
 
-## Gaps / follow-ups
+## Gap closure (second pass)
 
-- **Careers content screens** (Job Openings, Add Job Opening, Job Opening Detail,
-  Applications, Application Details) exist in the approved designs but have **no entry in
-  `route-manifest.json`**. They were added to the registry under Content Management using
-  the design as the spec.
+All eight gaps from the first pass were closed:
+
+1. **Careers** — `JobOpening` / `JobApplication` models added, wired to the Careers and
+   Applications screens, with a working "Add Job Opening" form (`createJobOpening`).
+2. **Duplicate destinations** — the registry now carries `canonical`. Duplicated routes
+   (Audit Log ×4, Roles & Permissions ×3, Module Controls, System Health, Security & 2FA,
+   Data Management, API & Domains, Billing & Subscription, Help Center, and the Quick
+   Action shortcuts) keep their approved route but inherit one canonical implementation —
+   same columns, filters and loader.
+3. **Producers** — System Health is populated by `runSystemHealthCheck`, which probes the
+   database, user directory, billing and audit log and writes measured `SystemHealthCheck`
+   rows. Domains, API keys, deliverability, landing-page publishing and connected apps are
+   wired to their existing models. Pricing benchmarks are populated by CSV import.
+4. **Detail routes** — `findSuperPage` treats an unmatched trailing segment as a record id,
+   so `<detail route>/<id>` loads that record via `loadSuperRecord`. List rows link into it.
+5. **Export / Import / filters / bulk** — CSV export at `/api/super/export` (honours the
+   active search and filters, escapes formula injection, and is itself audit-logged); CSV
+   import for reference data only (suppression list, pricing benchmarks); real per-screen
+   filter dropdowns wired to the query layer; row selection with "Export selected".
+6. **Foreign keys** — governance models now use real relations to `User` and `Organization`
+   instead of loose id columns.
+7. **Accessibility** — audited and fixed: heading order, duplicate SVG gradient ids,
+   sidebar label and badge contrast (page now reports 0 contrast failures), focus ring on
+   the navy surface, labelled controls, `scope` on table headers.
+8. **Directory picker** — Grant Access / Credit uses a type-ahead backed by
+   `/api/super/directory`, so a grant binds to a real user or organization id.
+
+## Remaining follow-ups
+
+- **Write actions beyond the ones built.** Grant Access / Credit, job-opening creation,
+  diagnostics and CSV import are implemented. Other row actions (Revoke, Suspend, Resend,
+  Approve) still render as labels — each needs its own authorized, audited server action.
 - **`Growth Audit™`** appears in the manifest with a corrupted trademark character; the
   registry strips it.
-- **Duplicate destinations.** The manifest lists the same page in several groups (Audit
-  Log ×4, Roles & Permissions ×3, Email Deliverability, Publish & Domains, Landing Page
-  Publishing, Billing & Subscription, Security & 2FA, Help Center). Each keeps its own
-  route so the approved IA is intact; they share loaders.
-- **Governance models use plain id columns** for `userId` / `organizationId` rather than
-  foreign keys, to keep the addition self-contained and avoid migrating existing tables.
-  Referential integrity for those links is not enforced by the database yet.
-- **Not yet wired to a source:** system health/uptime, usage & costs ingestion, pricing
-  benchmarks, deliverability, domains, and the analytics/report-builder screens. They have
-  models and/or empty states but no producer writing rows.
-- **Directory lookup** in Grant Access / Credit takes a raw identifier; there is no user or
-  organization picker yet.
-- **Detail screens** render a "no record selected" state — deep record pages (Admin /
-  Sub-Admin Detail, Deal Detail, Ticket Detail, Application Details) need per-record routes
-  once the list screens can link to ids.
-- **Bulk actions, Export/Import, and the Filters button** are present per the designs but
-  not yet implemented.
-- **Accessibility QA** (rule 17: keyboard, focus, labelling, contrast, screen reader) has
-  not been run against the built screens.
+- **Analytics screens** (Reports & Analytics, Content Analytics, Usage & Costs ingestion)
+  have models and empty states but no aggregation job writing rows yet.
+- **Import is intentionally limited** to suppression lists and pricing benchmarks.
+  Governance and billing records must originate from their own system of record.
+- **Accessibility** is verified for contrast, headings, labels, ids and focus. A screen
+  reader pass on the collapsible nav and the import dialog has not been done.
 
 ## Regenerating the registry
 

@@ -66,7 +66,8 @@ function Badge({ kind }: { kind: "New" | "Soon" }) {
     <span
       className={cn(
         "ml-auto rounded-md px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide",
-        kind === "New" ? "bg-emerald-400/20 text-emerald-300" : "bg-white/10 text-white/50",
+        // Solid fills: translucent badges on the navy sidebar fell below 4.5:1.
+        kind === "New" ? "bg-emerald-300 text-emerald-950" : "bg-white/85 text-admin-navy",
       )}
     >
       {kind}
@@ -201,11 +202,11 @@ export function SuperShell({
       >
         {/* Brand */}
         <div className="flex h-[78px] shrink-0 items-center gap-3 border-b border-white/10 px-5">
-          <LogoMark className="h-9 w-9 shrink-0" />
+          <LogoMark className="h-9 w-9 shrink-0" gradientId="amp-mark-super" />
           {!collapsed && (
             <div className="min-w-0 flex-1">
               <div className="truncate text-[15.5px] font-extrabold tracking-wide">AMPLIVANTA</div>
-              <div className="text-[8.5px] font-semibold uppercase tracking-[0.22em] text-white/45">
+              <div className="text-[8.5px] font-semibold uppercase tracking-[0.22em] text-white/65">
                 Engineering Growth
               </div>
             </div>
@@ -225,7 +226,7 @@ export function SuperShell({
           {sections.map((section) => (
             <div key={section.section} className="mb-5">
               {!collapsed && (
-                <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/35">
+                <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/60">
                   {section.section}
                 </div>
               )}

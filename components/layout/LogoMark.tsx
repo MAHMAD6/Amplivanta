@@ -7,10 +7,16 @@ import { cn } from "@/lib/utils";
 export function LogoMark({
   className,
   variant = "badge",
+  gradientId = "amp-mark-grad",
 }: {
   className?: string;
   /** "badge" = dark rounded badge container with white icon; "flat" = transparent bg with white icon */
   variant?: "badge" | "flat";
+  /**
+   * SVG gradient id. Pass a distinct value when more than one mark can appear in
+   * the same document, so the ids stay unique.
+   */
+  gradientId?: string;
 }) {
   return (
     <svg
@@ -21,7 +27,7 @@ export function LogoMark({
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id="amp-mark-grad" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#6D3BF5" />
           <stop offset="55%" stopColor="#C43BE0" />
           <stop offset="100%" stopColor="#F5731A" />
@@ -30,7 +36,7 @@ export function LogoMark({
 
       {/* Brand gradient container for badge variant */}
       {variant === "badge" && (
-        <rect width="100%" height="100%" rx="160" fill="url(#amp-mark-grad)" />
+        <rect width="100%" height="100%" rx="160" fill={`url(#${gradientId})`} />
       )}
 
       {/* Background Layer: The inverted 'V' creating the main structure of the 'A' */}

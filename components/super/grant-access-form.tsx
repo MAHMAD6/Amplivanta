@@ -36,6 +36,97 @@ function StepLabel({ n, children }: { n: number; children: React.ReactNode }) {
 const field =
   "h-12 w-full rounded-xl border border-line bg-white px-3.5 text-[13.5px] text-ink focus:border-royal-blue focus:outline-none focus:ring-2 focus:ring-royal-blue/15";
 
+type DirectoryEntry = { id: string; label: string; sublabel: string | null };
+
+/** Type-ahead recipient picker backed by the real user / organization directory. */
+function DirectoryPicker({ type }: { type: "user" | "organization" }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<DirectoryEntry[]>([]);
+  const [chosen, setChosen] = useState<DirectoryEntry | null>(null);
+  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+  const [open, setOpen] = useState(false);
+
+  async function search(q: string) {
+    setState("loading");
+    try {
+      const res = await fetch(`/api/super/directory?type=${type}&q=${encodeURIComponent(q)}`);
+      const data = (await res.json()) as { results?: DirectoryEntry[] };
+      setResults(data.results ?? []);
+      setState(res.ok ? "idle" : "error");
+    } catch {
+      setResults([]);
+      setState("error");
+    }
+  }
+
+  if (chosen) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-royal-blue bg-royal-tint px-4 py-3">
+        <input type="hidden" name="recipient" value={chosen.id} />
+        <span>
+          <span className="block text-[13.5px] font-bold text-admin-navy">{chosen.label}</span>
+          {chosen.sublabel && <span className="block text-[12px] text-ink-soft">{chosen.sublabel}</span>}
+        </span>
+        <button
+          type="button"
+          onClick={() => { setChosen(null); setQuery(""); setResults([]); setOpen(false); }}
+          className="text-[12.5px] font-bold text-royal-blue hover:underline"
+        >
+          Change
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <input
+        value={query}
+        onChange={(e) => {
+          const v = e.currentTarget.value;
+          setQuery(v);
+          setOpen(true);
+          void search(v);
+        }}
+        onFocus={() => { setOpen(true); if (!results.length) void search(""); }}
+        placeholder={type === "user" ? "Search users by name or email" : "Search organizations by name"}
+        aria-label={type === "user" ? "Search users" : "Search organizations"}
+        autoComplete="off"
+        className={field}
+      />
+      {/* Empty until a real record is picked; the server action rejects a blank recipient. */}
+      <input type="hidden" name="recipient" value="" />
+
+      {open && (
+        <div className="absolute z-20 mt-1.5 max-h-64 w-full overflow-y-auto rounded-xl border border-line bg-white shadow-card-lg">
+          {state === "loading" && <p className="px-4 py-3 text-[12.5px] text-ink-muted">Searching...</p>}
+          {state === "error" && (
+            <p className="px-4 py-3 text-[12.5px] text-red-700">
+              Directory unavailable — the platform database could not be reached.
+            </p>
+          )}
+          {state === "idle" && results.length === 0 && (
+            <p className="px-4 py-3 text-[12.5px] text-ink-muted">
+              No matching {type === "user" ? "users" : "organizations"}.
+            </p>
+          )}
+          {results.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => { setChosen(r); setOpen(false); }}
+              className="block w-full border-b border-line px-4 py-2.5 text-left last:border-0 hover:bg-bg-soft"
+            >
+              <span className="block text-[13px] font-semibold text-admin-navy">{r.label}</span>
+              {r.sublabel && <span className="block text-[11.5px] text-ink-soft">{r.sublabel}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function GrantAccessForm() {
   const [target, setTarget] = useState<"user" | "organization">("user");
   const [grantType, setGrantType] = useState<string>("ACCESS_EXTENSION");
@@ -111,15 +202,7 @@ export function GrantAccessForm() {
         {/* 2. Recipient */}
         <div className="mt-7">
           <StepLabel n={2}>{target === "user" ? "Select User" : "Select Organization"}</StepLabel>
-          <input
-            name="recipient"
-            required
-            placeholder={target === "user" ? "User ID or email address" : "Organization ID or name"}
-            className={field}
-          />
-          <p className="mt-1.5 text-[12px] text-ink-muted">
-            Directory lookup is not connected yet — enter the exact identifier.
-          </p>
+          <DirectoryPicker key={target} type={target} />
         </div>
 
         {/* 3. Grant type */}

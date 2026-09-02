@@ -1,13 +1,18 @@
 import "server-only";
-import { AdminScopeLevel, Role, SuspensionStatus, TicketStatus } from "@prisma/client";
+import { AdminScopeLevel, Role, SuspensionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Data loaders for the Super Admin screens.
+ * Data layer for the Super Admin screens.
  *
- * Every loader queries the real database. Pages whose domain has no connected
- * production source yet return an empty result, which renders the approved
- * empty state — we never substitute fabricated rows (handoff rule 5).
+ * Screens are described declaratively (model, search fields, filters, row
+ * mapping) so listing, filtering, pagination, CSV export and single-record
+ * lookup all share one implementation instead of a bespoke function per page.
+ *
+ * Every spec reads the real database. A screen with no spec renders the
+ * "not connected to a production data source yet" state, and a query failure
+ * renders "Data source unavailable" — we never substitute fabricated rows
+ * (handoff rule 5).
  */
 
 export type SuperRow = { id: string; cells: (string | null)[] };
@@ -15,7 +20,14 @@ export type SuperResult = { rows: SuperRow[]; total: number; connected: boolean 
 
 export const EMPTY: SuperResult = { rows: [], total: 0, connected: false };
 
-export type SuperQueryArgs = { q?: string; page?: number; pageSize?: number };
+export type SuperQueryArgs = {
+  q?: string;
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, string | undefined>;
+};
+
+/* ------------------------------------------------------------------ format */
 
 const fmtDate = (d: Date | null | undefined) =>
   d ? new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(d) : null;
@@ -23,590 +35,911 @@ const fmtDate = (d: Date | null | undefined) =>
 const fmtMoney = (n: number | null | undefined, currency = "USD") =>
   n == null ? null : new Intl.NumberFormat("en-US", { style: "currency", currency }).format(n);
 
-const title = (s: string | null | undefined) =>
+const label = (s: string | null | undefined) =>
   s ? s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, " ") : null;
 
-/** Registry of loaders keyed by the manifest route key. */
-type Loader = (a: Required<SuperQueryArgs>) => Promise<SuperResult>;
+const yesNo = (b: boolean | null | undefined) => (b == null ? null : b ? "Yes" : "No");
 
-const loaders: Record<string, Loader> = {
-  // ---------- User management ----------
-  "user-management-all-users": async ({ q, page, pageSize }) => {
-    const where = q
-      ? { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] }
-      : {};
-    const [total, users] = await Promise.all([
-      prisma.user.count({ where }),
-      prisma.user.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: users.map((u) => ({
-        id: u.id,
-        cells: [u.name, u.email, title(u.role), null, null, fmtDate(u.updatedAt), "View"],
-      })),
-    };
+/* -------------------------------------------------------------------- spec */
+
+type Row = Record<string, unknown>;
+
+type TableSpec = {
+  /** Prisma delegate name, e.g. "user". */
+  model: string;
+  orderBy: Record<string, "asc" | "desc">;
+  /** Fields matched against the `q` search box (case-insensitive contains). */
+  search?: string[];
+  /** Base filter always applied. */
+  where?: Record<string, unknown>;
+  /** Maps a URL filter param to a Prisma where fragment. */
+  filters?: Record<string, (value: string) => Record<string, unknown>>;
+  include?: Record<string, unknown>;
+  map: (row: Row) => (string | null)[];
+};
+
+const contains = (q: string) => ({ contains: q, mode: "insensitive" as const });
+
+/** Equality filter helper for a plain column. */
+const eq = (field: string) => (v: string) => ({ [field]: v });
+/** Boolean filter driven by an "Enabled"/"Disabled" style option. */
+const bool = (field: string, truthy: string) => (v: string) => ({ [field]: v === truthy });
+
+const SPECS: Record<string, TableSpec> = {
+  /* ---------------------------------------------------------- users */
+  "user-management-all-users": {
+    model: "user",
+    orderBy: { createdAt: "desc" },
+    search: ["name", "email"],
+    filters: { role: eq("role") },
+    map: (r) => [
+      r.name as string,
+      r.email as string,
+      label(r.role as string),
+      null,
+      null,
+      fmtDate(r.updatedAt as Date),
+      "View",
+    ],
   },
 
-  "user-management-admins": async ({ q, page, pageSize }) => {
-    const where = {
-      role: { in: [Role.SUPER_ADMIN, Role.ADMIN, Role.OWNER] },
-      ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] } : {}),
-    };
-    const [total, users] = await Promise.all([
-      prisma.user.count({ where }),
-      prisma.user.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: users.map((u) => ({ id: u.id, cells: [u.name, u.email, title(u.role), "Global", null, fmtDate(u.updatedAt), "Manage"] })),
-    };
+  "user-management-admins": {
+    model: "user",
+    orderBy: { createdAt: "desc" },
+    search: ["name", "email"],
+    where: { role: { in: [Role.SUPER_ADMIN, Role.ADMIN, Role.OWNER] } },
+    filters: { role: eq("role") },
+    map: (r) => [
+      r.name as string,
+      r.email as string,
+      label(r.role as string),
+      "Global",
+      null,
+      fmtDate(r.updatedAt as Date),
+      "Manage",
+    ],
   },
 
-  "user-management-sub-admins": async ({ page, pageSize }) => {
-    const where = { scopeLevel: { in: [AdminScopeLevel.ORGANIZATION, AdminScopeLevel.WORKSPACE, AdminScopeLevel.MODULE] } };
-    const [total, rows] = await Promise.all([
-      prisma.adminAssignment.count({ where }),
-      prisma.adminAssignment.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" }, include: { roleDefinition: true } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.userId, null, r.grantedByUserId, title(r.scopeLevel), null, fmtDate(r.createdAt), "Manage"],
-      })),
-    };
+  "user-management-sub-admins": {
+    model: "adminAssignment",
+    orderBy: { createdAt: "desc" },
+    where: {
+      scopeLevel: { in: [AdminScopeLevel.ORGANIZATION, AdminScopeLevel.WORKSPACE, AdminScopeLevel.MODULE] },
+    },
+    filters: { scope: eq("scopeLevel") },
+    include: { user: true, grantedBy: true, roleDefinition: true },
+    map: (r) => {
+      const u = r.user as Row | null;
+      const g = r.grantedBy as Row | null;
+      return [
+        (u?.name as string) ?? null,
+        (u?.email as string) ?? null,
+        (g?.name as string) ?? null,
+        label(r.scopeLevel as string),
+        null,
+        fmtDate(r.createdAt as Date),
+        "Manage",
+      ];
+    },
   },
 
-  "user-management-roles-and-permissions": async ({ page, pageSize }) => {
-    const [total, roles] = await Promise.all([
-      prisma.roleDefinition.count(),
-      prisma.roleDefinition.findMany({
-        skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "asc" },
-        include: { _count: { select: { permissions: true, assignments: true } } },
-      }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: roles.map((r) => ({
-        id: r.id,
-        cells: [r.name, r.description, r.isSystem ? "System" : "Custom", String(r._count.permissions), String(r._count.assignments), "Edit"],
-      })),
-    };
+  "user-management-roles-and-permissions": {
+    model: "roleDefinition",
+    orderBy: { createdAt: "asc" },
+    search: ["name", "key"],
+    include: { _count: { select: { permissions: true, assignments: true } } },
+    map: (r) => {
+      const c = r._count as { permissions: number; assignments: number };
+      return [
+        r.name as string,
+        (r.description as string) ?? null,
+        r.isSystem ? "System" : "Custom",
+        String(c.permissions),
+        String(c.assignments),
+        "Edit",
+      ];
+    },
   },
 
-  "user-management-access-assignments": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.adminAssignment.count(),
-      prisma.adminAssignment.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" }, include: { roleDefinition: true } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.userId, r.roleDefinition?.name ?? null, title(r.scopeLevel), r.organizationId ?? r.workspaceId, r.grantedByUserId, fmtDate(r.expiresAt), "Revoke"],
-      })),
-    };
+  "user-management-access-assignments": {
+    model: "adminAssignment",
+    orderBy: { createdAt: "desc" },
+    filters: { scope: eq("scopeLevel") },
+    include: { user: true, grantedBy: true, roleDefinition: true, organization: true },
+    map: (r) => {
+      const u = r.user as Row | null;
+      const g = r.grantedBy as Row | null;
+      const o = r.organization as Row | null;
+      const role = r.roleDefinition as Row | null;
+      return [
+        (u?.name as string) ?? null,
+        (role?.name as string) ?? null,
+        label(r.scopeLevel as string),
+        (o?.name as string) ?? (r.workspaceId as string) ?? null,
+        (g?.name as string) ?? null,
+        fmtDate(r.expiresAt as Date),
+        "Revoke",
+      ];
+    },
   },
 
-  "user-management-invitations": async ({ q, page, pageSize }) => {
-    const where = q ? { email: { contains: q, mode: "insensitive" as const } } : {};
-    const [total, rows] = await Promise.all([
-      prisma.invitation.count({ where }),
-      prisma.invitation.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.email, null, title(r.scopeLevel), r.invitedByUserId, title(r.status), fmtDate(r.expiresAt), "Resend"],
-      })),
-    };
+  "user-management-invitations": {
+    model: "invitation",
+    orderBy: { createdAt: "desc" },
+    search: ["email"],
+    filters: { status: eq("status") },
+    include: { invitedBy: true, organization: true },
+    map: (r) => {
+      const inv = r.invitedBy as Row | null;
+      const o = r.organization as Row | null;
+      return [
+        r.email as string,
+        (o?.name as string) ?? null,
+        label(r.scopeLevel as string),
+        (inv?.name as string) ?? null,
+        label(r.status as string),
+        fmtDate(r.expiresAt as Date),
+        "Resend",
+      ];
+    },
   },
 
-  "user-management-sessions-devices": async ({ page, pageSize }) => {
-    const where = { revokedAt: null };
-    const [total, rows] = await Promise.all([
-      prisma.userSession.count({ where }),
-      prisma.userSession.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { lastActiveAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.userId, r.device, [r.browser, r.os].filter(Boolean).join(" / ") || null, r.ipAddress, r.location, fmtDate(r.lastActiveAt), "Revoke"],
-      })),
-    };
+  "user-management-sessions-devices": {
+    model: "userSession",
+    orderBy: { lastActiveAt: "desc" },
+    where: { revokedAt: null },
+    include: { user: true },
+    map: (r) => {
+      const u = r.user as Row | null;
+      const combo = [r.browser, r.os].filter(Boolean).join(" / ");
+      return [
+        (u?.name as string) ?? null,
+        (r.device as string) ?? null,
+        combo || null,
+        (r.ipAddress as string) ?? null,
+        (r.location as string) ?? null,
+        fmtDate(r.lastActiveAt as Date),
+        "Revoke",
+      ];
+    },
   },
 
-  "user-management-suspended-access": async ({ page, pageSize }) => {
-    const where = { status: SuspensionStatus.ACTIVE };
-    const [total, rows] = await Promise.all([
-      prisma.accessSuspension.count({ where }),
-      prisma.accessSuspension.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.userId, r.reason, r.suspendedByUserId, title(r.status), fmtDate(r.createdAt), "Lift"] })),
-    };
+  "user-management-suspended-access": {
+    model: "accessSuspension",
+    orderBy: { createdAt: "desc" },
+    where: { status: SuspensionStatus.ACTIVE },
+    filters: { status: eq("status") },
+    include: { user: true, suspendedBy: true },
+    map: (r) => {
+      const u = r.user as Row | null;
+      const by = r.suspendedBy as Row | null;
+      return [
+        (u?.name as string) ?? null,
+        r.reason as string,
+        (by?.name as string) ?? null,
+        label(r.status as string),
+        fmtDate(r.createdAt as Date),
+        "Lift",
+      ];
+    },
   },
 
-  // ---------- Audit ----------
-  "user-management-admin-activity": auditLoader(),
-  "security-and-compliance-audit-log": auditLoader(),
-  "audit-logs-audit-log": auditLoader(),
-  "audit-logs-global-audit-logs": auditLoader(),
-  "settings-audit-log": auditLoader(),
-  "affiliate-management-audit-history": auditLoader(),
-
-  // ---------- Organizations ----------
-  "organizations-organizations": async ({ q, page, pageSize }) => {
-    const where = q ? { name: { contains: q, mode: "insensitive" as const } } : {};
-    const [total, rows] = await Promise.all([
-      prisma.organization.count({ where }),
-      prisma.organization.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.name, r.plan, r.status, String(r.userCount), fmtDate(r.createdAt), "Manage"] })),
-    };
+  /* ---------------------------------------------------------- audit */
+  "audit-logs-global-audit-logs": {
+    model: "platformAuditLog",
+    orderBy: { createdAt: "desc" },
+    search: ["action"],
+    include: { actor: true },
+    map: (r) => {
+      const a = r.actor as Row | null;
+      const res = [r.resourceType, r.resourceId].filter(Boolean).join(":");
+      return [
+        (a?.name as string) ?? (r.actorUserId as string) ?? null,
+        r.action as string,
+        res || null,
+        label(r.scopeLevel as string),
+        (r.ipAddress as string) ?? null,
+        fmtDate(r.createdAt as Date),
+      ];
+    },
   },
 
-  "organizations-tenant-workspace-management": async ({ q, page, pageSize }) => {
-    const where = q ? { name: { contains: q, mode: "insensitive" as const } } : {};
-    const [total, rows] = await Promise.all([
-      prisma.workspace.count({ where }),
-      prisma.workspace.findMany({
-        where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" },
-        include: { _count: { select: { memberships: true } } },
-      }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.name, null, r.planTier, String(r._count.memberships), fmtDate(r.createdAt), "Manage"] })),
-    };
+  /* -------------------------------------------------- organizations */
+  "organizations-organizations": {
+    model: "organization",
+    orderBy: { createdAt: "desc" },
+    search: ["name"],
+    filters: { status: eq("status") },
+    map: (r) => [
+      r.name as string,
+      r.plan as string,
+      r.status as string,
+      String(r.userCount),
+      fmtDate(r.createdAt as Date),
+      "Manage",
+    ],
   },
 
-  // ---------- Plans & billing ----------
-  "plans-and-pricing-pricing-plans-overview": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.plan.count(),
-      prisma.plan.findMany({
-        skip: (page - 1) * pageSize, take: pageSize, orderBy: { price: "asc" },
-        include: { _count: { select: { subscriptions: true } } },
-      }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.name, fmtMoney(r.price), r.interval, String(r.features.length), String(r._count.subscriptions), "Edit"],
-      })),
-    };
+  "organizations-tenant-workspace-management": {
+    model: "workspace",
+    orderBy: { createdAt: "desc" },
+    search: ["name", "slug"],
+    include: { _count: { select: { memberships: true } } },
+    map: (r) => {
+      const c = r._count as { memberships: number };
+      return [
+        r.name as string,
+        (r.domain as string) ?? null,
+        r.planTier as string,
+        String(c.memberships),
+        fmtDate(r.createdAt as Date),
+        "Manage",
+      ];
+    },
   },
 
-  "plans-and-pricing-pricing-benchmark-and-positioning": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.pricingBenchmark.count(),
-      prisma.pricingBenchmark.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { capturedAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.competitor, r.planName, fmtMoney(r.price, r.currency), r.interval, fmtDate(r.capturedAt), r.sourceUrl] })),
-    };
+  /* ------------------------------------------------- plans, billing */
+  "plans-and-pricing-pricing-plans-overview": {
+    model: "plan",
+    orderBy: { price: "asc" },
+    search: ["name"],
+    include: { _count: { select: { subscriptions: true } } },
+    map: (r) => {
+      const c = r._count as { subscriptions: number };
+      return [
+        r.name as string,
+        fmtMoney(r.price as number),
+        r.interval as string,
+        String((r.features as string[]).length),
+        String(c.subscriptions),
+        "Edit",
+      ];
+    },
   },
 
-  "subscriptions-and-billing-subscriptions": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.subscription.count(),
-      prisma.subscription.findMany({
-        skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" },
-        include: { plan: true, workspace: true },
-      }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.workspace.name, r.plan.name, r.status, `${fmtDate(r.currentPeriodStart)} – ${fmtDate(r.currentPeriodEnd)}`, fmtDate(r.currentPeriodEnd), "Manage"],
-      })),
-    };
+  "plans-and-pricing-pricing-benchmark-and-positioning": {
+    model: "pricingBenchmark",
+    orderBy: { capturedAt: "desc" },
+    search: ["competitor", "planName"],
+    map: (r) => [
+      r.competitor as string,
+      r.planName as string,
+      fmtMoney(r.price as number, r.currency as string),
+      r.interval as string,
+      fmtDate(r.capturedAt as Date),
+      (r.sourceUrl as string) ?? null,
+    ],
   },
 
-  "subscriptions-and-billing-billing-invoices": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.invoice.count(),
-      prisma.invoice.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" }, include: { workspace: true } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.id.slice(0, 10), r.workspace.name, fmtMoney(r.amount), r.status, fmtDate(r.paidAt), "View"] })),
-    };
+  "subscriptions-and-billing-subscriptions": {
+    model: "subscription",
+    orderBy: { createdAt: "desc" },
+    filters: { status: eq("status") },
+    include: { plan: true, workspace: true },
+    map: (r) => {
+      const w = r.workspace as Row;
+      const p = r.plan as Row;
+      return [
+        w.name as string,
+        p.name as string,
+        r.status as string,
+        `${fmtDate(r.currentPeriodStart as Date)} – ${fmtDate(r.currentPeriodEnd as Date)}`,
+        fmtDate(r.currentPeriodEnd as Date),
+        "Manage",
+      ];
+    },
   },
 
-  "subscriptions-and-billing-ai-credit-management": creditLoader(),
-  "quick-actions-grant-access-credit": creditLoader(),
-
-  // ---------- System management ----------
-  "system-management-module-controls": async ({ q, page, pageSize }) => {
-    const where = q ? { name: { contains: q, mode: "insensitive" as const } } : {};
-    const [total, rows] = await Promise.all([
-      prisma.moduleControl.count({ where }),
-      prisma.moduleControl.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { name: "asc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.name, r.description, title(r.status), title(r.scopeLevel), r.isCore ? "Core" : "Configure"] })),
-    };
-  },
-  "quick-actions-module-controls": async (a) => loaders["system-management-module-controls"](a),
-
-  "system-management-feature-flags": async ({ q, page, pageSize }) => {
-    const where = q ? { name: { contains: q, mode: "insensitive" as const } } : {};
-    const [total, rows] = await Promise.all([
-      prisma.featureFlag.count({ where }),
-      prisma.featureFlag.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { name: "asc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.name, r.description, r.enabled ? "Enabled" : "Disabled", r.rolloutPercent == null ? null : `${r.rolloutPercent}%`, title(r.scopeLevel), "Edit"],
-      })),
-    };
+  "subscriptions-and-billing-billing-invoices": {
+    model: "invoice",
+    orderBy: { createdAt: "desc" },
+    filters: { status: eq("status") },
+    include: { workspace: true },
+    map: (r) => {
+      const w = r.workspace as Row;
+      return [
+        (r.id as string).slice(0, 10),
+        w.name as string,
+        fmtMoney(r.amount as number),
+        r.status as string,
+        fmtDate(r.paidAt as Date),
+        "View",
+      ];
+    },
   },
 
-  "system-management-usage-and-costs": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.usageCostRecord.count(),
-      prisma.usageCostRecord.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { periodStart: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [`${fmtDate(r.periodStart)} – ${fmtDate(r.periodEnd)}`, r.category, r.provider, String(r.units), fmtMoney(r.cost, r.currency), r.organizationId],
-      })),
-    };
+  "subscriptions-and-billing-ai-credit-management": {
+    model: "creditAdjustment",
+    orderBy: { createdAt: "desc" },
+    search: ["reason"],
+    filters: { grantType: eq("grantType") },
+    include: { user: true, organization: true, grantedBy: true },
+    map: (r) => {
+      const u = r.user as Row | null;
+      const o = r.organization as Row | null;
+      const g = r.grantedBy as Row | null;
+      const value =
+        r.amount == null
+          ? r.days == null
+            ? null
+            : `${r.days} days`
+          : fmtMoney(r.amount as number);
+      return [
+        label(r.grantType as string),
+        (u?.name as string) ?? (o?.name as string) ?? null,
+        value,
+        r.reason as string,
+        (g?.name as string) ?? null,
+        fmtDate(r.effectiveAt as Date),
+        fmtDate(r.expiresAt as Date),
+      ];
+    },
   },
 
-  "system-management-system-health": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.systemHealthCheck.count(),
-      prisma.systemHealthCheck.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { checkedAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.service, r.status, r.latencyMs == null ? null : `${r.latencyMs} ms`, r.message, fmtDate(r.checkedAt)] })),
-    };
-  },
-  "quick-actions-system-health-check": async (a) => loaders["system-management-system-health"](a),
-
-  // ---------- Security & compliance ----------
-  "security-and-compliance-consent-records": async ({ q, page, pageSize }) => {
-    const where = q ? { subjectEmail: { contains: q, mode: "insensitive" as const } } : {};
-    const [total, rows] = await Promise.all([
-      prisma.consentRecord.count({ where }),
-      prisma.consentRecord.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { recordedAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.subjectEmail, r.consentType, r.granted ? "Granted" : "Withdrawn", r.source, r.ipAddress, fmtDate(r.recordedAt)] })),
-    };
+  /* --------------------------------------------------------- system */
+  "system-management-module-controls": {
+    model: "moduleControl",
+    orderBy: { name: "asc" },
+    search: ["name", "key"],
+    filters: { status: eq("status"), scope: eq("scopeLevel") },
+    map: (r) => [
+      r.name as string,
+      (r.description as string) ?? null,
+      label(r.status as string),
+      label(r.scopeLevel as string),
+      r.isCore ? "Core" : "Configure",
+    ],
   },
 
-  "security-and-compliance-suppression-lists": async ({ q, page, pageSize }) => {
-    const where = q ? { email: { contains: q, mode: "insensitive" as const } } : {};
-    const [total, rows] = await Promise.all([
-      prisma.suppressionEntry.count({ where }),
-      prisma.suppressionEntry.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return { total, connected: true, rows: rows.map((r) => ({ id: r.id, cells: [r.email, r.reason, r.source, fmtDate(r.createdAt)] })) };
+  "system-management-feature-flags": {
+    model: "featureFlag",
+    orderBy: { name: "asc" },
+    search: ["name", "key"],
+    filters: { enabled: bool("enabled", "Enabled") },
+    map: (r) => [
+      r.name as string,
+      (r.description as string) ?? null,
+      r.enabled ? "Enabled" : "Disabled",
+      r.rolloutPercent == null ? null : `${r.rolloutPercent}%`,
+      label(r.scopeLevel as string),
+      "Edit",
+    ],
   },
 
-  "security-and-compliance-data-requests-dsar": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.dataRequest.count(),
-      prisma.dataRequest.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { requestedAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.subjectEmail, title(r.type), title(r.status), fmtDate(r.requestedAt), fmtDate(r.completedAt), "Process"] })),
-    };
+  "system-management-usage-and-costs": {
+    model: "usageCostRecord",
+    orderBy: { periodStart: "desc" },
+    search: ["category", "provider"],
+    include: { organization: true },
+    map: (r) => {
+      const o = r.organization as Row | null;
+      return [
+        `${fmtDate(r.periodStart as Date)} – ${fmtDate(r.periodEnd as Date)}`,
+        r.category as string,
+        (r.provider as string) ?? null,
+        String(r.units),
+        fmtMoney(r.cost as number, r.currency as string),
+        (o?.name as string) ?? null,
+      ];
+    },
   },
 
-  // ---------- Affiliates ----------
-  "affiliate-management-applications": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.affiliateApplication.count(),
-      prisma.affiliateApplication.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return { total, connected: true, rows: rows.map((r) => ({ id: r.id, cells: [r.name, r.email, r.website, title(r.status), fmtDate(r.createdAt), "Review"] })) };
+  "system-management-system-health": {
+    model: "systemHealthCheck",
+    orderBy: { checkedAt: "desc" },
+    search: ["service"],
+    map: (r) => [
+      r.service as string,
+      r.status as string,
+      r.latencyMs == null ? null : `${r.latencyMs} ms`,
+      (r.message as string) ?? null,
+      fmtDate(r.checkedAt as Date),
+    ],
   },
 
-  "affiliate-management-affiliates": async ({ q, page, pageSize }) => {
-    const where = q ? { OR: [{ name: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }] } : {};
-    const [total, rows] = await Promise.all([
-      prisma.affiliate.count({ where }),
-      prisma.affiliate.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.name, r.email, r.code, title(r.status), `${r.commissionRate}%`, fmtDate(r.createdAt), "Manage"] })),
-    };
+  /* ------------------------------------------ security & compliance */
+  "security-and-compliance-consent-records": {
+    model: "consentRecord",
+    orderBy: { recordedAt: "desc" },
+    search: ["subjectEmail", "consentType"],
+    map: (r) => [
+      r.subjectEmail as string,
+      r.consentType as string,
+      r.granted ? "Granted" : "Withdrawn",
+      (r.source as string) ?? null,
+      (r.ipAddress as string) ?? null,
+      fmtDate(r.recordedAt as Date),
+    ],
   },
 
-  "affiliate-management-referrals-and-attribution": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.referral.count(),
-      prisma.referral.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { landedAt: "desc" }, include: { affiliate: true } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.id.slice(0, 10), r.affiliate.name, r.source, r.status, fmtDate(r.landedAt), fmtDate(r.convertedAt)] })),
-    };
+  "security-and-compliance-suppression-lists": {
+    model: "suppressionEntry",
+    orderBy: { createdAt: "desc" },
+    search: ["email", "reason"],
+    map: (r) => [r.email as string, r.reason as string, (r.source as string) ?? null, fmtDate(r.createdAt as Date)],
   },
 
-  "affiliate-management-commissions": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.commission.count(),
-      prisma.commission.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" }, include: { affiliate: true } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.affiliate.name, r.referralId, fmtMoney(r.amount, r.currency), r.status, fmtDate(r.periodStart), fmtDate(r.createdAt)],
-      })),
-    };
+  "security-and-compliance-data-requests-dsar": {
+    model: "dataRequest",
+    orderBy: { requestedAt: "desc" },
+    search: ["subjectEmail"],
+    filters: { status: eq("status"), type: eq("type") },
+    map: (r) => [
+      r.subjectEmail as string,
+      label(r.type as string),
+      label(r.status as string),
+      fmtDate(r.requestedAt as Date),
+      fmtDate(r.completedAt as Date),
+      "Process",
+    ],
   },
 
-  "affiliate-management-payouts": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.payout.count(),
-      prisma.payout.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" }, include: { affiliate: true } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.affiliate.name, fmtMoney(r.amount, r.currency), r.method, title(r.status), r.reference, fmtDate(r.processedAt)] })),
-    };
+  /* ------------------------------------------------------ affiliates */
+  "affiliate-management-applications": {
+    model: "affiliateApplication",
+    orderBy: { createdAt: "desc" },
+    search: ["name", "email"],
+    filters: { status: eq("status") },
+    map: (r) => [
+      r.name as string,
+      r.email as string,
+      (r.website as string) ?? null,
+      label(r.status as string),
+      fmtDate(r.createdAt as Date),
+      "Review",
+    ],
   },
 
-  "affiliate-management-fraud-and-risk": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.fraudSignal.count(),
-      prisma.fraudSignal.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return { total, connected: true, rows: rows.map((r) => ({ id: r.id, cells: [r.signal, r.affiliateId, r.severity, fmtDate(r.createdAt), fmtDate(r.resolvedAt)] })) };
+  "affiliate-management-affiliates": {
+    model: "affiliate",
+    orderBy: { createdAt: "desc" },
+    search: ["name", "email", "code"],
+    filters: { status: eq("status") },
+    map: (r) => [
+      r.name as string,
+      r.email as string,
+      r.code as string,
+      label(r.status as string),
+      `${r.commissionRate}%`,
+      fmtDate(r.createdAt as Date),
+      "Manage",
+    ],
   },
 
-  // ---------- Partner marketplace ----------
-  "partner-marketplace-programs": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.partnerProgram.count(),
-      prisma.partnerProgram.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" }, include: { _count: { select: { profiles: true } } } }),
-    ]);
-    return { total, connected: true, rows: rows.map((r) => ({ id: r.id, cells: [r.name, r.slug, r.status, String(r._count.profiles), fmtDate(r.createdAt), "Edit"] })) };
+  "affiliate-management-referrals-and-attribution": {
+    model: "referral",
+    orderBy: { landedAt: "desc" },
+    include: { affiliate: true, organization: true },
+    map: (r) => {
+      const a = r.affiliate as Row;
+      return [
+        (r.id as string).slice(0, 10),
+        a.name as string,
+        (r.source as string) ?? null,
+        r.status as string,
+        fmtDate(r.landedAt as Date),
+        fmtDate(r.convertedAt as Date),
+      ];
+    },
   },
 
-  "partner-marketplace-partner-profiles": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.partnerProfile.count(),
-      prisma.partnerProfile.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" }, include: { program: true } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.companyName, r.contactEmail, r.program?.name ?? null, r.tier, title(r.status), fmtDate(r.createdAt), "View"] })),
-    };
+  "affiliate-management-commissions": {
+    model: "commission",
+    orderBy: { createdAt: "desc" },
+    filters: { status: eq("status") },
+    include: { affiliate: true },
+    map: (r) => {
+      const a = r.affiliate as Row;
+      return [
+        a.name as string,
+        (r.referralId as string) ?? null,
+        fmtMoney(r.amount as number, r.currency as string),
+        r.status as string,
+        fmtDate(r.periodStart as Date),
+        fmtDate(r.createdAt as Date),
+      ];
+    },
   },
 
-  "partner-marketplace-applications-and-approvals": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.partnerApplication.count(),
-      prisma.partnerApplication.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return { total, connected: true, rows: rows.map((r) => ({ id: r.id, cells: [r.companyName, r.contactEmail, r.programId, title(r.status), fmtDate(r.createdAt), "Review"] })) };
+  "affiliate-management-payouts": {
+    model: "payout",
+    orderBy: { createdAt: "desc" },
+    filters: { status: eq("status") },
+    include: { affiliate: true },
+    map: (r) => {
+      const a = r.affiliate as Row;
+      return [
+        a.name as string,
+        fmtMoney(r.amount as number, r.currency as string),
+        (r.method as string) ?? null,
+        label(r.status as string),
+        (r.reference as string) ?? null,
+        fmtDate(r.processedAt as Date),
+      ];
+    },
   },
 
-  // ---------- Operations ----------
-  "support-and-tickets-support-tickets": ticketLoader(),
-  "support-and-tickets-support-admin-cases": ticketLoader(),
-
-  "announcements-announcements": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.announcement.count(),
-      prisma.announcement.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return { total, connected: true, rows: rows.map((r) => ({ id: r.id, cells: [r.title, r.audience, fmtDate(r.publishedAt), fmtDate(r.expiresAt), "Edit"] })) };
+  "affiliate-management-fraud-and-risk": {
+    model: "fraudSignal",
+    orderBy: { createdAt: "desc" },
+    search: ["signal"],
+    map: (r) => [
+      r.signal as string,
+      (r.affiliateId as string) ?? null,
+      r.severity as string,
+      fmtDate(r.createdAt as Date),
+      fmtDate(r.resolvedAt as Date),
+    ],
   },
 
-  "support-and-tickets-product-updates-what-s-new": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.productUpdate.count(),
-      prisma.productUpdate.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return { total, connected: true, rows: rows.map((r) => ({ id: r.id, cells: [r.title, r.version, fmtDate(r.publishedAt), "Edit"] })) };
+  /* ---------------------------------------------------------- partners */
+  "partner-marketplace-programs": {
+    model: "partnerProgram",
+    orderBy: { createdAt: "desc" },
+    search: ["name", "slug"],
+    include: { _count: { select: { profiles: true } } },
+    map: (r) => {
+      const c = r._count as { profiles: number };
+      return [
+        r.name as string,
+        r.slug as string,
+        r.status as string,
+        String(c.profiles),
+        fmtDate(r.createdAt as Date),
+        "Edit",
+      ];
+    },
   },
 
-  // ---------- Command center ----------
-  "command-center-command-center": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.platformIncident.count(),
-      prisma.platformIncident.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { detectedAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.title, r.severity, r.status, fmtDate(r.detectedAt), fmtDate(r.resolvedAt), "Open"] })),
-    };
+  "partner-marketplace-partner-profiles": {
+    model: "partnerProfile",
+    orderBy: { createdAt: "desc" },
+    search: ["companyName", "contactEmail"],
+    filters: { status: eq("status") },
+    include: { program: true },
+    map: (r) => {
+      const p = r.program as Row | null;
+      return [
+        r.companyName as string,
+        r.contactEmail as string,
+        (p?.name as string) ?? null,
+        (r.tier as string) ?? null,
+        label(r.status as string),
+        fmtDate(r.createdAt as Date),
+        "View",
+      ];
+    },
   },
 
-  "command-center-notification-center": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.platformNotification.count(),
-      prisma.platformNotification.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return { total, connected: true, rows: rows.map((r) => ({ id: r.id, cells: [r.title, r.level, r.audience, fmtDate(r.createdAt), "View"] })) };
+  "partner-marketplace-applications-and-approvals": {
+    model: "partnerApplication",
+    orderBy: { createdAt: "desc" },
+    search: ["companyName", "contactEmail"],
+    filters: { status: eq("status") },
+    map: (r) => [
+      r.companyName as string,
+      r.contactEmail as string,
+      (r.programId as string) ?? null,
+      label(r.status as string),
+      fmtDate(r.createdAt as Date),
+      "Review",
+    ],
   },
 
-  // ---------- Content management ----------
-  "content-management-blog-posts": async ({ q, page, pageSize }) => {
-    const where = q ? { title: { contains: q, mode: "insensitive" as const } } : {};
-    const [total, rows] = await Promise.all([
-      prisma.blogPost.count({ where }),
-      prisma.blogPost.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.title, (r as { author?: string | null }).author ?? null, (r as { category?: string | null }).category ?? null,
-          (r as { published?: boolean }).published ? "Published" : "Draft", fmtDate(r.createdAt), "Edit"],
-      })),
-    };
+  /* --------------------------------------------------------- operations */
+  "support-and-tickets-support-tickets": {
+    model: "supportTicket",
+    orderBy: { updatedAt: "desc" },
+    search: ["subject", "requesterEmail"],
+    filters: { status: eq("status"), priority: eq("priority") },
+    include: { organization: true, assignedTo: true },
+    map: (r) => {
+      const o = r.organization as Row | null;
+      return [
+        r.subject as string,
+        r.requesterEmail as string,
+        (o?.name as string) ?? null,
+        r.priority as string,
+        label(r.status as string),
+        fmtDate(r.updatedAt as Date),
+        "Open",
+      ];
+    },
   },
 
-  "content-management-authors": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.teamMember.count(),
-      prisma.teamMember.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({ id: r.id, cells: [r.name, (r as { email?: string | null }).email ?? null, (r as { role?: string | null }).role ?? null, null, "Edit"] })),
-    };
+  "announcements-announcements": {
+    model: "announcement",
+    orderBy: { createdAt: "desc" },
+    search: ["title"],
+    map: (r) => [
+      r.title as string,
+      r.audience as string,
+      fmtDate(r.publishedAt as Date),
+      fmtDate(r.expiresAt as Date),
+      "Edit",
+    ],
   },
 
-  "content-management-media-library": async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.asset.count(),
-      prisma.asset.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.name, (r as { type?: string | null }).type ?? null, null, fmtDate(r.createdAt), "Open"],
-      })),
-    };
+  "support-and-tickets-product-updates-what-s-new": {
+    model: "productUpdate",
+    orderBy: { createdAt: "desc" },
+    search: ["title"],
+    map: (r) => [r.title as string, (r.version as string) ?? null, fmtDate(r.publishedAt as Date), "Edit"],
+  },
+
+  /* ------------------------------------------------------ command centre */
+  "command-center-command-center": {
+    model: "platformIncident",
+    orderBy: { detectedAt: "desc" },
+    search: ["title"],
+    filters: { status: eq("status"), severity: eq("severity") },
+    map: (r) => [
+      r.title as string,
+      r.severity as string,
+      r.status as string,
+      fmtDate(r.detectedAt as Date),
+      fmtDate(r.resolvedAt as Date),
+      "Open",
+    ],
+  },
+
+  "command-center-notification-center": {
+    model: "platformNotification",
+    orderBy: { createdAt: "desc" },
+    search: ["title"],
+    map: (r) => [
+      r.title as string,
+      r.level as string,
+      r.audience as string,
+      fmtDate(r.createdAt as Date),
+      "View",
+    ],
+  },
+
+  /* --------------------------------------------------- content management */
+  "content-management-blog-posts": {
+    model: "blogPost",
+    orderBy: { createdAt: "desc" },
+    search: ["title", "author"],
+    map: (r) => [
+      r.title as string,
+      (r.author as string) ?? null,
+      ((r.tags as string[] | null) ?? [])[0] ?? null,
+      r.isPublished ? "Published" : "Draft",
+      fmtDate(r.publishedAt as Date),
+      "Edit",
+    ],
+  },
+
+  "content-management-authors": {
+    model: "teamMember",
+    orderBy: { createdAt: "desc" },
+    search: ["name"],
+    map: (r) => [r.name as string, null, (r.role as string) ?? null, null, "Edit"],
+  },
+
+  "content-management-media-library": {
+    model: "asset",
+    orderBy: { createdAt: "desc" },
+    search: ["name"],
+    map: (r) => [
+      r.name as string,
+      (r.type as string) ?? null,
+      r.fileSize == null ? null : `${Math.round((r.fileSize as number) / 1024)} KB`,
+      fmtDate(r.createdAt as Date),
+      "Open",
+    ],
+  },
+
+  "content-management-careers-job-openings": {
+    model: "jobOpening",
+    orderBy: { createdAt: "desc" },
+    search: ["title", "department", "location"],
+    filters: { status: eq("status") },
+    include: { _count: { select: { applications: true } } },
+    map: (r) => {
+      const c = r._count as { applications: number };
+      return [
+        r.title as string,
+        (r.department as string) ?? null,
+        (r.location as string) ?? null,
+        (r.employment as string) ?? null,
+        label(r.status as string),
+        String(c.applications),
+        "Edit",
+      ];
+    },
+  },
+
+  "content-management-applications": {
+    model: "jobApplication",
+    orderBy: { createdAt: "desc" },
+    search: ["candidate", "email"],
+    filters: { stage: eq("stage") },
+    include: { jobOpening: true },
+    map: (r) => {
+      const j = r.jobOpening as Row | null;
+      return [
+        r.candidate as string,
+        (j?.title as string) ?? null,
+        label(r.stage as string),
+        (r.source as string) ?? null,
+        fmtDate(r.createdAt as Date),
+        "Review",
+      ];
+    },
+  },
+
+  /* ------------------------------------------------------ domains & email */
+  "domains-and-email-publish-and-domains": {
+    model: "domain",
+    orderBy: { createdAt: "desc" },
+    search: ["domain"],
+    include: { workspace: true },
+    map: (r) => {
+      const w = r.workspace as Row | null;
+      return [
+        (r.domain as string) ?? null,
+        (w?.name as string) ?? null,
+        r.isVerified ? "Verified" : "Pending verification",
+        yesNo(r.isVerified as boolean),
+        fmtDate(r.createdAt as Date),
+        "Manage",
+      ];
+    },
+  },
+
+  "domains-and-email-api-and-domains": {
+    model: "apiKey",
+    orderBy: { createdAt: "desc" },
+    search: ["name"],
+    include: { workspace: true },
+    map: (r) => {
+      const w = r.workspace as Row | null;
+      return [
+        (r.name as string) ?? null,
+        (w?.name as string) ?? null,
+        fmtDate(r.lastUsedAt as Date),
+        fmtDate(r.createdAt as Date),
+        "Revoke",
+      ];
+    },
+  },
+
+  "domains-and-email-email-deliverability": {
+    model: "emailSend",
+    orderBy: { createdAt: "desc" },
+    search: ["recipientEmail"],
+    map: (r) => [
+      (r.recipientEmail as string) ?? null,
+      (r.emailCampaignId as string) ?? null,
+      (r.status as string) ?? null,
+      yesNo(r.openedAt != null),
+      yesNo(r.clickedAt != null),
+      fmtDate(r.createdAt as Date),
+    ],
+  },
+
+  "domains-and-email-landing-page-publishing": {
+    model: "landingPage",
+    orderBy: { createdAt: "desc" },
+    search: ["title", "slug"],
+    include: { workspace: true },
+    map: (r) => {
+      const w = r.workspace as Row | null;
+      return [
+        (r.title as string) ?? null,
+        (w?.name as string) ?? null,
+        r.isPublished ? "Published" : "Draft",
+        fmtDate(r.publishedAt as Date),
+        "Open",
+      ];
+    },
+  },
+
+  "integrations-connected-apps": {
+    model: "integration",
+    orderBy: { createdAt: "desc" },
+    search: ["provider"],
+    include: { workspace: true },
+    map: (r) => {
+      const w = r.workspace as Row | null;
+      return [
+        (r.provider as string) ?? null,
+        (w?.name as string) ?? null,
+        (r.status as string) ?? null,
+        fmtDate(r.createdAt as Date),
+        "Configure",
+      ];
+    },
   },
 };
 
-function auditLoader(): Loader {
-  return async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.platformAuditLog.count(),
-      prisma.platformAuditLog.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.actorUserId, r.action, [r.resourceType, r.resourceId].filter(Boolean).join(":") || null, title(r.scopeLevel), r.ipAddress, fmtDate(r.createdAt)],
-      })),
-    };
-  };
+/* ----------------------------------------------------------------- runtime */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const delegate = (model: string) => (prisma as any)[model];
+
+function buildWhere(spec: TableSpec, q: string, filters: Record<string, string | undefined>) {
+  const and: Record<string, unknown>[] = [];
+  if (spec.where) and.push(spec.where);
+  if (q && spec.search?.length) {
+    and.push({ OR: spec.search.map((f) => ({ [f]: contains(q) })) });
+  }
+  for (const [key, build] of Object.entries(spec.filters ?? {})) {
+    const value = filters[key];
+    if (value) and.push(build(value));
+  }
+  return and.length ? { AND: and } : {};
 }
 
-function creditLoader(): Loader {
-  return async ({ page, pageSize }) => {
-    const [total, rows] = await Promise.all([
-      prisma.creditAdjustment.count(),
-      prisma.creditAdjustment.findMany({ skip: (page - 1) * pageSize, take: pageSize, orderBy: { createdAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [title(r.grantType), r.userId ?? r.organizationId, r.amount == null ? (r.days == null ? null : `${r.days} days`) : fmtMoney(r.amount),
-          r.reason, r.grantedByUserId, fmtDate(r.effectiveAt), fmtDate(r.expiresAt)],
-      })),
-    };
-  };
-}
-
-function ticketLoader(): Loader {
-  return async ({ q, page, pageSize }) => {
-    const where = q ? { subject: { contains: q, mode: "insensitive" as const } } : {};
-    const [total, rows] = await Promise.all([
-      prisma.supportTicket.count({ where }),
-      prisma.supportTicket.findMany({ where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { updatedAt: "desc" } }),
-    ]);
-    return {
-      total,
-      connected: true,
-      rows: rows.map((r) => ({
-        id: r.id,
-        cells: [r.subject, r.requesterEmail, r.organizationId, r.priority, title(r.status), fmtDate(r.updatedAt), "Open"],
-      })),
-    };
-  };
-}
-
-/** True when the page has a connected production source. */
 export function hasLoader(key: string) {
-  return key in loaders;
+  return key in SPECS;
 }
 
 export async function loadSuperPage(key: string, args: SuperQueryArgs = {}): Promise<SuperResult> {
-  const loader = loaders[key];
-  if (!loader) return EMPTY;
-  const resolved = { q: args.q ?? "", page: Math.max(1, args.page ?? 1), pageSize: Math.min(100, Math.max(1, args.pageSize ?? 25)) };
+  const spec = SPECS[key];
+  if (!spec) return EMPTY;
+
+  const page = Math.max(1, args.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, args.pageSize ?? 25));
+  const where = buildWhere(spec, args.q ?? "", args.filters ?? {});
+
   try {
-    return await loader(resolved);
+    const d = delegate(spec.model);
+    const [total, rows] = await Promise.all([
+      d.count({ where }),
+      d.findMany({
+        where,
+        orderBy: spec.orderBy,
+        include: spec.include,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+    return { total, connected: true, rows: (rows as Row[]).map((r) => ({ id: r.id as string, cells: spec.map(r) })) };
   } catch {
-    // A query failure must not fabricate data — fall back to the empty state.
+    // A query failure must never be presented as an empty platform.
     return EMPTY;
+  }
+}
+
+/** All matching rows, unpaginated — used by CSV export. Capped for safety. */
+export async function loadSuperPageForExport(key: string, args: SuperQueryArgs = {}): Promise<SuperResult> {
+  const spec = SPECS[key];
+  if (!spec) return EMPTY;
+  const where = buildWhere(spec, args.q ?? "", args.filters ?? {});
+  try {
+    const d = delegate(spec.model);
+    const rows = (await d.findMany({
+      where,
+      orderBy: spec.orderBy,
+      include: spec.include,
+      take: 10000,
+    })) as Row[];
+    return { total: rows.length, connected: true, rows: rows.map((r) => ({ id: r.id as string, cells: spec.map(r) })) };
+  } catch {
+    return EMPTY;
+  }
+}
+
+export type SuperRecord = { id: string; fields: { label: string; value: string | null }[] };
+
+/** Single record for a detail screen, rendered as label/value pairs. */
+export async function loadSuperRecord(key: string, id: string, columns: string[]): Promise<SuperRecord | null> {
+  const spec = SPECS[key];
+  if (!spec) return null;
+  try {
+    const d = delegate(spec.model);
+    const row = (await d.findUnique({ where: { id }, include: spec.include })) as Row | null;
+    if (!row) return null;
+    const cells = spec.map(row);
+    return {
+      id,
+      fields: columns.map((label, i) => ({ label, value: cells[i] ?? null })),
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -616,7 +949,7 @@ export async function loadDashboardSummary() {
     const [organizations, users, tickets, incidents] = await Promise.all([
       prisma.organization.count(),
       prisma.user.count(),
-      prisma.supportTicket.count({ where: { status: { in: [TicketStatus.OPEN, TicketStatus.PENDING] } } }),
+      prisma.supportTicket.count({ where: { status: { in: ["OPEN", "PENDING"] } } }),
       prisma.platformIncident.count({ where: { status: "open" } }),
     ]);
     return { organizations, users, tickets, incidents, connected: true };

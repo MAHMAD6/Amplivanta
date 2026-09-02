@@ -74,8 +74,10 @@ body {
 }
 /* On dark surfaces a lighter ring reads better */
 .bg-\[\#0d0b18\] :where(a, button, [role="button"], input, textarea, select, summary):focus-visible,
-.bg-\[\#14121f\] :where(a, button, [role="button"], input, textarea, select, summary):focus-visible {
-  outline-color: #b79bff;
+.bg-\[\#14121f\] :where(a, button, [role="button"], input, textarea, select, summary):focus-visible,
+.bg-deep-navy :where(a, button, [role="button"], input, textarea, select, summary):focus-visible,
+.bg-admin-navy :where(a, button, [role="button"], input, textarea, select, summary):focus-visible {
+  outline-color: #ffffff;
 }
 
 /* Prevent iOS Safari auto-zoom on focus: form controls must be >=16px on mobile.

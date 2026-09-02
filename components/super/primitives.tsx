@@ -92,7 +92,7 @@ export function SuperEmptyState({
       <span className="flex h-[104px] w-[104px] items-center justify-center rounded-full border border-line bg-bg-soft">
         <Icon className="h-10 w-10 text-royal-blue/45" />
       </span>
-      <h3 className="mt-7 text-[21px] font-extrabold text-admin-navy">{title}</h3>
+      <h2 className="mt-7 text-[21px] font-extrabold text-admin-navy">{title}</h2>
       <p className="mt-2 max-w-[440px] text-[13.5px] leading-relaxed text-ink-soft">{description}</p>
       {action && <div className="mt-6">{action}</div>}
     </div>
