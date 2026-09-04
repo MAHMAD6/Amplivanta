@@ -129,7 +129,7 @@ export const APP_NAV: AppNavSection[] = [
       { label: "Integrations", href: "/app/integrations", icon: "plug" },
       { label: "Team", href: "/app/settings/users", icon: "user-cog" },
       { label: "Domains", href: "/app/settings/api-domains", icon: "plug" },
-      { label: "Usage & Credits", href: "/app/settings/billing", icon: "credit-card" },
+      { label: "Usage & Credits", href: "/app/usage-credits", icon: "credit-card" },
       { label: "Settings", href: "/app/settings", icon: "settings" },
       { label: "Help & Support", href: "/app/help", icon: "help" },
     ],

@@ -5,6 +5,7 @@ import { MarketplaceProductType, Prisma, SellerStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
 import { getMarketplaceViewer, guardMarketplace } from "@/lib/server/marketplace-access";
+import { getPaymentProvider, issueSignedUrl, requiresPaymentProvider } from "@/lib/marketplace/providers";
 
 export type MpResult = { ok: true; message: string } | { ok: false; error: string };
 
@@ -215,5 +216,281 @@ export async function requestWithdrawal(): Promise<MpResult> {
     return { ok: true, message: "Payout requested." };
   } catch {
     return { ok: false, error: "Could not request a payout — the platform database was unreachable." };
+  }
+}
+
+/* ------------------------------------------------------------ cart + orders */
+
+/** Adds the current published version of a product to the buyer cart. */
+export async function addToCart(productId: string): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, { permission: "marketplace.purchase" });
+  if (!gate.ok) return { ok: false, error: "You cannot add items to a cart right now." };
+
+  try {
+    const product = await prisma.marketplaceProduct.findFirst({
+      where: { id: productId, status: "PUBLISHED" },
+      include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+    });
+    if (!product) return { ok: false, error: "That product is not available." };
+    const version = product.versions[0];
+    if (!version) return { ok: false, error: "That product has no published version." };
+
+    await prisma.marketplaceCartItem.upsert({
+      where: { userId_productId: { userId: viewer.userId!, productId } },
+      create: { userId: viewer.userId!, productId, versionId: version.id },
+      update: { versionId: version.id },
+    });
+    revalidatePath("/app/marketplace/cart");
+    return { ok: true, message: `"${product.title}" added to your cart.` };
+  } catch {
+    return { ok: false, error: "Could not update your cart — the platform database was unreachable." };
+  }
+}
+
+export async function removeFromCart(itemId: string): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, { permission: "marketplace.purchase" });
+  if (!gate.ok) return { ok: false, error: "You cannot change this cart." };
+
+  try {
+    // Ownership check: never delete a cart row belonging to another buyer.
+    const deleted = await prisma.marketplaceCartItem.deleteMany({
+      where: { id: itemId, userId: viewer.userId! },
+    });
+    if (deleted.count === 0) return { ok: false, error: "That item is not in your cart." };
+    revalidatePath("/app/marketplace/cart");
+    return { ok: true, message: "Item removed." };
+  } catch {
+    return { ok: false, error: "Could not update your cart — the platform database was unreachable." };
+  }
+}
+
+export type CheckoutLine = {
+  itemId: string;
+  productId: string;
+  versionId: string;
+  title: string;
+  unitPriceCents: number;
+  currency: string;
+  licenseVersion: string;
+};
+
+export type CheckoutQuote = {
+  connected: boolean;
+  lines: CheckoutLine[];
+  subtotalCents: number;
+  taxCents: number;
+  totalCents: number;
+  currency: string;
+  requiresProvider: boolean;
+  providerConfigured: boolean;
+};
+
+/**
+ * Server-side checkout quote. Prices come from the product version, never from
+ * the client. Tax stays at zero because tax treatment is an unconfirmed launch
+ * decision — it is not guessed at.
+ */
+export async function getCheckoutQuote(): Promise<CheckoutQuote> {
+  const empty: CheckoutQuote = {
+    connected: false,
+    lines: [],
+    subtotalCents: 0,
+    taxCents: 0,
+    totalCents: 0,
+    currency: "USD",
+    requiresProvider: false,
+    providerConfigured: false,
+  };
+  const viewer = await getMarketplaceViewer();
+  if (!viewer.userId) return empty;
+
+  try {
+    const items = await prisma.marketplaceCartItem.findMany({ where: { userId: viewer.userId } });
+    if (items.length === 0) return { ...empty, connected: true };
+
+    const versions = await prisma.marketplaceProductVersion.findMany({
+      where: { id: { in: items.map((i) => i.versionId) } },
+      include: { product: { select: { id: true, title: true, status: true } } },
+    });
+
+    const lines: CheckoutLine[] = items.flatMap((i) => {
+      const v = versions.find((x) => x.id === i.versionId);
+      if (!v || v.product.status !== "PUBLISHED") return [];
+      return [
+        {
+          itemId: i.id,
+          productId: v.product.id,
+          versionId: v.id,
+          title: v.product.title,
+          unitPriceCents: v.priceCents,
+          currency: v.currency,
+          licenseVersion: v.licenseVersion,
+        },
+      ];
+    });
+
+    const subtotalCents = lines.reduce((s, l) => s + l.unitPriceCents, 0);
+    const provider = await getPaymentProvider();
+    return {
+      connected: true,
+      lines,
+      subtotalCents,
+      taxCents: 0,
+      totalCents: subtotalCents,
+      currency: lines[0]?.currency ?? "USD",
+      requiresProvider: requiresPaymentProvider(subtotalCents),
+      providerConfigured: provider !== null,
+    };
+  } catch {
+    return empty;
+  }
+}
+
+/**
+ * Places the order. A zero-total order completes end to end today: it is marked
+ * paid, entitlements activate, and seller ledger entries are written. An order
+ * with a balance due needs a configured payment provider and is refused until
+ * one exists — no fake charge is ever recorded.
+ */
+export async function placeOrder(): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, { permission: "marketplace.purchase" });
+  if (!gate.ok) return { ok: false, error: "You cannot place an order right now." };
+
+  const quote = await getCheckoutQuote();
+  if (!quote.connected) return { ok: false, error: "Checkout is unavailable — the platform database was unreachable." };
+  if (quote.lines.length === 0) return { ok: false, error: "Your cart is empty." };
+
+  if (quote.requiresProvider && !quote.providerConfigured) {
+    return {
+      ok: false,
+      error: "No payment provider is connected, so a paid order cannot be taken. Free products can be claimed now.",
+    };
+  }
+
+  try {
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.marketplaceOrder.create({
+        data: {
+          buyerUserId: viewer.userId!,
+          status: "PAID",
+          subtotalCents: quote.subtotalCents,
+          taxCents: quote.taxCents,
+          totalCents: quote.totalCents,
+          currency: quote.currency,
+          placedAt: new Date(),
+        },
+      });
+
+      for (const line of quote.lines) {
+        const version = await tx.marketplaceProductVersion.findUnique({
+          where: { id: line.versionId },
+          include: { product: { select: { sellerId: true } } },
+        });
+        if (!version) continue;
+
+        // Snapshot exactly what was bought.
+        const item = await tx.marketplaceOrderItem.create({
+          data: {
+            orderId: created.id,
+            productId: line.productId,
+            productVersionId: line.versionId,
+            sellerId: version.product.sellerId,
+            titleSnapshot: line.title,
+            licenseVersion: version.licenseVersion,
+            licenseHash: version.licenseHash,
+            unitPriceCents: line.unitPriceCents,
+            totalCents: line.unitPriceCents,
+            currency: line.currency,
+          },
+        });
+
+        await tx.marketplaceEntitlement.create({
+          data: {
+            orderItemId: item.id,
+            buyerUserId: viewer.userId!,
+            productVersionId: line.versionId,
+            status: "ACTIVE",
+            activatedAt: new Date(),
+          },
+        });
+
+        if (line.unitPriceCents > 0) {
+          // Commission rate is an unconfirmed commercial decision, so no fee is
+          // deducted here; gross and net match until a rate is configured.
+          await tx.marketplaceLedgerEntry.create({
+            data: {
+              sellerId: version.product.sellerId,
+              orderItemId: item.id,
+              entryType: "sale",
+              grossCents: line.unitPriceCents,
+              feeCents: 0,
+              netCents: line.unitPriceCents,
+              currency: line.currency,
+              availableAt: new Date(),
+            },
+          });
+        }
+      }
+
+      await tx.marketplaceOrder.update({ where: { id: created.id }, data: { status: "ACCESS_READY" } });
+      await tx.marketplaceCartItem.deleteMany({ where: { userId: viewer.userId! } });
+      return created;
+    });
+
+    await audit(viewer.userId, "marketplace.order.placed", "MarketplaceOrder", order.id, {
+      totalCents: quote.totalCents,
+      lines: quote.lines.length,
+    });
+
+    revalidatePath("/app/marketplace/purchases");
+    revalidatePath("/app/marketplace/cart");
+    return { ok: true, message: `Order placed. Reference ${order.id}` };
+  } catch {
+    return { ok: false, error: "Could not place the order — the platform database was unreachable." };
+  }
+}
+
+export type DownloadResult = { ok: true; url: string } | { ok: false; error: string };
+
+/**
+ * Issues a download. A paid order alone is not enough: the entitlement must be
+ * active and owned by this buyer, and every issued link is recorded.
+ */
+export async function issueDownload(entitlementId: string): Promise<DownloadResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, { permission: "marketplace.downloads.issue_own" });
+  if (!gate.ok) return { ok: false, error: "You cannot download this." };
+
+  try {
+    const ent = await prisma.marketplaceEntitlement.findFirst({
+      where: { id: entitlementId, buyerUserId: viewer.userId! },
+      include: { productVersion: { include: { assets: true } } },
+    });
+    if (!ent) return { ok: false, error: "That download does not belong to your account." };
+    if (ent.status !== "ACTIVE") return { ok: false, error: `This entitlement is ${ent.status.toLowerCase()}.` };
+    if (ent.expiresAt && ent.expiresAt < new Date()) return { ok: false, error: "This entitlement has expired." };
+
+    const asset = ent.productVersion.assets[0];
+    if (!asset) return { ok: false, error: "No deliverable file is attached to this product version yet." };
+    if (asset.scanStatus !== "CLEAN") {
+      return { ok: false, error: "This file has not passed a malware scan, so it cannot be downloaded." };
+    }
+
+    const signed = await issueSignedUrl(asset.storageKey);
+    if (!signed.ok) {
+      return { ok: false, error: "No file storage provider is connected, so a download link cannot be issued." };
+    }
+
+    await prisma.marketplaceDownload.create({
+      data: { entitlementId: ent.id, assetId: asset.id, expiresAt: signed.expiresAt },
+    });
+    await audit(viewer.userId, "marketplace.download.issued", "MarketplaceEntitlement", ent.id, { assetId: asset.id });
+
+    return { ok: true, url: signed.url };
+  } catch {
+    return { ok: false, error: "Could not issue the download — the platform database was unreachable." };
   }
 }

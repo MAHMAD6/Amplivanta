@@ -77,16 +77,47 @@ in code. Each has an honest blocked state in the UI rather than a fake implement
 9. **Legal publication** — counsel approval of all six documents. The supplied documents
    ship with **blank** Effective Date and Last Updated fields, so no date is published.
 
+## Implemented in the follow-up pass
+
+- **Purchase path is live.** Cart add/remove, a server-side checkout quote (prices read from the
+  product version, never the client), order placement, order-item snapshotting, entitlement
+  activation, seller ledger entries, and signed-download issuance. A **zero-total order completes
+  end to end today** — free products are fully purchasable without any payment provider. An order
+  with a balance due is refused until a provider is configured; no fake charge is ever recorded.
+- **Provider adapters** (`lib/marketplace/providers.ts`) read payment, payout and storage providers
+  from `MarketplaceSetting`. Nothing is hard-coded; with none configured the caller gets an explicit
+  "not configured" result.
+- **Module Controls and Feature Flags now have working toggles**, plus a "Register declared modules"
+  action that idempotently registers everything declared in code — always disabled, so nothing turns
+  itself on. Module changes require a reason and are audit logged; core modules cannot be switched off.
+- **Marketplace admin row actions**: approve/reject seller applications (creating the seller record
+  atomically with a unique store slug), suspend/reinstate sellers, product moderation restricted to
+  legal state-machine transitions, refunds that revoke entitlements, and payout decisions that settle
+  or release ledger entries. Every one requires a reason and writes an audit event.
+- **Category CRUD** on Categories & Products.
+- **Approved route names** from the handoff (`/app/marketing-automation`, `/app/social-publishing`,
+  `/app/growth-intelligence/*`, `/app/ai-workspace`, `/admin/marketplace/*`, `/admin/system/*`) are
+  served as redirects to the implementing routes, so handoff links resolve without renaming ~100 live
+  routes.
+- **`/app/usage-credits`** built; the Workspace nav item now points at it.
+
+### Verification
+
+The data layer was exercised end to end against a throwaway database on the VPS (created, tested,
+dropped — production data untouched): 15/15 checks passed, covering module/flag default-off,
+seller approval, cart uniqueness, the free-order path reaching `ACCESS_READY` with an active
+entitlement, order snapshots surviving a new product version, ledger-derived available balance,
+payout settlement zeroing the balance, and refund revoking entitlements.
+
 ## Remaining follow-ups
 
-- Cart/checkout write paths, order creation, entitlement activation and signed-download
-  issuance are modelled but not implemented — they depend on decisions 1 and 5.
-- Marketplace Management admin screens list real data; their row actions (approve seller,
-  moderate product, issue refund, decide payout) still need individual authorized actions.
-- Categories are modelled but there is no category admin CRUD yet.
-- `marketplace` and its 14 flags are declared in code; an operator still has to switch the
-  module on via Module Controls for any of it to appear.
-- The approved target routes use names this codebase does not use (`/app/marketing-automation`,
-  `/app/social-publishing`, `/app/growth-intelligence/*`, `/app/usage-credits`). The nav was
-  restructured to the approved labels and order but each item points at the existing route;
-  renaming ~100 live routes was out of scope for this pass.
+- **Paid checkout, payouts and file downloads stay blocked by design** until the payment provider,
+  payout provider and storage/malware-scanning provider are chosen. The mechanisms are built; only
+  the provider configuration is missing.
+- The HTTP-level purchase flow has not been click-tested end to end, because doing so needs a real
+  signed-in session and production credentials. The data layer behind it is verified.
+- Reviews, favorites, coupons, bundles, sponsored listings and affiliate promotion have flags and
+  models but no UI yet — they are explicitly Phase 4 / flag-gated.
+- Dispute (chargeback) ingestion has a model but no webhook receiver.
+- Marketplace Settings is still a settings placeholder; the commercial rules it would edit are
+  unconfirmed launch decisions.

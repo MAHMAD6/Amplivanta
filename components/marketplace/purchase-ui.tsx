@@ -1,0 +1,176 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Download, Loader2, ShoppingCart, Trash2 } from "lucide-react";
+import {
+  addToCart,
+  issueDownload,
+  placeOrder,
+  removeFromCart,
+  type CheckoutLine,
+} from "@/app/(app)/app/marketplace/actions";
+import { cn } from "@/lib/utils";
+
+const money = (cents: number, currency = "USD") =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
+
+function Msg({ m }: { m: { ok: boolean; text: string } | null }) {
+  if (!m) return null;
+  return (
+    <p
+      role="status"
+      className={cn(
+        "mt-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
+        m.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
+      )}
+    >
+      {m.text}
+    </p>
+  );
+}
+
+export function AddToCartButton({ productId, priceCents, currency }: { productId: string; priceCents: number; currency: string }) {
+  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  return (
+    <div>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          start(async () => {
+            const res = await addToCart(productId);
+            setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+            if (res.ok) router.refresh();
+          })
+        }
+        className="inline-flex h-12 items-center gap-2 rounded-xl bg-royal-blue px-5 text-[14px] font-bold text-white transition hover:bg-royal-soft disabled:opacity-60"
+      >
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
+        {priceCents === 0 ? "Get for free" : `Add to cart — ${money(priceCents, currency)}`}
+      </button>
+      <Msg m={m} />
+    </div>
+  );
+}
+
+export function CartLines({ lines, currency, subtotalCents }: { lines: CheckoutLine[]; currency: string; subtotalCents: number }) {
+  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  return (
+    <div>
+      <div className="divide-y divide-line">
+        {lines.map((l) => (
+          <div key={l.itemId} className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+            <div className="min-w-0">
+              <div className="text-[14px] font-bold text-deep-navy">{l.title}</div>
+              <div className="text-[12px] text-ink-muted">Licence {l.licenseVersion}</div>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-[14px] font-bold text-deep-navy">{money(l.unitPriceCents, l.currency)}</span>
+              <button
+                type="button"
+                aria-label={`Remove ${l.title}`}
+                disabled={pending}
+                onClick={() =>
+                  start(async () => {
+                    const res = await removeFromCart(l.itemId);
+                    setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+                    if (res.ok) router.refresh();
+                  })
+                }
+                className="rounded-lg p-2 text-ink-muted hover:bg-bg-soft hover:text-red-600"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between border-t border-line px-6 py-4">
+        <span className="text-[13px] font-semibold text-ink-soft">Subtotal</span>
+        <span className="text-[18px] font-extrabold text-deep-navy">{money(subtotalCents, currency)}</span>
+      </div>
+      <div className="px-6 pb-6">
+        <Msg m={m} />
+      </div>
+    </div>
+  );
+}
+
+export function PlaceOrderButton({
+  totalCents,
+  currency,
+  blocked,
+  blockedReason,
+}: {
+  totalCents: number;
+  currency: string;
+  blocked: boolean;
+  blockedReason: string | null;
+}) {
+  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  return (
+    <div>
+      <button
+        type="button"
+        disabled={blocked || pending}
+        onClick={() =>
+          start(async () => {
+            const res = await placeOrder();
+            setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+            if (res.ok) router.push("/app/marketplace/purchases");
+          })
+        }
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-royal-blue text-[14px] font-bold text-white transition hover:bg-royal-soft disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+        {totalCents === 0 ? "Complete free order" : `Pay ${money(totalCents, currency)}`}
+      </button>
+      {blocked && blockedReason && (
+        <p className="mt-3 rounded-xl bg-orange-cta/10 px-4 py-3 text-[12.5px] font-semibold text-orange-cta">
+          {blockedReason}
+        </p>
+      )}
+      <Msg m={m} />
+    </div>
+  );
+}
+
+export function DownloadButton({ entitlementId, label = "Download" }: { entitlementId: string; label?: string }) {
+  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, start] = useTransition();
+
+  return (
+    <div className="text-right">
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          start(async () => {
+            const res = await issueDownload(entitlementId);
+            if (res.ok) {
+              setM({ ok: true, text: "Download link issued." });
+              window.location.href = res.url;
+            } else {
+              setM({ ok: false, text: res.error });
+            }
+          })
+        }
+        className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-[13.5px] font-bold text-deep-navy transition hover:bg-bg-soft disabled:opacity-60"
+      >
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+        {label}
+      </button>
+      <Msg m={m} />
+    </div>
+  );
+}

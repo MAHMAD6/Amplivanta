@@ -5,6 +5,27 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ClipboardList, Database, Plus } from "lucide-react";
 import { SuperDashboard } from "@/components/super/dashboard";
 import { GrantAccessForm } from "@/components/super/grant-access-form";
+import { FeatureFlagsPanel, ModuleControlsPanel } from "@/components/super/platform-controls";
+import {
+  CategoriesPanel,
+  ModerationPanel,
+  OrdersPanel,
+  PayoutsPanel,
+  SellerApplicationsPanel,
+  SellersPanel,
+} from "@/components/super/marketplace-admin";
+import { loadPlatformControls } from "@/app/(super)/super/platform-actions";
+import { loadCategories } from "@/app/(super)/super/marketplace-actions";
+import {
+  loadMarketplaceOverview,
+  loadOrders,
+  loadPayouts,
+  loadProducts,
+  loadSellerApplications,
+  loadSellers,
+} from "@/lib/server/marketplace-admin-data";
+import { SuperStatCard } from "@/components/super/primitives";
+import { Building2, Handshake, Package, ShieldAlert, ShoppingBag, Wallet } from "lucide-react";
 import { JobOpeningForm } from "@/components/super/job-opening-form";
 import { SuperFilterBar, SuperPagination } from "@/components/super/filters";
 import {
@@ -250,6 +271,101 @@ export default async function SuperCatchAllPage({
     return (
       <>
         <GrantAccessForm />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+
+  // ---- Platform controls (module + feature flags) with live toggles.
+  if (page.canonical === "system-management-module-controls") {
+    const { modules, connected } = await loadPlatformControls();
+    return (
+      <>
+        <ModuleControlsPanel modules={modules} connected={connected} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "system-management-feature-flags") {
+    const { flags, connected } = await loadPlatformControls();
+    return (
+      <>
+        <FeatureFlagsPanel flags={flags} connected={connected} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+
+  // ---- Marketplace management.
+  if (page.canonical === "marketplace-management-marketplace-overview") {
+    const o = await loadMarketplaceOverview();
+    return (
+      <>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <SuperStatCard icon={Wallet} label="Total sales" value={o.totalSales} />
+          <SuperStatCard icon={ShoppingBag} label="Total orders" value={o.orders} />
+          <SuperStatCard icon={Handshake} label="Active sellers" value={o.sellers} />
+          <SuperStatCard icon={Package} label="Active products" value={o.products} />
+          <SuperStatCard icon={Building2} label="Pending payouts" value={o.pendingPayouts} tone="warning" />
+          <SuperStatCard icon={ShieldAlert} label="Open disputes" value={o.openDisputes} tone="warning" />
+        </div>
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "marketplace-management-seller-applications") {
+    const { rows, connected } = await loadSellerApplications();
+    return (
+      <>
+        <SellerApplicationsPanel rows={rows} connected={connected} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "marketplace-management-seller-management") {
+    const { rows, connected } = await loadSellers();
+    return (
+      <>
+        <SellersPanel rows={rows} connected={connected} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "marketplace-management-product-review-and-moderation") {
+    const { rows, connected } = await loadProducts(true);
+    return (
+      <>
+        <ModerationPanel rows={rows} connected={connected} emptyLabel="Nothing awaiting moderation" />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "marketplace-management-categories-and-products") {
+    const [{ rows, connected }, cats] = await Promise.all([loadProducts(false), loadCategories()]);
+    return (
+      <>
+        <CategoriesPanel categories={cats.categories} connected={cats.connected} />
+        <div className="mt-8">
+          <ModerationPanel rows={rows} connected={connected} emptyLabel="No products yet" />
+        </div>
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "marketplace-management-orders-refunds-and-disputes") {
+    const { rows, connected } = await loadOrders();
+    return (
+      <>
+        <OrdersPanel rows={rows} connected={connected} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "marketplace-management-commissions-and-payouts") {
+    const { rows, connected } = await loadPayouts();
+    return (
+      <>
+        <PayoutsPanel rows={rows} connected={connected} />
         <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
       </>
     );

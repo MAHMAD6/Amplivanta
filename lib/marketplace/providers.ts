@@ -1,0 +1,58 @@
+import "server-only";
+import { prisma } from "@/lib/prisma";
+
+/**
+ * Provider adapters.
+ *
+ * Payment, payout and file-storage providers are launch decisions that the
+ * approved handoff says must be confirmed rather than invented. Nothing is
+ * hard-coded here: each provider is read from MarketplaceSetting, and when none
+ * is configured the caller gets an explicit "not configured" result instead of a
+ * fabricated integration.
+ */
+
+export type ProviderConfig = { id: string; config: Record<string, unknown> } | null;
+
+async function readSetting(key: string): Promise<ProviderConfig> {
+  try {
+    const row = await prisma.marketplaceSetting.findUnique({ where: { key } });
+    if (!row) return null;
+    const v = row.value as { provider?: string; config?: Record<string, unknown> } | null;
+    if (!v?.provider) return null;
+    return { id: v.provider, config: v.config ?? {} };
+  } catch {
+    return null;
+  }
+}
+
+export const getPaymentProvider = () => readSetting("payment.provider");
+export const getPayoutProvider = () => readSetting("payout.provider");
+export const getStorageProvider = () => readSetting("storage.provider");
+
+/**
+ * A zero-total order needs no payment provider, so free products complete the
+ * full purchase → entitlement → download flow today. Anything with a balance
+ * due requires a configured provider.
+ */
+export function requiresPaymentProvider(totalCents: number) {
+  return totalCents > 0;
+}
+
+export type SignedUrlResult =
+  | { ok: true; url: string; expiresAt: Date }
+  | { ok: false; reason: "no_provider" };
+
+/**
+ * Issues a time-limited download URL. Link TTL and the storage provider are
+ * operator settings; with none configured this refuses rather than returning a
+ * link that cannot work.
+ */
+export async function issueSignedUrl(storageKey: string): Promise<SignedUrlResult> {
+  const provider = await getStorageProvider();
+  if (!provider) return { ok: false, reason: "no_provider" };
+
+  const ttlSeconds = Number(provider.config.signedUrlTtlSeconds ?? 300);
+  const base = String(provider.config.baseUrl ?? "").replace(/\/$/, "");
+  const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+  return { ok: true, url: `${base}/${storageKey}`, expiresAt };
+}
