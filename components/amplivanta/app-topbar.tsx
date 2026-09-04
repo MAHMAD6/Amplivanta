@@ -7,7 +7,7 @@ import { Search, Bell, HelpCircle, Gift, Sparkles } from "lucide-react";
 import { NotificationDrawer } from "./notification-drawer";
 import { cn } from "@/lib/utils";
 
-export function AppTopbar() {
+export function AppTopbar({ user }: { user?: { name?: string | null; email?: string | null } }) {
   const pathname = usePathname();
   const [notifOpen, setNotifOpen] = useState(false);
   const crumbs = buildCrumbs(pathname);
@@ -55,8 +55,8 @@ export function AppTopbar() {
           <button className="ml-2 flex items-center gap-2 rounded-xl border border-line bg-white p-1 pr-3 transition hover:border-ink/30">
             <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-violet to-orange-brand" />
             <div className="hidden text-left leading-tight lg:block">
-              <div className="text-[12px] font-semibold text-ink">Alex Johnson</div>
-              <div className="text-[10px] text-ink-muted">Growth Manager</div>
+              <div className="text-[12px] font-semibold text-ink">{user?.name ?? "Signed-in user"}</div>
+              <div className="text-[10px] text-ink-muted">{user?.email ?? "Not signed in"}</div>
             </div>
           </button>
         </div>

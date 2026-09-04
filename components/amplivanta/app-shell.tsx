@@ -9,7 +9,17 @@ import { RouteAnalytics } from "./route-analytics";
 import { LogoMark } from "@/components/layout/LogoMark";
 import { cn } from "@/lib/utils";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  navVisibility,
+  workspaces,
+  user,
+}: {
+  children: React.ReactNode;
+  navVisibility?: Record<string, boolean>;
+  workspaces?: { id: string; name: string; plan: string }[];
+  user?: { name?: string | null; email?: string | null };
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -29,7 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:block">
-        <AppSidebar />
+        <AppSidebar navVisibility={navVisibility} workspaces={workspaces} />
       </div>
 
       {/* Mobile drawer */}
@@ -37,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="relative h-full w-[280px]">
-            <AppSidebar />
+            <AppSidebar navVisibility={navVisibility} workspaces={workspaces} />
             <button
               onClick={() => setMobileOpen(false)}
               className="absolute right-3 top-3 z-50 rounded-lg bg-white/10 p-1.5 text-white"
@@ -51,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="lg:pl-[248px]">
         <div className="hidden lg:block">
-          <AppTopbar />
+          <AppTopbar user={user} />
         </div>
         <main className={cn("p-4 sm:p-6 lg:p-8")}>{children}</main>
       </div>

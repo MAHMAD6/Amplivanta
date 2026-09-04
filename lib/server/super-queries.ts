@@ -770,6 +770,119 @@ const SPECS: Record<string, TableSpec> = {
     },
   },
 
+
+  /* ------------------------------------------------------ marketplace admin */
+  "marketplace-management-seller-management": {
+    model: "marketplaceSeller",
+    orderBy: { createdAt: "desc" },
+    search: ["storeName", "slug"],
+    filters: { status: eq("status") },
+    include: { user: true, _count: { select: { products: true } } },
+    map: (r) => {
+      const u = r.user as Row | null;
+      const c = r._count as { products: number };
+      return [
+        r.storeName as string,
+        (u?.email as string) ?? null,
+        label(r.status as string),
+        String(c.products),
+        fmtDate(r.createdAt as Date),
+        "Manage",
+      ];
+    },
+  },
+
+  "marketplace-management-seller-applications": {
+    model: "marketplaceSellerApplication",
+    orderBy: { createdAt: "desc" },
+    search: ["storeName", "contactEmail"],
+    filters: { status: eq("status") },
+    map: (r) => [
+      (r.contactEmail as string) ?? null,
+      (r.website as string) ?? null,
+      r.storeName as string,
+      label(r.status as string),
+      fmtDate(r.createdAt as Date),
+      "Review",
+    ],
+  },
+
+  "marketplace-management-product-review-and-moderation": {
+    model: "marketplaceProduct",
+    orderBy: { updatedAt: "desc" },
+    search: ["title"],
+    where: { status: { in: ["SUBMITTED", "UNDER_REVIEW", "CHANGES_REQUESTED"] } },
+    filters: { status: eq("status") },
+    include: { seller: true },
+    map: (r) => {
+      const s = r.seller as Row | null;
+      return [
+        r.title as string,
+        (s?.storeName as string) ?? null,
+        label(r.type as string),
+        label(r.status as string),
+        fmtDate(r.updatedAt as Date),
+        "Moderate",
+      ];
+    },
+  },
+
+  "marketplace-management-categories-and-products": {
+    model: "marketplaceProduct",
+    orderBy: { createdAt: "desc" },
+    search: ["title", "slug"],
+    filters: { status: eq("status") },
+    include: { seller: true, category: true },
+    map: (r) => {
+      const s = r.seller as Row | null;
+      const c = r.category as Row | null;
+      return [
+        r.title as string,
+        (s?.storeName as string) ?? null,
+        (c?.name as string) ?? null,
+        label(r.status as string),
+        fmtDate(r.publishedAt as Date),
+        "Edit",
+      ];
+    },
+  },
+
+  "marketplace-management-orders-refunds-and-disputes": {
+    model: "marketplaceOrder",
+    orderBy: { createdAt: "desc" },
+    filters: { status: eq("status") },
+    include: { buyer: true },
+    map: (r) => {
+      const b = r.buyer as Row | null;
+      return [
+        (r.id as string).slice(0, 10),
+        (b?.email as string) ?? null,
+        fmtMoney((r.totalCents as number) / 100, r.currency as string),
+        label(r.status as string),
+        fmtDate((r.placedAt as Date) ?? (r.createdAt as Date)),
+        "Open",
+      ];
+    },
+  },
+
+  "marketplace-management-commissions-and-payouts": {
+    model: "marketplacePayout",
+    orderBy: { requestedAt: "desc" },
+    filters: { status: eq("status") },
+    include: { seller: true },
+    map: (r) => {
+      const s = r.seller as Row | null;
+      return [
+        (s?.storeName as string) ?? null,
+        fmtMoney((r.amountCents as number) / 100, r.currency as string),
+        label(r.status as string),
+        (r.provider as string) ?? null,
+        fmtDate(r.requestedAt as Date),
+        "Review",
+      ];
+    },
+  },
+
   /* ------------------------------------------------------ domains & email */
   "domains-and-email-publish-and-domains": {
     model: "domain",

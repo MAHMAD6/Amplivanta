@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LegalDocument } from "@/components/amplivanta/legal-document";
 import { LEGAL_DOCS } from "@/lib/legal-docs";
+import { MARKETPLACE_LEGAL_DOCS } from "@/lib/marketplace-legal-docs";
 import { MarketingBreadcrumb } from "@/components/amplivanta/marketing-breadcrumb";
 
 const SIMPLE_DOCS: Record<string, { title: string; body: string[] }> = {
@@ -19,14 +20,14 @@ const SIMPLE_DOCS: Record<string, { title: string; body: string[] }> = {
 
 export function generateStaticParams() {
   // "dpa" has its own dedicated rich route at /legal/dpa — exclude it here.
-  return [...Object.keys(LEGAL_DOCS), ...Object.keys(SIMPLE_DOCS)]
+  return [...Object.keys(LEGAL_DOCS), ...Object.keys(MARKETPLACE_LEGAL_DOCS), ...Object.keys(SIMPLE_DOCS)]
     .filter((slug) => slug !== "dpa")
     .map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const rich = LEGAL_DOCS[slug];
+  const rich = LEGAL_DOCS[slug] ?? MARKETPLACE_LEGAL_DOCS[slug];
   if (rich) return { title: `${rich.title} — Amplivanta` };
   const doc = SIMPLE_DOCS[slug];
   return doc ? { title: `${doc.title} — Amplivanta` } : {};
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const rich = LEGAL_DOCS[slug];
+  const rich = LEGAL_DOCS[slug] ?? MARKETPLACE_LEGAL_DOCS[slug];
   if (rich) return <LegalDocument doc={rich} />;
 
   const doc = SIMPLE_DOCS[slug];

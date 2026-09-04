@@ -48,6 +48,11 @@ model User {
   creditsReceived   CreditAdjustment[] @relation("CreditRecipient")
   creditsGranted    CreditAdjustment[] @relation("CreditGrantedBy")
   ticketsAssigned   SupportTicket[]    @relation("TicketAssignee")
+
+  // Marketplace
+  marketplaceSeller       MarketplaceSeller?       @relation("MarketplaceSellerUser")
+  marketplaceOrders       MarketplaceOrder[]       @relation("MarketplaceOrderBuyer")
+  marketplaceEntitlements MarketplaceEntitlement[] @relation("MarketplaceEntitlementBuyer")
 }
 
 model Workspace {
@@ -1697,4 +1702,410 @@ model JobApplication {
 
   @@index([jobOpeningId])
   @@index([stage])
+}
+
+// ----------------------------------------------------------------------
+// Marketplace (downloadable marketing products)
+//
+// Distinct from Partner Program (business partnerships) and Affiliate Program
+// (referral commissions) - see the approved integration handoff. Enums mirror
+// the approved state machines exactly; order items snapshot the purchased
+// product/license version so historical purchases stay addressable.
+// ----------------------------------------------------------------------
+
+enum SellerStatus {
+  APPLICANT
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+  CLOSED
+}
+
+enum MarketplaceProductStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  PUBLISHED
+  UNPUBLISHED
+  SUSPENDED
+  ARCHIVED
+  REJECTED
+}
+
+enum MarketplaceProductType {
+  TEMPLATE
+  IMAGE
+  VIDEO
+  GRAPHIC
+  DOCUMENT
+  TOOL_KIT
+}
+
+enum MarketplaceOrderStatus {
+  INITIATED
+  PAYMENT_PENDING
+  PAID
+  ACCESS_READY
+  PAYMENT_FAILED
+  REFUND_PENDING
+  PARTIALLY_REFUNDED
+  REFUNDED
+  CHARGEBACK_OPEN
+  CHARGEBACK_RESOLVED
+}
+
+enum EntitlementStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum MarketplacePayoutStatus {
+  ELIGIBLE
+  REQUESTED
+  PENDING
+  PROCESSING
+  PAID
+  HELD
+  FAILED
+  CANCELLED
+}
+
+enum AssetScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  FAILED
+}
+
+model MarketplaceSeller {
+  id               String       @id @default(cuid())
+  userId           String       @unique
+  user             User         @relation("MarketplaceSellerUser", fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId      String?
+  storeName        String
+  slug             String       @unique
+  headline         String?
+  bio              String?      @db.Text
+  status           SellerStatus @default(APPLICANT)
+  // Payout provider account reference only - never raw bank or KYC details.
+  payoutProvider   String?
+  payoutAccountRef String?
+  approvedAt       DateTime?
+  suspendedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  products     MarketplaceProduct[]
+  ledger       MarketplaceLedgerEntry[]
+  payouts      MarketplacePayout[]
+  applications MarketplaceSellerApplication[]
+
+  @@index([status])
+}
+
+model MarketplaceSellerApplication {
+  id               String             @id @default(cuid())
+  userId           String
+  sellerId         String?
+  seller           MarketplaceSeller? @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  storeName        String
+  contactEmail     String
+  website          String?
+  productTypes     String[]
+  motivation       String?            @db.Text
+  status           SellerStatus       @default(APPLICANT)
+  reviewNotes      String?
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
+model MarketplaceCategory {
+  id          String                @id @default(cuid())
+  slug        String                @unique
+  name        String
+  description String?
+  parentId    String?
+  parent      MarketplaceCategory?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    MarketplaceCategory[] @relation("CategoryTree")
+  order       Int                   @default(0)
+  isActive    Boolean               @default(true)
+  products    MarketplaceProduct[]
+  createdAt   DateTime              @default(now())
+}
+
+model MarketplaceProduct {
+  id          String                   @id @default(cuid())
+  sellerId    String
+  seller      MarketplaceSeller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    MarketplaceCategory?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  slug        String                   @unique
+  title       String
+  summary     String?
+  description String?                  @db.Text
+  type        MarketplaceProductType
+  status      MarketplaceProductStatus @default(DRAFT)
+  tags        String[]
+  coverImage  String?
+  publishedAt DateTime?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  versions   MarketplaceProductVersion[]
+  orderItems MarketplaceOrderItem[]
+  reviews    MarketplaceReview[]
+  moderation MarketplaceModerationEvent[]
+
+  @@index([status])
+  @@index([sellerId])
+}
+
+/// New seller content creates a new version; existing orders keep referencing the old one.
+model MarketplaceProductVersion {
+  id             String                   @id @default(cuid())
+  productId      String
+  product        MarketplaceProduct       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  version        Int
+  priceCents     Int                      @default(0)
+  currency       String                   @default("USD")
+  licenseVersion String                   @default("standard-v1")
+  licenseHash    String?
+  changelog      String?
+  status         MarketplaceProductStatus @default(DRAFT)
+  createdAt      DateTime                 @default(now())
+
+  assets       MarketplaceProductAsset[]
+  orderItems   MarketplaceOrderItem[]
+  entitlements MarketplaceEntitlement[]
+
+  @@unique([productId, version])
+}
+
+model MarketplaceProductAsset {
+  id         String                    @id @default(cuid())
+  versionId  String
+  version    MarketplaceProductVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  kind       String                    @default("deliverable")
+  storageKey String
+  fileName   String
+  mimeType   String?
+  sizeBytes  Int?
+  checksum   String?
+  scanStatus AssetScanStatus           @default(PENDING)
+  createdAt  DateTime                  @default(now())
+
+  @@index([versionId])
+}
+
+model MarketplaceModerationEvent {
+  id          String                   @id @default(cuid())
+  productId   String
+  product     MarketplaceProduct       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  fromStatus  MarketplaceProductStatus
+  toStatus    MarketplaceProductStatus
+  reason      String?
+  actorUserId String?
+  createdAt   DateTime                 @default(now())
+
+  @@index([productId])
+}
+
+model MarketplaceCartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  versionId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model MarketplaceOrder {
+  id               String                 @id @default(cuid())
+  buyerUserId      String
+  buyer            User                   @relation("MarketplaceOrderBuyer", fields: [buyerUserId], references: [id], onDelete: Cascade)
+  status           MarketplaceOrderStatus @default(INITIATED)
+  subtotalCents    Int                    @default(0)
+  taxCents         Int                    @default(0)
+  totalCents       Int                    @default(0)
+  currency         String                 @default("USD")
+  // Provider reference only - never raw payment credentials.
+  paymentProvider  String?
+  paymentIntentRef String?
+  placedAt         DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  items    MarketplaceOrderItem[]
+  refunds  MarketplaceRefund[]
+  disputes MarketplaceDispute[]
+
+  @@index([buyerUserId])
+  @@index([status])
+}
+
+/// Immutable snapshot of exactly what was purchased.
+model MarketplaceOrderItem {
+  id               String                    @id @default(cuid())
+  orderId          String
+  order            MarketplaceOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId        String
+  product          MarketplaceProduct        @relation(fields: [productId], references: [id])
+  productVersionId String
+  productVersion   MarketplaceProductVersion @relation(fields: [productVersionId], references: [id])
+  sellerId         String
+  titleSnapshot    String
+  licenseVersion   String
+  licenseHash      String?
+  unitPriceCents   Int
+  quantity         Int                       @default(1)
+  totalCents       Int
+  currency         String                    @default("USD")
+  createdAt        DateTime                  @default(now())
+
+  entitlements MarketplaceEntitlement[]
+  ledger       MarketplaceLedgerEntry[]
+
+  @@index([orderId])
+  @@index([sellerId])
+}
+
+model MarketplaceEntitlement {
+  id               String                    @id @default(cuid())
+  orderItemId      String
+  orderItem        MarketplaceOrderItem      @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  buyerUserId      String
+  buyer            User                      @relation("MarketplaceEntitlementBuyer", fields: [buyerUserId], references: [id], onDelete: Cascade)
+  productVersionId String
+  productVersion   MarketplaceProductVersion @relation(fields: [productVersionId], references: [id])
+  status           EntitlementStatus         @default(PENDING)
+  activatedAt      DateTime?
+  revokedAt        DateTime?
+  revokedReason    String?
+  expiresAt        DateTime?
+  createdAt        DateTime                  @default(now())
+
+  downloads MarketplaceDownload[]
+
+  @@index([buyerUserId])
+  @@index([status])
+}
+
+/// One row per issued signed download URL - the audit trail for file access.
+model MarketplaceDownload {
+  id            String                 @id @default(cuid())
+  entitlementId String
+  entitlement   MarketplaceEntitlement @relation(fields: [entitlementId], references: [id], onDelete: Cascade)
+  assetId       String?
+  ipAddress     String?
+  userAgent     String?
+  issuedAt      DateTime               @default(now())
+  expiresAt     DateTime?
+
+  @@index([entitlementId])
+}
+
+model MarketplaceRefund {
+  id                String           @id @default(cuid())
+  orderId           String
+  order             MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amountCents       Int
+  currency          String           @default("USD")
+  reason            String
+  status            String           @default("pending")
+  requestedByUserId String?
+  decidedByUserId   String?
+  decidedAt         DateTime?
+  createdAt         DateTime         @default(now())
+
+  @@index([orderId])
+}
+
+model MarketplaceDispute {
+  id          String           @id @default(cuid())
+  orderId     String
+  order       MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind        String           @default("chargeback")
+  status      String           @default("open")
+  amountCents Int?
+  providerRef String?
+  openedAt    DateTime         @default(now())
+  resolvedAt  DateTime?
+  resolution  String?
+
+  @@index([status])
+}
+
+/// Seller earnings ledger - payout eligibility is calculated from this, never a stored UI assumption.
+model MarketplaceLedgerEntry {
+  id          String                @id @default(cuid())
+  sellerId    String
+  seller      MarketplaceSeller     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  orderItemId String?
+  orderItem   MarketplaceOrderItem? @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
+  entryType   String
+  grossCents  Int                   @default(0)
+  feeCents    Int                   @default(0)
+  netCents    Int                   @default(0)
+  currency    String                @default("USD")
+  availableAt DateTime?
+  payoutId    String?
+  payout      MarketplacePayout?    @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  createdAt   DateTime              @default(now())
+
+  @@index([sellerId])
+}
+
+model MarketplacePayout {
+  id          String                  @id @default(cuid())
+  sellerId    String
+  seller      MarketplaceSeller       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  amountCents Int
+  currency    String                  @default("USD")
+  status      MarketplacePayoutStatus @default(REQUESTED)
+  provider    String?
+  providerRef String?
+  requestedAt DateTime                @default(now())
+  processedAt DateTime?
+  failureNote String?
+
+  ledger MarketplaceLedgerEntry[]
+
+  @@index([sellerId])
+  @@index([status])
+}
+
+model MarketplaceReview {
+  id          String             @id @default(cuid())
+  productId   String
+  product     MarketplaceProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  buyerUserId String
+  orderItemId String?
+  rating      Int
+  title       String?
+  body        String?            @db.Text
+  isVerified  Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+
+  @@unique([productId, buyerUserId])
+  @@index([productId])
+}
+
+model MarketplaceSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
 }
