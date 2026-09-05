@@ -15,7 +15,28 @@ import {
   SellersPanel,
 } from "@/components/admin/marketplace-admin";
 import { loadPlatformControls } from "@/app/(admin)/admin/platform-actions";
-import { loadCategories } from "@/app/(admin)/admin/marketplace-actions";
+import { loadCategories, loadMarketplaceSettings } from "@/app/(admin)/admin/marketplace-actions";
+import { MarketplaceSettingsPanel } from "@/components/admin/marketplace-settings";
+import { loadGovernanceOptions } from "@/app/(admin)/admin/governance-actions";
+import {
+  AccessAssignmentsPanel,
+  AnnouncementsPanel,
+  DataRequestsPanel,
+  InvitationsPanel,
+  RolesPanel,
+  SessionsPanel,
+  SuspensionsPanel,
+  TicketsPanel,
+} from "@/components/admin/governance-panels";
+import {
+  loadAnnouncements,
+  loadAssignments,
+  loadDataRequests,
+  loadInvitations,
+  loadSessions,
+  loadSuspensions,
+  loadTickets,
+} from "@/lib/server/governance-data";
 import {
   loadMarketplaceOverview,
   loadOrders,
@@ -276,6 +297,40 @@ export default async function SuperCatchAllPage({
     );
   }
 
+  // ---- Governance panels with working write paths.
+  if (page.canonical === "user-management-roles-and-permissions") {
+    const o = await loadGovernanceOptions();
+    return (<><RolesPanel roles={o.roles} connected={o.connected} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "user-management-access-assignments") {
+    const [o, a] = await Promise.all([loadGovernanceOptions(), loadAssignments()]);
+    return (<><AccessAssignmentsPanel roles={o.roles} users={o.users} assignments={a.rows} connected={o.connected && a.connected} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "user-management-invitations") {
+    const [o, i] = await Promise.all([loadGovernanceOptions(), loadInvitations()]);
+    return (<><InvitationsPanel roles={o.roles} invitations={i.rows} connected={i.connected} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "user-management-sessions-devices") {
+    const r = await loadSessions();
+    return (<><SessionsPanel sessions={r.rows} connected={r.connected} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "user-management-suspended-access") {
+    const [o, r] = await Promise.all([loadGovernanceOptions(), loadSuspensions()]);
+    return (<><SuspensionsPanel users={o.users} suspensions={r.rows} connected={r.connected} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "security-and-compliance-data-requests-dsar") {
+    const r = await loadDataRequests();
+    return (<><DataRequestsPanel requests={r.rows} connected={r.connected} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "announcements-announcements") {
+    const r = await loadAnnouncements();
+    return (<><AnnouncementsPanel announcements={r.rows} connected={r.connected} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "support-and-tickets-support-tickets") {
+    const r = await loadTickets();
+    return (<><TicketsPanel tickets={r.rows} connected={r.connected} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+
   // ---- Platform controls (module + feature flags) with live toggles.
   if (page.canonical === "system-management-module-controls") {
     const { modules, connected } = await loadPlatformControls();
@@ -357,6 +412,15 @@ export default async function SuperCatchAllPage({
     return (
       <>
         <OrdersPanel rows={rows} connected={connected} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "marketplace-management-marketplace-settings") {
+    const r = await loadMarketplaceSettings();
+    return (
+      <>
+        <MarketplaceSettingsPanel settings={r.settings} connected={r.connected} />
         <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
       </>
     );

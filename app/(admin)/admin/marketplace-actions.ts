@@ -411,3 +411,54 @@ export async function setAssetScanStatus(
     return { ok: false, error: "Could not record the scan result." };
   }
 }
+
+
+/**
+ * Marketplace operator settings.
+ *
+ * These are the switches an operator legitimately owns (provider ids, scanning
+ * policy). Values are stored as MarketplaceSetting rows so the code never
+ * hard-codes a provider or a commercial term.
+ */
+export async function saveMarketplaceSetting(
+  key: string,
+  value: unknown,
+  reason: string,
+): Promise<AdminActionResult> {
+  const user = await requireMarketplaceAdmin("marketplace.admin.settings.manage");
+  if (!user) return { ok: false, error: "You are not authorized to change marketplace settings." };
+  if (!reason.trim()) return { ok: false, error: "A reason is required." };
+
+  const allowed = new Set([
+    "payment.provider",
+    "payout.provider",
+    "storage.provider",
+    "security.malware_scanning",
+    "commercial.commission",
+  ]);
+  if (!allowed.has(key)) return { ok: false, error: "That setting is not editable here." };
+
+  try {
+    await prisma.marketplaceSetting.upsert({
+      where: { key },
+      create: { key, value: value as Prisma.InputJsonValue },
+      update: { value: value as Prisma.InputJsonValue },
+    });
+    await audit(user.id ?? null, "marketplace.setting.updated", "MarketplaceSetting", key, { key }, reason);
+    revalidatePath("/admin/marketplace-management/marketplace-settings");
+    revalidatePath("/app/marketplace");
+    return { ok: true, message: `${key} saved.` };
+  } catch {
+    return { ok: false, error: "Could not save the setting — the platform database was unreachable." };
+  }
+}
+
+export async function loadMarketplaceSettings() {
+  try {
+    const rows = await prisma.marketplaceSetting.findMany();
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value])) as Record<string, unknown>;
+    return { connected: true, settings: map };
+  } catch {
+    return { connected: false, settings: {} as Record<string, unknown> };
+  }
+}
