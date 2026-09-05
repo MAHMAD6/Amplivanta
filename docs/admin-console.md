@@ -7,14 +7,14 @@ Source package: `Amplivanta_Super_Admin_Developer_Handoff` (index.html, app.js,
 
 | Piece | Location |
 | --- | --- |
-| Route/IA registry (generated from `route-manifest.json`) | `lib/super/registry.ts` |
-| Navy shell — sidebar, sections, badges, collapse, header, footer | `components/super/super-shell.tsx` |
-| Page primitives — cards, table, empty states, stat tiles, info note | `components/super/primitives.tsx` |
-| Search / filter / pagination (URL-driven) | `components/super/filters.tsx` |
-| Super Admin Dashboard (approved visual reference) | `components/super/dashboard.tsx` |
-| Grant Access / Credit flow | `components/super/grant-access-form.tsx`, `app/(super)/super/actions.ts` |
+| Route/IA registry (generated from `route-manifest.json`) | `lib/admin/registry.ts` |
+| Navy shell — sidebar, sections, badges, collapse, header, footer | `components/admin/super-shell.tsx` |
+| Page primitives — cards, table, empty states, stat tiles, info note | `components/admin/primitives.tsx` |
+| Search / filter / pagination (URL-driven) | `components/admin/filters.tsx` |
+| Super Admin Dashboard (approved visual reference) | `components/admin/dashboard.tsx` |
+| Grant Access / Credit flow | `components/admin/grant-access-form.tsx`, `app/(super)/admin/actions.ts` |
 | Data loaders (real Prisma queries) | `lib/server/super-queries.ts` |
-| Single renderer for every destination | `app/(super)/super/[[...slug]]/page.tsx` |
+| Single renderer for every destination | `app/(super)/admin/[[...slug]]/page.tsx` |
 | Platform governance models | `prisma/schema.prisma` (Super Admin section) |
 
 194 destinations total: **106 built under `/super`**, **88 deep-linked** to screens that
@@ -60,7 +60,7 @@ All eight gaps from the first pass were closed:
    wired to their existing models. Pricing benchmarks are populated by CSV import.
 4. **Detail routes** — `findSuperPage` treats an unmatched trailing segment as a record id,
    so `<detail route>/<id>` loads that record via `loadSuperRecord`. List rows link into it.
-5. **Export / Import / filters / bulk** — CSV export at `/api/super/export` (honours the
+5. **Export / Import / filters / bulk** — CSV export at `/api/admin/export` (honours the
    active search and filters, escapes formula injection, and is itself audit-logged); CSV
    import for reference data only (suppression list, pricing benchmarks); real per-screen
    filter dropdowns wired to the query layer; row selection with "Export selected".
@@ -70,7 +70,7 @@ All eight gaps from the first pass were closed:
    sidebar label and badge contrast (page now reports 0 contrast failures), focus ring on
    the navy surface, labelled controls, `scope` on table headers.
 8. **Directory picker** — Grant Access / Credit uses a type-ahead backed by
-   `/api/super/directory`, so a grant binds to a real user or organization id.
+   `/api/admin/directory`, so a grant binds to a real user or organization id.
 
 ## Remaining follow-ups
 
@@ -88,6 +88,42 @@ All eight gaps from the first pass were closed:
 
 ## Regenerating the registry
 
-`lib/super/registry.ts` is generated. Re-run the generator against an updated
+`lib/admin/registry.ts` is generated. Re-run the generator against an updated
 `route-manifest.json` rather than hand-editing it, then re-apply the deep-link map and the
 per-screen column definitions it carries.
+
+## Consolidation and gap closure (2026-09-06)
+
+The `/super` console and the legacy `/admin` CMS are now **one surface at `/admin`**.
+`/super` and `/super/:path*` redirect there. `/admin/marketplace/*` and
+`/admin/system/*` are real routes now, which is what the marketplace handoff
+specified natively. `/admin` requires SUPER_ADMIN, ADMIN or OWNER.
+
+Gaps closed in this pass:
+
+| Gap | Resolution |
+| --- | --- |
+| Orders marked PAID without a charge | Placing an order no longer grants access. `fulfilOrder` is the only path to PAID/ACCESS_READY and refuses a non-zero order without a confirmed payment. Signed webhook at `/api/webhooks/marketplace`. |
+| Migration history 55 tables behind | Reconcile migration generated against a shadow database and baselined; `prisma migrate status` reports up to date. |
+| Scoped RBAC modelled but unenforced | `lib/server/rbac.ts` unions role grants with non-expired `AdminAssignment`s at Global/Org/Workspace/Module scope. `canGrant` blocks escalation. |
+| Console effectively read-only | Roles, access grants/revokes, invitations, session revoke, suspend/lift, DSAR, announcements, tickets, marketplace settings all have working, audited write paths. |
+| Fabricated metrics in the product UI | 134 hardcoded KPI values across 44 pages and 7 fake trend charts replaced with honest empty states. |
+| Stale cart pricing | Checkout re-resolves each line to the newest published version. |
+| Downloads permanently blocked | Scanning is required unless an operator explicitly records a decision to run without a scanner; admins can record scan results. |
+| No chargeback ingestion | `chargeback.opened` opens a dispute and revokes entitlements. |
+| Partial module evaluation | Global kill switch, then plan/entitlement, then org/workspace override. |
+| Thin catalogue | Category and type filters, pagination, and real product listings on category and store pages. |
+| No tests | 38 tests, covering the RBAC scoping/escalation rules and the fulfilment guards. |
+| Accessibility | User app shell audited and fixed; audited pages report zero contrast, duplicate-id, heading-order and unnamed-control issues. |
+| Naming | Partner Marketplace displays as "Partner Program", matching the handoff vocabulary. |
+
+### Still open
+
+- Paid checkout, payouts and downloads stay blocked until an operator sets the
+  provider ids in Marketplace Settings. The mechanisms are built and tested.
+- The HTTP purchase flow is not click-tested end to end; the data layer and the
+  policy rules are.
+- Reviews, favorites, coupons, bundles and sponsored listings remain Phase 4 /
+  flag-gated with no UI.
+- The legacy CMS pages render inside the new console shell but keep their own
+  older styling.
