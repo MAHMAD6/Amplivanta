@@ -67,7 +67,7 @@ export default async function PricingBenchmarkPage() {
         action={
           <div className="flex flex-wrap gap-2.5">
             <MpButton
-              href="/super/plans-pricing/pricing-benchmark-and-positioning"
+              href="/admin/plans-pricing/pricing-benchmark-and-positioning"
               variant="primary"
             >
               Add Benchmark

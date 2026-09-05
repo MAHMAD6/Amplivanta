@@ -75,8 +75,8 @@ export async function syncPlatformRegistry(): Promise<ActionOk> {
       modulesAdded,
       flagsAdded,
     });
-    revalidatePath("/super/system-management/module-controls");
-    revalidatePath("/super/system-management/feature-flags");
+    revalidatePath("/admin/system-management/module-controls");
+    revalidatePath("/admin/system-management/feature-flags");
     return {
       ok: true,
       message:
@@ -118,7 +118,7 @@ export async function setModuleStatus(key: string, enabled: boolean, reason: str
       reason,
     );
 
-    revalidatePath("/super/system-management/module-controls");
+    revalidatePath("/admin/system-management/module-controls");
     revalidatePath("/app/marketplace");
     return {
       ok: true,
@@ -140,7 +140,7 @@ export async function setFeatureFlag(key: string, enabled: boolean): Promise<Act
     await prisma.featureFlag.update({ where: { key }, data: { enabled } });
     await audit(user.id ?? null, enabled ? "feature_flag.enabled" : "feature_flag.disabled", "FeatureFlag", flag.id, { key });
 
-    revalidatePath("/super/system-management/feature-flags");
+    revalidatePath("/admin/system-management/feature-flags");
     revalidatePath("/app/marketplace");
     return { ok: true, message: `${flag.name} ${enabled ? "enabled" : "disabled"}.` };
   } catch {

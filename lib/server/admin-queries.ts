@@ -15,12 +15,12 @@ import { prisma } from "@/lib/prisma";
  * (handoff rule 5).
  */
 
-export type SuperRow = { id: string; cells: (string | null)[] };
-export type SuperResult = { rows: SuperRow[]; total: number; connected: boolean };
+export type AdminRow = { id: string; cells: (string | null)[] };
+export type AdminResult = { rows: AdminRow[]; total: number; connected: boolean };
 
-export const EMPTY: SuperResult = { rows: [], total: 0, connected: false };
+export const EMPTY: AdminResult = { rows: [], total: 0, connected: false };
 
-export type SuperQueryArgs = {
+export type AdminQueryArgs = {
   q?: string;
   page?: number;
   pageSize?: number;
@@ -990,7 +990,7 @@ export function hasLoader(key: string) {
   return key in SPECS;
 }
 
-export async function loadSuperPage(key: string, args: SuperQueryArgs = {}): Promise<SuperResult> {
+export async function loadAdminPage(key: string, args: AdminQueryArgs = {}): Promise<AdminResult> {
   const spec = SPECS[key];
   if (!spec) return EMPTY;
 
@@ -1018,7 +1018,7 @@ export async function loadSuperPage(key: string, args: SuperQueryArgs = {}): Pro
 }
 
 /** All matching rows, unpaginated — used by CSV export. Capped for safety. */
-export async function loadSuperPageForExport(key: string, args: SuperQueryArgs = {}): Promise<SuperResult> {
+export async function loadAdminPageForExport(key: string, args: AdminQueryArgs = {}): Promise<AdminResult> {
   const spec = SPECS[key];
   if (!spec) return EMPTY;
   const where = buildWhere(spec, args.q ?? "", args.filters ?? {});
@@ -1036,10 +1036,10 @@ export async function loadSuperPageForExport(key: string, args: SuperQueryArgs =
   }
 }
 
-export type SuperRecord = { id: string; fields: { label: string; value: string | null }[] };
+export type AdminRecord = { id: string; fields: { label: string; value: string | null }[] };
 
 /** Single record for a detail screen, rendered as label/value pairs. */
-export async function loadSuperRecord(key: string, id: string, columns: string[]): Promise<SuperRecord | null> {
+export async function loadAdminRecord(key: string, id: string, columns: string[]): Promise<AdminRecord | null> {
   const spec = SPECS[key];
   if (!spec) return null;
   try {

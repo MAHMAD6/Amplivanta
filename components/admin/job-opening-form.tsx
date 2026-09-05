@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
-import { createJobOpening } from "@/app/(super)/super/actions";
+import { createJobOpening } from "@/app/(admin)/admin/actions";
 import { cn } from "@/lib/utils";
 import { SuperCard } from "./primitives";
 

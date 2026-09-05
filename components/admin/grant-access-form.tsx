@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Building2, CalendarDays, Check, ShieldCheck, User as UserIcon } from "lucide-react";
-import { grantAccessCredit } from "@/app/(super)/super/actions";
+import { grantAccessCredit } from "@/app/(admin)/admin/actions";
 import { cn } from "@/lib/utils";
 import { SuperCard } from "./primitives";
 
@@ -49,7 +49,7 @@ function DirectoryPicker({ type }: { type: "user" | "organization" }) {
   async function search(q: string) {
     setState("loading");
     try {
-      const res = await fetch(`/api/super/directory?type=${type}&q=${encodeURIComponent(q)}`);
+      const res = await fetch(`/api/admin/directory?type=${type}&q=${encodeURIComponent(q)}`);
       const data = (await res.json()) as { results?: DirectoryEntry[] };
       setResults(data.results ?? []);
       setState(res.ok ? "idle" : "error");

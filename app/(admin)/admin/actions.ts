@@ -78,8 +78,8 @@ export async function grantAccessCredit(formData: FormData): Promise<GrantResult
       return created;
     });
 
-    revalidatePath("/super/quick-actions/grant-access-credit");
-    revalidatePath("/super/subscriptions-billing/ai-credit-management");
+    revalidatePath("/admin/quick-actions/grant-access-credit");
+    revalidatePath("/admin/subscriptions-billing/ai-credit-management");
     return { ok: true, id: grant.id };
   } catch {
     return { ok: false, error: "Could not record the grant. The platform database was unreachable." };
@@ -142,8 +142,8 @@ export async function runSystemHealthCheck(): Promise<ActionResult> {
     return { ok: false, error: "Diagnostics ran but results could not be saved — the database is unreachable." };
   }
 
-  revalidatePath("/super/system-management/system-health");
-  revalidatePath("/super/quick-actions/system-health-check");
+  revalidatePath("/admin/system-management/system-health");
+  revalidatePath("/admin/quick-actions/system-health-check");
   const degraded = checks.filter((c) => c.status !== "operational").length;
   return {
     ok: true,
@@ -191,7 +191,7 @@ export async function createJobOpening(formData: FormData): Promise<ActionResult
         metadata: { title, status },
       },
     });
-    revalidatePath("/super/content-management/careers-job-openings");
+    revalidatePath("/admin/content-management/careers-job-openings");
     return { ok: true, message: `"${title}" created.` };
   } catch (e) {
     const dup = e instanceof Error && e.message.includes("Unique constraint");
@@ -311,7 +311,7 @@ export async function importCsv(key: string, formData: FormData): Promise<Action
         metadata: { imported: created.count, skipped, file: file.name },
       },
     });
-    revalidatePath("/super");
+    revalidatePath("/admin");
     return {
       ok: true,
       message: `Imported ${created.count} ${spec.label}${skipped ? `, skipped ${skipped} invalid row(s)` : ""}.`,

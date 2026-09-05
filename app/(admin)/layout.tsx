@@ -1,20 +1,30 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { AdminLayoutClient } from "@/components/layout/AdminLayoutClient";
 import { Toaster } from "sonner";
+import { auth } from "@/lib/auth";
+import { AdminShell } from "@/components/admin/admin-shell";
+
+/** Roles allowed into the administration console. */
+const ADMIN_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "OWNER"]);
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user) redirect("/login");
+  const user = session?.user as { name?: string | null; email?: string | null; role?: string } | undefined;
 
-  const user = session.user as { name?: string | null; role?: string };
+  if (!session?.user && process.env.NODE_ENV !== "development") redirect("/login?next=/admin");
+  if (session?.user && !ADMIN_ROLES.has(user?.role ?? "") && process.env.NODE_ENV !== "development") {
+    redirect("/app");
+  }
 
   return (
     <>
-      <AdminLayoutClient userName={user.name ?? "Admin"} userRole={user.role ?? "ADMIN"}>
+      <AdminShell
+        adminName={user?.name || "Administrator"}
+        adminEmail={user?.email || "Signed in"}
+        role={user?.role ?? "ADMIN"}
+      >
         {children}
-      </AdminLayoutClient>
-      <Toaster position="top-right" theme="dark" closeButton gap={12} expand={false} />
+      </AdminShell>
+      <Toaster position="top-right" closeButton gap={12} />
     </>
   );
 }

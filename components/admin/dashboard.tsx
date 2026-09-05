@@ -23,34 +23,34 @@ import {
   Zap,
 } from "lucide-react";
 import { SuperCard, SuperDataRow, SuperEmptyState, SuperInfoNote, SuperStatCard } from "./primitives";
-import { loadDashboardSummary } from "@/lib/server/super-queries";
+import { loadDashboardSummary } from "@/lib/server/admin-queries";
 
 const MODULES = [
   { name: "Growth Intelligence", desc: "Growth audit, opportunities, recommendations & insights", icon: Lightbulb, href: "/app/ai-advisor", badge: "New" as const },
   { name: "CRM", desc: "Manage contacts, companies, deals and pipelines", icon: Contact, href: "/app/crm", badge: "New" as const },
-  { name: "Affiliate Management", desc: "Manage affiliates, referrals, commissions and payouts", icon: Handshake, href: "/super/affiliate-management/affiliate-command-center", badge: "New" as const, featured: true, chips: [
-    { label: "Applications", href: "/super/affiliate-management/applications" },
-    { label: "Commissions", href: "/super/affiliate-management/commissions" },
-    { label: "Payouts", href: "/super/affiliate-management/payouts" },
+  { name: "Affiliate Management", desc: "Manage affiliates, referrals, commissions and payouts", icon: Handshake, href: "/admin/affiliate-management/affiliate-command-center", badge: "New" as const, featured: true, chips: [
+    { label: "Applications", href: "/admin/affiliate-management/applications" },
+    { label: "Commissions", href: "/admin/affiliate-management/commissions" },
+    { label: "Payouts", href: "/admin/affiliate-management/payouts" },
   ] },
-  { name: "Partner Marketplace", desc: "Partner recruitment, matching and marketplace management", icon: Store, href: "/super/partner-marketplace/partner-growth-dashboard", badge: "Soon" as const },
-  { name: "Content Management", desc: "Manage content, categories and media library", icon: FolderOpen, href: "/super/content-management/content-and-resources-admin" },
+  { name: "Partner Marketplace", desc: "Partner recruitment, matching and marketplace management", icon: Store, href: "/admin/partner-marketplace/partner-growth-dashboard", badge: "Soon" as const },
+  { name: "Content Management", desc: "Manage content, categories and media library", icon: FolderOpen, href: "/admin/content-management/content-and-resources-admin" },
   { name: "Creative Studio", desc: "Design, templates and brand assets", icon: Palette, href: "/app/creative-studio" },
   { name: "Marketing Automation", desc: "Campaigns, workflows and automation management", icon: Mail, href: "/app/marketing" },
   { name: "AI Management", desc: "AI models, usage and configuration", icon: Sparkles, href: "/app/workspace" },
   { name: "Social Publishing", desc: "Manage social accounts and publishing", icon: Share2, href: "/app/social" },
   { name: "Integrations", desc: "Third-party integrations and API management", icon: Plug, href: "/app/integrations" },
-  { name: "Reports & Analytics", desc: "Analytics, reports and business intelligence", icon: BarChart3, href: "/super/reports-analytics/analytics-dashboard" },
-  { name: "System Management", desc: "System settings, maintenance and configuration", icon: Server, href: "/super/system-management/module-controls" },
+  { name: "Reports & Analytics", desc: "Analytics, reports and business intelligence", icon: BarChart3, href: "/admin/reports-analytics/analytics-dashboard" },
+  { name: "System Management", desc: "System settings, maintenance and configuration", icon: Server, href: "/admin/system-management/module-controls" },
 ];
 
 const QUICK_ACTIONS = [
-  { name: "Module Controls", desc: "Enable, disable & manage modules", icon: Server, href: "/super/quick-actions/module-controls" },
-  { name: "Grant Access / Credit", desc: "Extend access, usage or billing credits", icon: Zap, href: "/super/quick-actions/grant-access-credit", featured: true },
-  { name: "Create Organization", desc: "Add a new organization", icon: Building2, href: "/super/quick-actions/create-organization" },
-  { name: "Invite User", desc: "Add a new admin or user", icon: Users, href: "/super/quick-actions/invite-user" },
-  { name: "System Health Check", desc: "Run system diagnostics", icon: ShieldCheck, href: "/super/quick-actions/system-health-check" },
-  { name: "View Audit Logs", desc: "Review system activity", icon: ClipboardList, href: "/super/quick-actions/view-audit-logs" },
+  { name: "Module Controls", desc: "Enable, disable & manage modules", icon: Server, href: "/admin/quick-actions/module-controls" },
+  { name: "Grant Access / Credit", desc: "Extend access, usage or billing credits", icon: Zap, href: "/admin/quick-actions/grant-access-credit", featured: true },
+  { name: "Create Organization", desc: "Add a new organization", icon: Building2, href: "/admin/quick-actions/create-organization" },
+  { name: "Invite User", desc: "Add a new admin or user", icon: Users, href: "/admin/quick-actions/invite-user" },
+  { name: "System Health Check", desc: "Run system diagnostics", icon: ShieldCheck, href: "/admin/quick-actions/system-health-check" },
+  { name: "View Audit Logs", desc: "Review system activity", icon: ClipboardList, href: "/admin/quick-actions/view-audit-logs" },
 ];
 
 function ModuleBadge({ kind }: { kind: "New" | "Soon" }) {
@@ -75,11 +75,11 @@ export async function SuperDashboard() {
     <>
       {/* Status strip */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <SuperStatCard icon={ShieldCheck} label="System Status" value={null} tone="positive" href="/super/system-management/system-health" />
-        <SuperStatCard icon={Building2} label="Organizations" value={count(summary.organizations)} href="/super/organizations/organizations" />
-        <SuperStatCard icon={Users} label="Users" value={count(summary.users)} href="/super/user-management/all-users" />
-        <SuperStatCard icon={Headphones} label="Support Tickets" value={count(summary.tickets)} tone="warning" href="/super/support-tickets/support-tickets" />
-        <SuperStatCard icon={Activity} label="System Alerts" value={count(summary.incidents)} href="/super/command-center/command-center" />
+        <SuperStatCard icon={ShieldCheck} label="System Status" value={null} tone="positive" href="/admin/system-management/system-health" />
+        <SuperStatCard icon={Building2} label="Organizations" value={count(summary.organizations)} href="/admin/organizations/organizations" />
+        <SuperStatCard icon={Users} label="Users" value={count(summary.users)} href="/admin/user-management/all-users" />
+        <SuperStatCard icon={Headphones} label="Support Tickets" value={count(summary.tickets)} tone="warning" href="/admin/support-tickets/support-tickets" />
+        <SuperStatCard icon={Activity} label="System Alerts" value={count(summary.incidents)} href="/admin/command-center/command-center" />
       </div>
 
       {/* Platform modules */}
@@ -145,7 +145,7 @@ export async function SuperDashboard() {
             description="System and administrative actions will appear here."
             action={
               <Link
-                href="/super/audit-logs/global-audit-logs"
+                href="/admin/audit-logs/global-audit-logs"
                 className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-[13.5px] font-bold text-royal-blue hover:bg-bg-soft"
               >
                 View all activity <ChevronRight className="h-4 w-4" />
@@ -160,7 +160,7 @@ export async function SuperDashboard() {
               <h2 className="text-[16px] font-bold text-admin-navy">System Overview</h2>
               <p className="mt-0.5 text-[13px] text-ink-soft">High-level overview of platform health and performance</p>
             </div>
-            <Link href="/super/reports-analytics/analytics-dashboard" className="shrink-0 text-[12.5px] font-bold text-royal-blue hover:underline">
+            <Link href="/admin/reports-analytics/analytics-dashboard" className="shrink-0 text-[12.5px] font-bold text-royal-blue hover:underline">
               View full report →
             </Link>
           </div>
@@ -203,7 +203,7 @@ export async function SuperDashboard() {
               </Link>
             ))}
             <Link
-              href="/super/quick-actions/module-controls"
+              href="/admin/quick-actions/module-controls"
               className="flex items-center justify-between rounded-xl border border-line px-3.5 py-2.5 text-[13px] font-bold text-royal-blue hover:bg-bg-soft"
             >
               See all actions <ChevronRight className="h-4 w-4" />

@@ -126,8 +126,8 @@ export async function decideSellerApplication(
       await audit(user.id ?? null, "marketplace.seller_application.approved", "MarketplaceSellerApplication", applicationId, {}, reason);
     }
 
-    revalidatePath("/super/marketplace-management/seller-applications");
-    revalidatePath("/super/marketplace-management/seller-management");
+    revalidatePath("/admin/marketplace-management/seller-applications");
+    revalidatePath("/admin/marketplace-management/seller-management");
     return { ok: true, message: `Application ${decision === "APPROVED" ? "approved" : "rejected"}.` };
   } catch {
     return { ok: false, error: "Could not record the decision — the platform database was unreachable." };
@@ -153,7 +153,7 @@ export async function setSellerStatus(
       },
     });
     await audit(user.id ?? null, `marketplace.seller.${status.toLowerCase()}`, "MarketplaceSeller", sellerId, {}, reason);
-    revalidatePath("/super/marketplace-management/seller-management");
+    revalidatePath("/admin/marketplace-management/seller-management");
     return { ok: true, message: `${seller.storeName} is now ${status.toLowerCase()}.` };
   } catch {
     return { ok: false, error: "Could not update the seller — the platform database was unreachable." };
@@ -215,8 +215,8 @@ export async function moderateProduct(
       to: toStatus,
     }, reason);
 
-    revalidatePath("/super/marketplace-management/product-review-and-moderation");
-    revalidatePath("/super/marketplace-management/categories-and-products");
+    revalidatePath("/admin/marketplace-management/product-review-and-moderation");
+    revalidatePath("/admin/marketplace-management/categories-and-products");
     return { ok: true, message: `"${product.title}" moved to ${toStatus.toLowerCase()}.` };
   } catch {
     return { ok: false, error: "Could not moderate the product — the platform database was unreachable." };
@@ -271,7 +271,7 @@ export async function refundOrder(orderId: string, reason: string, full = true):
     });
 
     await audit(user.id ?? null, "marketplace.order.refunded", "MarketplaceOrder", orderId, { full }, reason);
-    revalidatePath("/super/marketplace-management/orders-refunds-and-disputes");
+    revalidatePath("/admin/marketplace-management/orders-refunds-and-disputes");
     return {
       ok: true,
       message: "Refund recorded and access revoked. The money movement completes once a payment provider is connected.",
@@ -336,7 +336,7 @@ export async function decidePayout(
       to: toStatus,
     }, reason);
 
-    revalidatePath("/super/marketplace-management/commissions-and-payouts");
+    revalidatePath("/admin/marketplace-management/commissions-and-payouts");
     return { ok: true, message: `Payout moved to ${toStatus.toLowerCase()}.` };
   } catch {
     return { ok: false, error: "Could not update the payout — the platform database was unreachable." };
@@ -366,7 +366,7 @@ export async function upsertCategory(formData: FormData): Promise<AdminActionRes
       ? await prisma.marketplaceCategory.update({ where: { id }, data })
       : await prisma.marketplaceCategory.create({ data });
     await audit(user.id ?? null, id ? "marketplace.category.updated" : "marketplace.category.created", "MarketplaceCategory", cat.id, { name });
-    revalidatePath("/super/marketplace-management/categories-and-products");
+    revalidatePath("/admin/marketplace-management/categories-and-products");
     return { ok: true, message: `Category "${name}" saved.` };
   } catch (e) {
     const dup = e instanceof Error && e.message.includes("Unique constraint");

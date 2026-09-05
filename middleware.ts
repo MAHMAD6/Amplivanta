@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Lightweight edge gate for the authenticated surfaces: /admin, /app, /super.
+ * Lightweight edge gate for the authenticated surfaces: /admin and /app.
  * It only checks for the presence of an Auth.js session cookie (edge-safe);
  * the authoritative session + role checks run in each group's server layout.
  */
-const PROTECTED = ["/admin", "/app", "/super"];
+const PROTECTED = ["/admin", "/app"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -41,5 +41,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/app/:path*", "/super/:path*"],
+  matcher: ["/admin/:path*", "/app/:path*"],
 };

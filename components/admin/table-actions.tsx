@@ -3,8 +3,8 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { Activity, Download, Loader2, Upload, X } from "lucide-react";
-import { importCsv, runSystemHealthCheck } from "@/app/(super)/super/actions";
-import type { SuperRow } from "@/lib/server/super-queries";
+import { importCsv, runSystemHealthCheck } from "@/app/(admin)/admin/actions";
+import type { AdminRow } from "@/lib/server/admin-queries";
 import { cn } from "@/lib/utils";
 
 /** Downloads the current result set, honouring the active search and filters. */
@@ -15,7 +15,7 @@ export function SuperExportButton({ pageKey, disabled }: { pageKey: string; disa
     next.delete("page");
     next.delete("pageSize");
     next.set("key", pageKey);
-    return `/api/super/export?${next.toString()}`;
+    return `/api/admin/export?${next.toString()}`;
   }, [params, pageKey]);
 
   if (disabled) {
@@ -166,7 +166,7 @@ export function SuperSelectableTable({
   detailHref,
 }: {
   columns: string[];
-  rows: SuperRow[];
+  rows: AdminRow[];
   pageKey: string;
   detailHref?: string;
 }) {

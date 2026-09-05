@@ -29,7 +29,7 @@ export default function SuperError({
           <RotateCw className="h-4 w-4" /> Retry
         </button>
         <a
-          href="/super"
+          href="/admin"
           className="inline-flex h-11 items-center rounded-xl border border-line bg-white px-4 text-[13.5px] font-bold text-admin-navy hover:bg-bg-soft"
         >
           Back to dashboard

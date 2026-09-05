@@ -10,7 +10,7 @@ import {
   refundOrder,
   setSellerStatus,
   upsertCategory,
-} from "@/app/(super)/super/marketplace-actions";
+} from "@/app/(admin)/admin/marketplace-actions";
 import { cn } from "@/lib/utils";
 import { SuperCard, SuperEmptyState } from "./primitives";
 

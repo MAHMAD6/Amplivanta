@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { SUPER_PAGE_BY_KEY } from "@/lib/super/registry";
-import { loadSuperPageForExport } from "@/lib/server/super-queries";
+import { ADMIN_PAGE_BY_KEY } from "@/lib/admin/registry";
+import { loadAdminPageForExport } from "@/lib/server/admin-queries";
 
 /** RFC 4180 escaping, with a guard against spreadsheet formula injection. */
 function csvCell(value: string | null) {
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   const sp = req.nextUrl.searchParams;
   const key = sp.get("key") ?? "";
-  const page = SUPER_PAGE_BY_KEY.get(key);
+  const page = ADMIN_PAGE_BY_KEY.get(key);
   if (!page) return NextResponse.json({ error: "Unknown page" }, { status: 404 });
 
   const filters: Record<string, string | undefined> = {};
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     if (v) filters[f.key] = v;
   }
 
-  const result = await loadSuperPageForExport(page.canonical, { q: sp.get("q") ?? "", filters });
+  const result = await loadAdminPageForExport(page.canonical, { q: sp.get("q") ?? "", filters });
   if (!result.connected) {
     return NextResponse.json({ error: "Data source unavailable" }, { status: 503 });
   }

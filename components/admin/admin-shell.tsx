@@ -25,6 +25,7 @@ import {
   Lightbulb,
   Mail,
   Megaphone,
+  Newspaper,
   Palette,
   Plug,
   ScrollText,
@@ -41,13 +42,13 @@ import {
   Zap,
 } from "lucide-react";
 import { LogoMark } from "@/components/layout/LogoMark";
-import { SUPER_NAV, SUPER_PAGE_BY_HREF, type SuperNavGroup } from "@/lib/super/registry";
+import { ADMIN_NAV, ADMIN_PAGE_BY_HREF, type AdminNavGroup } from "@/lib/admin/registry";
 import { cn } from "@/lib/utils";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard, Siren, Building2, Users, Tags, CreditCard, Globe, LifeBuoy, Lightbulb,
   Contact, FolderOpen, Palette, Share2, Mail, Sparkles, Plug, Handshake, Store, BarChart3,
-  Globe2, Server, ShieldCheck, Headphones, ScrollText, Megaphone, Settings, Zap, Circle,
+  Globe2, Server, ShieldCheck, Headphones, ScrollText, Megaphone, Settings, Zap, Circle, Newspaper,
 };
 
 /** Groups flagged in the approved dashboard design. */
@@ -80,7 +81,7 @@ function NavGroup({
   pathname,
   collapsed,
 }: {
-  group: SuperNavGroup;
+  group: AdminNavGroup;
   pathname: string;
   collapsed: boolean;
 }) {
@@ -173,22 +174,25 @@ function NavGroup({
   );
 }
 
-export function SuperShell({
+export function AdminShell({
   children,
   adminName,
   adminEmail,
+  role,
 }: {
   children: React.ReactNode;
   adminName: string;
   adminEmail: string;
+  /** Shown next to the account so the operator knows their effective role. */
+  role?: string;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const sections = useMemo(() => SUPER_NAV, []);
+  const sections = useMemo(() => ADMIN_NAV, []);
 
   // The header title mirrors the approved route registry so every destination
   // is labelled consistently without each page repeating itself.
-  const current = SUPER_PAGE_BY_HREF.get(pathname);
+  const current = ADMIN_PAGE_BY_HREF.get(pathname);
   const title = current?.page ?? "Super Admin";
   const subtitle = current ? current.objective.split(/(?<=\.)\s/)[0] : "Overview and control for your platform";
 
@@ -294,7 +298,9 @@ export function SuperShell({
                 </span>
                 <div className="hidden leading-tight xl:block">
                   <div className="text-[13px] font-bold text-admin-navy">{adminName}</div>
-                  <div className="text-[11px] text-ink-muted">{adminEmail}</div>
+                  <div className="text-[11px] text-ink-muted">
+                    {role ? role.replace(/_/g, " ").toLowerCase() : adminEmail}
+                  </div>
                 </div>
                 <ChevronDown className="hidden h-4 w-4 text-ink-muted xl:block" />
               </div>
@@ -310,7 +316,7 @@ export function SuperShell({
             <div className="flex flex-wrap items-center gap-5">
               <Link href="/legal/privacy" className="hover:text-royal-blue">Privacy Policy</Link>
               <Link href="/legal/terms" className="hover:text-royal-blue">Terms of Service</Link>
-              <Link href="/super/system-management/system-health" className="hover:text-royal-blue">System Status</Link>
+              <Link href="/admin/system-management/system-health" className="hover:text-royal-blue">System Status</Link>
             </div>
           </div>
         </footer>

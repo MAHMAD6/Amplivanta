@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw } from "lucide-react";
-import { setFeatureFlag, setModuleStatus, syncPlatformRegistry } from "@/app/(super)/super/platform-actions";
+import { setFeatureFlag, setModuleStatus, syncPlatformRegistry } from "@/app/(admin)/admin/platform-actions";
 import { cn } from "@/lib/utils";
 import { SuperCard, SuperEmptyState } from "./primitives";
 import { Database } from "lucide-react";

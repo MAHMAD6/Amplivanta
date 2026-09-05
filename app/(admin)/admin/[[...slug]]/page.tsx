@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ClipboardList, Database, Plus } from "lucide-react";
-import { SuperDashboard } from "@/components/super/dashboard";
-import { GrantAccessForm } from "@/components/super/grant-access-form";
-import { FeatureFlagsPanel, ModuleControlsPanel } from "@/components/super/platform-controls";
+import { SuperDashboard } from "@/components/admin/dashboard";
+import { GrantAccessForm } from "@/components/admin/grant-access-form";
+import { FeatureFlagsPanel, ModuleControlsPanel } from "@/components/admin/platform-controls";
 import {
   CategoriesPanel,
   ModerationPanel,
@@ -13,9 +13,9 @@ import {
   PayoutsPanel,
   SellerApplicationsPanel,
   SellersPanel,
-} from "@/components/super/marketplace-admin";
-import { loadPlatformControls } from "@/app/(super)/super/platform-actions";
-import { loadCategories } from "@/app/(super)/super/marketplace-actions";
+} from "@/components/admin/marketplace-admin";
+import { loadPlatformControls } from "@/app/(admin)/admin/platform-actions";
+import { loadCategories } from "@/app/(admin)/admin/marketplace-actions";
 import {
   loadMarketplaceOverview,
   loadOrders,
@@ -24,16 +24,16 @@ import {
   loadSellerApplications,
   loadSellers,
 } from "@/lib/server/marketplace-admin-data";
-import { SuperStatCard } from "@/components/super/primitives";
+import { SuperStatCard } from "@/components/admin/primitives";
 import { Building2, Handshake, Package, ShieldAlert, ShoppingBag, Wallet } from "lucide-react";
-import { JobOpeningForm } from "@/components/super/job-opening-form";
-import { SuperFilterBar, SuperPagination } from "@/components/super/filters";
+import { JobOpeningForm } from "@/components/admin/job-opening-form";
+import { SuperFilterBar, SuperPagination } from "@/components/admin/filters";
 import {
   SuperExportButton,
   SuperHealthCheckButton,
   SuperImportButton,
   SuperSelectableTable,
-} from "@/components/super/table-actions";
+} from "@/components/admin/table-actions";
 import {
   SuperActionBar,
   SuperButton,
@@ -41,24 +41,24 @@ import {
   SuperEmptyState,
   SuperInfoNote,
   SuperTable,
-} from "@/components/super/primitives";
-import { detailParent, findSuperPage, SUPER_PAGE_BY_KEY, type SuperPage } from "@/lib/super/registry";
-import { importableHeaders } from "@/app/(super)/super/actions";
-import { hasLoader, loadSuperPage, loadSuperRecord, type SuperResult } from "@/lib/server/super-queries";
+} from "@/components/admin/primitives";
+import { detailParent, findAdminPage, ADMIN_PAGE_BY_KEY, type AdminPage } from "@/lib/admin/registry";
+import { importableHeaders } from "@/app/(admin)/admin/actions";
+import { hasLoader, loadAdminPage, loadAdminRecord, type AdminResult } from "@/lib/server/admin-queries";
 
 type Params = { slug?: string[] };
 type Search = Record<string, string | string[] | undefined>;
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
-  const found = findSuperPage(slug);
+  const found = findAdminPage(slug);
   return { title: found ? `${found.page.page} — Super Admin` : "Super Admin" };
 }
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
 /** Plural noun used in empty-state copy, derived from the page name. */
-function subject(page: SuperPage) {
+function subject(page: AdminPage) {
   const n = page.page.toLowerCase();
   if (n.includes("job opening") || n.includes("careers")) return "job openings";
   if (n.includes("application")) return "applications";
@@ -86,7 +86,7 @@ function subject(page: SuperPage) {
   return "records";
 }
 
-function EmptyFor({ page, result }: { page: SuperPage; result: SuperResult }) {
+function EmptyFor({ page, result }: { page: AdminPage; result: AdminResult }) {
   const noun = subject(page);
   if (hasLoader(page.canonical) && !result.connected) {
     return (
@@ -110,11 +110,11 @@ function EmptyFor({ page, result }: { page: SuperPage; result: SuperResult }) {
   );
 }
 
-async function ListPage({ page, result }: { page: SuperPage; result: SuperResult }) {
+async function ListPage({ page, result }: { page: AdminPage; result: AdminResult }) {
   const connected = hasLoader(page.canonical);
   const importHeaders = await importableHeaders(page.canonical);
   // Rows link through to the detail screen that opens this list's records.
-  const detail = [...SUPER_PAGE_BY_KEY.values()].find((p) => p.detailOf === page.key);
+  const detail = [...ADMIN_PAGE_BY_KEY.values()].find((p) => p.detailOf === page.key);
 
   return (
     <>
@@ -124,7 +124,7 @@ async function ListPage({ page, result }: { page: SuperPage; result: SuperResult
         </Suspense>
         <SuperImportButton pageKey={page.canonical} headers={importHeaders} />
         {page.canonical === "content-management-careers-job-openings" ? (
-          <SuperButton icon={Plus} variant="primary" href="/super/content-management/add-job-opening">
+          <SuperButton icon={Plus} variant="primary" href="/admin/content-management/add-job-opening">
             New job opening
           </SuperButton>
         ) : (
@@ -164,7 +164,7 @@ async function ListPage({ page, result }: { page: SuperPage; result: SuperResult
   );
 }
 
-async function DetailPage({ page, recordId }: { page: SuperPage; recordId?: string }) {
+async function DetailPage({ page, recordId }: { page: AdminPage; recordId?: string }) {
   const parent = detailParent(page);
   const backLink = parent && (
     <Link
@@ -196,7 +196,7 @@ async function DetailPage({ page, recordId }: { page: SuperPage; recordId?: stri
     );
   }
 
-  const record = await loadSuperRecord(parent.canonical, recordId, parent.columns);
+  const record = await loadAdminRecord(parent.canonical, recordId, parent.columns);
 
   return (
     <>
@@ -229,7 +229,7 @@ async function DetailPage({ page, recordId }: { page: SuperPage; recordId?: stri
   );
 }
 
-function SettingsPage({ page }: { page: SuperPage }) {
+function SettingsPage({ page }: { page: AdminPage }) {
   return (
     <>
       {page.canonical === "system-management-system-health" && (
@@ -257,7 +257,7 @@ export default async function SuperCatchAllPage({
   searchParams: Promise<Search>;
 }) {
   const { slug } = await params;
-  const found = findSuperPage(slug);
+  const found = findAdminPage(slug);
   if (!found) notFound();
   const { page, recordId } = found;
 
@@ -375,7 +375,7 @@ export default async function SuperCatchAllPage({
     return (
       <>
         <Link
-          href="/super/content-management/careers-job-openings"
+          href="/admin/content-management/careers-job-openings"
           className="mb-5 inline-flex items-center gap-2 text-[13px] font-bold text-royal-blue hover:underline"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Careers / Job Openings
@@ -396,7 +396,7 @@ export default async function SuperCatchAllPage({
     if (v) filters[f.key] = v;
   }
 
-  const result = await loadSuperPage(page.canonical, {
+  const result = await loadAdminPage(page.canonical, {
     q: one(sp.q),
     page: Number(one(sp.page) ?? "1") || 1,
     pageSize: Number(one(sp.pageSize) ?? "25") || 25,

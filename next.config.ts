@@ -26,6 +26,9 @@ const nextConfig: NextConfig = {
    */
   async redirects() {
     return [
+      // The Super Admin console moved to /admin; keep old links working.
+      { source: "/super", destination: "/admin", permanent: false },
+      { source: "/super/:path*", destination: "/admin/:path*", permanent: false },
       { source: "/app/platform-experience-pricing/platform-home-executive-dashboard", destination: "/app", permanent: false },
       { source: "/app/platform-experience-pricing/notification-center", destination: "/app/notifications", permanent: false },
       { source: "/app/platform-experience-pricing/pricing-plans-overview", destination: "/app/settings/billing", permanent: false },
@@ -117,16 +120,6 @@ const nextConfig: NextConfig = {
       { source: "/app/settings/api-and-domains", destination: "/app/settings/api-domains", permanent: false },
       { source: "/app/settings/audit-log", destination: "/app/settings/audit", permanent: false },
       { source: "/app/usage-credits/usage-and-credits", destination: "/app/usage-credits", permanent: false },
-      { source: "/admin/marketplace", destination: "/super/marketplace-management/marketplace-overview", permanent: false },
-      { source: "/admin/marketplace/sellers", destination: "/super/marketplace-management/seller-management", permanent: false },
-      { source: "/admin/marketplace/seller-applications", destination: "/super/marketplace-management/seller-applications", permanent: false },
-      { source: "/admin/marketplace/product-moderation", destination: "/super/marketplace-management/product-review-and-moderation", permanent: false },
-      { source: "/admin/marketplace/products", destination: "/super/marketplace-management/categories-and-products", permanent: false },
-      { source: "/admin/marketplace/orders", destination: "/super/marketplace-management/orders-refunds-and-disputes", permanent: false },
-      { source: "/admin/marketplace/payouts", destination: "/super/marketplace-management/commissions-and-payouts", permanent: false },
-      { source: "/admin/marketplace/settings", destination: "/super/marketplace-management/marketplace-settings", permanent: false },
-      { source: "/admin/system/module-controls", destination: "/super/system-management/module-controls", permanent: false },
-      { source: "/admin/system/feature-flags", destination: "/super/system-management/feature-flags", permanent: false },
     ];
   },
   eslint: {
