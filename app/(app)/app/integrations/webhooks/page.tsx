@@ -32,9 +32,9 @@ export default function WebhooksPage() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={WHIcon} label="Active Endpoints" value={String(WEBHOOKS.filter((w) => w.status === "Active").length)} tone="violet" />
-        <KpiCard icon={Activity} label="Deliveries (24h)" value="4,280" delta="98.4% success" tone="green" />
+        <KpiCard icon={Activity} label="Deliveries (24h)" value={null} tone="green" />
         <KpiCard icon={AlertTriangle} label="Failing" value={String(WEBHOOKS.filter((w) => w.status === "Failing").length)} deltaTone="down" tone="red" />
-        <KpiCard icon={Clock} label="Avg. Latency" value="128 ms" tone="blue" />
+        <KpiCard icon={Clock} label="Avg. Latency" value={null} tone="blue" />
       </div>
 
       <div className="space-y-3">

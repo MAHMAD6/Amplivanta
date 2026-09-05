@@ -36,11 +36,11 @@ export default async function CrmDashboardPage() {
       <CrmSubnav />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <KpiCard icon={Users} label="Total Contacts" value="2,456" delta="12% vs last 30 days" tone="violet" />
-        <KpiCard icon={UserPlus} label="New Contacts" value="324" delta="18% vs last 30 days" tone="blue" />
-        <KpiCard icon={DollarSign} label="Active Deals" value="189" delta="8% vs last 30 days" tone="orange" />
-        <KpiCard icon={CheckCircle2} label="Won Deals" value="65" delta="15% vs last 30 days" tone="green" />
-        <KpiCard icon={TrendingUp} label="Total Revenue" value="$128,450" delta="22% vs last 30 days" tone="pink" />
+        <KpiCard icon={Users} label="Total Contacts" value={null} tone="violet" />
+        <KpiCard icon={UserPlus} label="New Contacts" value={null} tone="blue" />
+        <KpiCard icon={DollarSign} label="Active Deals" value={null} tone="orange" />
+        <KpiCard icon={CheckCircle2} label="Won Deals" value={null} tone="green" />
+        <KpiCard icon={TrendingUp} label="Total Revenue" value={null} tone="pink" />
       </div>
 
       <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">

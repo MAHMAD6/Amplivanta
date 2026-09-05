@@ -29,8 +29,8 @@ export default function EventsPage() {
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Calendar} label="Upcoming Events" value={String(EVENTS.length)} tone="violet" />
         <KpiCard icon={Star} label="High Impact" value={String(highImpact.length)} tone="pink" />
-        <KpiCard icon={CalendarCheck} label="Holidays (30d)" value="2" tone="amber" />
-        <KpiCard icon={Sparkles} label="Suggestions" value="12" delta="AI generated" tone="green" />
+        <KpiCard icon={CalendarCheck} label="Holidays (30d)" value={null} tone="amber" />
+        <KpiCard icon={Sparkles} label="Suggestions" value={null} tone="green" />
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">

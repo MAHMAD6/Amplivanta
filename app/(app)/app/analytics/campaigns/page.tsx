@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Download, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/amplivanta/page-header";
+import { ChartPlaceholder } from "@/components/amplivanta/chart-placeholder";
 import { AnalyticsSubnav } from "@/components/amplivanta/analytics-subnav";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { CAMPAIGN_ANALYTICS } from "@/lib/analytics-data";
@@ -28,20 +29,15 @@ export default function CampaignAnalyticsPage() {
       <AnalyticsSubnav />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Users} label="Total Reach" value={`${(totalReach / 1000).toFixed(0)}K`} delta="18%" tone="violet" />
-        <KpiCard icon={MousePointer} label="Total Conversions" value={totalConv.toLocaleString()} delta="24%" tone="blue" />
-        <KpiCard icon={DollarSign} label="Total Revenue" value={`$${(totalRev / 1000).toFixed(0)}K`} delta="22%" tone="green" />
-        <KpiCard icon={TrendingUp} label="Avg. ROAS" value={`${avgRoas.toFixed(1)}×`} delta="Target 3×+" tone="pink" />
+        <KpiCard icon={Users} label="Total Reach" value={`${(totalReach / 1000).toFixed(0)}K`} tone="violet" />
+        <KpiCard icon={MousePointer} label="Total Conversions" value={totalConv.toLocaleString()} tone="blue" />
+        <KpiCard icon={DollarSign} label="Total Revenue" value={`$${(totalRev / 1000).toFixed(0)}K`} tone="green" />
+        <KpiCard icon={TrendingUp} label="Avg. ROAS" value={`${avgRoas.toFixed(1)}×`} tone="pink" />
       </div>
 
       <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">
         <div className="mb-3 text-[14px] font-bold text-ink">Campaign Performance Trend</div>
-        <svg viewBox="0 0 600 220" className="h-56 w-full">
-          {[0, 100, 200, 300, 400, 500, 600].map((x) => <line key={x} x1={x} y1="0" x2={x} y2="220" stroke="#e9e7f0" strokeDasharray="2 4" />)}
-          <path d="M0,180 C60,140 120,150 180,120 C240,90 300,110 360,80 C420,50 480,70 540,40 L600,30" fill="none" stroke="#6D3BF5" strokeWidth="2.5" />
-          <path d="M0,190 C60,180 120,175 180,160 C240,145 300,150 360,130 C420,110 480,120 540,105 L600,100" fill="none" stroke="#E8398F" strokeWidth="2.5" />
-          <path d="M0,200 C60,195 120,185 180,180 C240,175 300,170 360,155 C420,140 480,145 540,135 L600,130" fill="none" stroke="#F5731A" strokeWidth="2.5" />
-        </svg>
+        <ChartPlaceholder />
         <div className="mt-2 flex gap-3 text-[11px] text-ink-muted">
           <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-violet" /> Reach</span>
           <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-pink-brand" /> Conversions</span>

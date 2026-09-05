@@ -26,6 +26,21 @@ async function readSetting(key: string): Promise<ProviderConfig> {
 }
 
 export const getPaymentProvider = () => readSetting("payment.provider");
+
+/**
+ * Whether a deliverable must pass a malware scan before it can be downloaded.
+ * Scanning is required unless an operator has explicitly recorded a decision to
+ * run without a scanner - it is never silently skipped.
+ */
+export async function malwareScanRequired(): Promise<boolean> {
+  try {
+    const row = await prisma.marketplaceSetting.findUnique({ where: { key: "security.malware_scanning" } });
+    const v = row?.value as { mode?: string } | null;
+    return v?.mode !== "disabled";
+  } catch {
+    return true;
+  }
+}
 export const getPayoutProvider = () => readSetting("payout.provider");
 export const getStorageProvider = () => readSetting("storage.provider");
 

@@ -24,8 +24,8 @@ export default function ApprovalsPage() {
       <SocialSubnav />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Clock} label="Pending Review" value={String(byStatus.Pending.length)} delta="1 overdue" deltaTone="down" tone="amber" />
-        <KpiCard icon={Check} label="Approved (7d)" value={String(byStatus.Approved.length)} delta="94% SLA" tone="green" />
+        <KpiCard icon={Clock} label="Pending Review" value={String(byStatus.Pending.length)} deltaTone="down" tone="amber" />
+        <KpiCard icon={Check} label="Approved (7d)" value={String(byStatus.Approved.length)} tone="green" />
         <KpiCard icon={MessageSquare} label="Changes Requested" value={String(byStatus["Changes Requested"].length)} tone="blue" />
         <KpiCard icon={X} label="Rejected" value={String(byStatus.Rejected.length)} tone="red" />
       </div>

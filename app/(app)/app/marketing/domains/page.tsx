@@ -27,8 +27,8 @@ export default function DomainsPage() {
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={ShieldCheck} label="Verified Domains" value={String(DOMAINS.filter((d) => d.status === "Verified").length)} tone="green" />
         <KpiCard icon={AlertTriangle} label="Need Attention" value={String(DOMAINS.filter((d) => d.status !== "Verified" && d.status !== "Available").length)} tone="amber" />
-        <KpiCard icon={ShieldCheck} label="SSL Auto-Renew" value="On" delta="Let's Encrypt" tone="blue" />
-        <KpiCard icon={ShieldCheck} label="Deploys (30d)" value="128" delta="Healthy" tone="violet" />
+        <KpiCard icon={ShieldCheck} label="SSL Auto-Renew" value={null} tone="blue" />
+        <KpiCard icon={ShieldCheck} label="Deploys (30d)" value={null} tone="violet" />
       </div>
 
       <div className="space-y-3">

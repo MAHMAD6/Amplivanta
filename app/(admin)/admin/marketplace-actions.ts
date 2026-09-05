@@ -11,7 +11,7 @@ import {
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { MarketplacePermission } from "@/lib/marketplace/config";
-import { MARKETPLACE_ROLE_GRANTS } from "@/lib/marketplace/config";
+import { getEffectiveAccess, hasPermission } from "@/lib/server/rbac";
 
 export type AdminActionResult = { ok: true; message: string } | { ok: false; error: string };
 
@@ -26,14 +26,10 @@ async function requireMarketplaceAdmin(permission: MarketplacePermission) {
   const session = await auth();
   const user = session?.user as { id?: string; email?: string; role?: string } | undefined;
   if (!user) return null;
-
-  const grants =
-    user.role === "SUPER_ADMIN"
-      ? MARKETPLACE_ROLE_GRANTS.super_admin
-      : user.role === "ADMIN" || user.role === "OWNER"
-        ? MARKETPLACE_ROLE_GRANTS.marketplace_operations_admin
-        : [];
-  return grants.includes(permission) ? user : null;
+  // Effective permissions include anything granted through AdminAssignment,
+  // so a marketplace moderator or finance admin is a real, grantable role.
+  const access = await getEffectiveAccess(user.id ?? null, user.role ?? null);
+  return hasPermission(access, permission) ? user : null;
 }
 
 async function audit(
@@ -394,5 +390,24 @@ export async function loadCategories() {
     };
   } catch {
     return { connected: false, categories: [] };
+  }
+}
+
+/** Record the outcome of a malware scan for a product deliverable. */
+export async function setAssetScanStatus(
+  assetId: string,
+  status: "CLEAN" | "INFECTED" | "FAILED",
+  reason: string,
+): Promise<AdminActionResult> {
+  const user = await requireMarketplaceAdmin("marketplace.admin.products.moderate");
+  if (!user) return { ok: false, error: "You are not authorized to record scan results." };
+  if (!reason.trim()) return { ok: false, error: "A reason or scanner reference is required." };
+  try {
+    await prisma.marketplaceProductAsset.update({ where: { id: assetId }, data: { scanStatus: status } });
+    await audit(user.id ?? null, "marketplace.asset.scanned", "MarketplaceProductAsset", assetId, { status }, reason);
+    revalidatePath("/admin/marketplace-management/product-review-and-moderation");
+    return { ok: true, message: `Asset marked ${status.toLowerCase()}.` };
+  } catch {
+    return { ok: false, error: "Could not record the scan result." };
   }
 }

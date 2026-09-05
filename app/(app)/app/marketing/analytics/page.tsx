@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Download, TrendingUp, Zap, Target, DollarSign, Sparkles, AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/amplivanta/page-header";
+import { ChartPlaceholder } from "@/components/amplivanta/chart-placeholder";
 import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { StatusPill } from "@/components/amplivanta/status-pill";
@@ -24,22 +25,17 @@ export default function AutomationAnalyticsPage() {
       <MarketingSubnav />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <KpiCard icon={Zap} label="Runs" value="128K" delta="22%" tone="violet" />
-        <KpiCard icon={Target} label="Completion" value="42%" delta="4 pts" tone="green" />
-        <KpiCard icon={TrendingUp} label="Contacts Enrolled" value="4.2K" delta="18%" tone="blue" />
-        <KpiCard icon={DollarSign} label="Revenue Influenced" value="$342K" delta="24%" tone="pink" />
-        <KpiCard icon={AlertTriangle} label="Failures" value="0.4%" delta="Healthy" tone="teal" />
+        <KpiCard icon={Zap} label="Runs" value={null} tone="violet" />
+        <KpiCard icon={Target} label="Completion" value={null} tone="green" />
+        <KpiCard icon={TrendingUp} label="Contacts Enrolled" value={null} tone="blue" />
+        <KpiCard icon={DollarSign} label="Revenue Influenced" value={null} tone="pink" />
+        <KpiCard icon={AlertTriangle} label="Failures" value={null} tone="teal" />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 text-[14px] font-bold text-ink">Performance Over Time</div>
-          <svg viewBox="0 0 600 220" className="h-56 w-full">
-            {[0, 100, 200, 300, 400, 500, 600].map((x) => <line key={x} x1={x} y1="0" x2={x} y2="220" stroke="#e9e7f0" strokeDasharray="2 4" />)}
-            <path d="M0,180 C60,150 120,160 180,120 C240,80 300,90 360,60 C420,40 480,50 540,30 L600,20" fill="none" stroke="#6D3BF5" strokeWidth="2.5" />
-            <path d="M0,190 C60,180 120,175 180,160 C240,145 300,150 360,130 C420,110 480,120 540,105 L600,100" fill="none" stroke="#E8398F" strokeWidth="2.5" />
-            <path d="M0,200 C60,195 120,185 180,180 C240,175 300,170 360,155 C420,140 480,145 540,135 L600,130" fill="none" stroke="#F5731A" strokeWidth="2.5" />
-          </svg>
+          <ChartPlaceholder />
           <div className="mt-2 flex gap-3 text-[11px] text-ink-muted">
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-violet" /> Enrollments</span>
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-pink-brand" /> Completions</span>

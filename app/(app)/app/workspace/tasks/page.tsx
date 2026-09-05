@@ -29,9 +29,9 @@ export default function WSTasksPage() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={ListChecks} label="Total Tasks" value={String(WS_TASKS.length)} tone="violet" />
-        <KpiCard icon={Clock} label="Due This Week" value="5" tone="blue" />
-        <KpiCard icon={AlertTriangle} label="Overdue" value="1" deltaTone="down" tone="pink" />
-        <KpiCard icon={CheckCircle2} label="Completed" value="1" delta="100% on-time" tone="green" />
+        <KpiCard icon={Clock} label="Due This Week" value={null} tone="blue" />
+        <KpiCard icon={AlertTriangle} label="Overdue" value={null} deltaTone="down" tone="pink" />
+        <KpiCard icon={CheckCircle2} label="Completed" value={null} tone="green" />
       </div>
 
       <div className="mb-3 flex gap-1">

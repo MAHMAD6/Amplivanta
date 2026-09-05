@@ -33,10 +33,10 @@ export default function ImagesPage() {
       <CreativeSubnav />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={ImageIcon} label="Total Images" value="822" delta="18 this week" tone="violet" />
-        <KpiCard icon={Sparkles} label="AI Generated" value="42" delta="8 today" tone="pink" />
-        <KpiCard icon={Star} label="Favorites" value="24" tone="amber" />
-        <KpiCard icon={HardDrive} label="Storage" value="42 / 100 GB" tone="blue" />
+        <KpiCard icon={ImageIcon} label="Total Images" value={null} tone="violet" />
+        <KpiCard icon={Sparkles} label="AI Generated" value={null} tone="pink" />
+        <KpiCard icon={Star} label="Favorites" value={null} tone="amber" />
+        <KpiCard icon={HardDrive} label="Storage" value={null} tone="blue" />
       </div>
 
       {/* AI generator card */}

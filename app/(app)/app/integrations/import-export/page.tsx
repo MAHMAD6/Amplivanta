@@ -55,10 +55,10 @@ export default function ImportExportPage() {
       <IntegrationsSubnav />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={ArrowDownToLine} label="Imports (30d)" value="24" tone="violet" />
-        <KpiCard icon={ArrowUpFromLine} label="Exports (30d)" value="17" tone="blue" />
-        <KpiCard icon={CheckCircle2} label="Success Rate" value="96%" delta="+2% vs last month" tone="green" />
-        <KpiCard icon={Clock} label="Avg. Job Time" value="42 s" tone="amber" />
+        <KpiCard icon={ArrowDownToLine} label="Imports (30d)" value={null} tone="violet" />
+        <KpiCard icon={ArrowUpFromLine} label="Exports (30d)" value={null} tone="blue" />
+        <KpiCard icon={CheckCircle2} label="Success Rate" value={null} tone="green" />
+        <KpiCard icon={Clock} label="Avg. Job Time" value={null} tone="amber" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

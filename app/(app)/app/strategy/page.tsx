@@ -31,10 +31,10 @@ export default function StrategyDashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <KpiCard icon={Target} label="Active Goals" value={String(GOALS.length)} delta={`${GOALS.filter((g) => g.status === "Achieved").length} achieved`} tone="violet" />
-        <KpiCard icon={TrendingUp} label="Campaigns Aligned" value="12" delta="3 launched" tone="pink" />
+        <KpiCard icon={TrendingUp} label="Campaigns Aligned" value={null} tone="pink" />
         <KpiCard icon={DollarSign} label="Planned Budget" value={`$${(totalBudget / 1000).toFixed(0)}K`} delta={`$${(totalSpend / 1000).toFixed(0)}K spent`} tone="green" />
-        <KpiCard icon={TrendingUp} label="Forecast Revenue" value="$1.2M" delta="Q3" tone="orange" />
-        <KpiCard icon={HeartHandshake} label="Strategy Health" value="82" delta="6 pts" tone="blue" />
+        <KpiCard icon={TrendingUp} label="Forecast Revenue" value={null} tone="orange" />
+        <KpiCard icon={HeartHandshake} label="Strategy Health" value={null} tone="blue" />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_1fr]">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, Eye, Users, DollarSign, TrendingUp, Target, Sparkles, Share2 } from "lucide-react";
 import { PageHeader } from "@/components/amplivanta/page-header";
+import { ChartPlaceholder } from "@/components/amplivanta/chart-placeholder";
 import { AnalyticsSubnav } from "@/components/amplivanta/analytics-subnav";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { TRAFFIC_GEO, ATTRIBUTION_CHANNELS, AI_ANALYTICS_INSIGHTS, CAMPAIGN_ANALYTICS } from "@/lib/analytics-data";
@@ -27,22 +28,17 @@ export default function AnalyticsDashboardPage() {
       <AnalyticsSubnav />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <KpiCard icon={Eye} label="Sessions" value="42.8K" delta="12%" tone="violet" />
-        <KpiCard icon={Users} label="Leads" value="2,543" delta="18%" tone="blue" />
-        <KpiCard icon={Target} label="Conv. Rate" value="4.2%" delta="0.6 pts" tone="pink" />
-        <KpiCard icon={DollarSign} label="Revenue" value={`$${(totalRev / 1000).toFixed(0)}K`} delta="22%" tone="green" />
-        <KpiCard icon={TrendingUp} label="ROAS" value="4.8×" delta="Target 3×+" tone="orange" />
+        <KpiCard icon={Eye} label="Sessions" value={null} tone="violet" />
+        <KpiCard icon={Users} label="Leads" value={null} tone="blue" />
+        <KpiCard icon={Target} label="Conv. Rate" value={null} tone="pink" />
+        <KpiCard icon={DollarSign} label="Revenue" value={`$${(totalRev / 1000).toFixed(0)}K`} tone="green" />
+        <KpiCard icon={TrendingUp} label="ROAS" value={null} tone="orange" />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 text-[14px] font-bold text-ink">Traffic Over Time</div>
-          <svg viewBox="0 0 600 220" className="h-56 w-full">
-            <defs><linearGradient id="ad-a" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#6D3BF5" stopOpacity="0.35" /><stop offset="1" stopColor="#6D3BF5" stopOpacity="0" /></linearGradient></defs>
-            {[0, 100, 200, 300, 400, 500, 600].map((x) => <line key={x} x1={x} y1="0" x2={x} y2="220" stroke="#e9e7f0" strokeDasharray="2 4" />)}
-            <path d="M0,180 C60,140 120,150 180,120 C240,90 300,110 360,80 C420,50 480,70 540,40 L600,30 L600,220 L0,220 Z" fill="url(#ad-a)" />
-            <path d="M0,180 C60,140 120,150 180,120 C240,90 300,110 360,80 C420,50 480,70 540,40 L600,30" fill="none" stroke="#6D3BF5" strokeWidth="2.5" />
-          </svg>
+          <ChartPlaceholder />
         </div>
 
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">

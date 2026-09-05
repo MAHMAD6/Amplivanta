@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChartPlaceholder } from "@/components/amplivanta/chart-placeholder";
 import Link from "next/link";
 import { Building2, BarChart3, Crosshair, Clock, GitBranch, Database, Target, TrendingUp, Megaphone, Sparkles, Bell, Users2, ArrowRight, ChevronRight, Info } from "lucide-react";
 import { loadCommandCenter } from "@/lib/server/command-center";
@@ -105,7 +106,7 @@ export default async function CommandCenterPage() {
           <div className="mb-1 flex items-center justify-between"><span className="text-[14px] font-bold text-ink">Performance Overview</span><span className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-ink-soft">Last 7 days</span></div>
           <p className="text-[11.5px] text-ink-soft">Connect your data to see performance trends across your key metrics.</p>
           <div className="my-4 flex h-28 items-end gap-1 opacity-40">
-            <svg viewBox="0 0 300 90" className="w-full"><path d="M0,70 C30,60 60,66 90,50 C120,40 150,58 180,44 C210,34 240,50 300,30" fill="none" stroke="#c9cede" strokeWidth="1.5" strokeDasharray="4 3" /></svg>
+            <ChartPlaceholder />
           </div>
           <div className="flex items-center justify-between"><span className="text-[11.5px] text-ink-muted">No data connected</span><Link href="/app/integrations" className="rounded-lg border border-line px-3 py-1 text-[12px] font-semibold text-royal-blue">Connect Data</Link></div>
         </div>

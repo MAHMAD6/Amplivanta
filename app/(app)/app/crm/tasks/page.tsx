@@ -53,10 +53,10 @@ export default async function CrmTasksPage() {
       {live && <LiveBadge label={`Live · ${crmTasks.length} tasks from database`} />}
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={ClipboardList} label="Total Tasks" value="28" delta="6 this week" tone="violet" />
-        <KpiCard icon={Clock} label="Due This Week" value="12" tone="amber" />
-        <KpiCard icon={AlertTriangle} label="Overdue" value="3" deltaTone="down" delta="1 escalated" tone="pink" />
-        <KpiCard icon={CheckCircle2} label="Completed" value="24" delta="82% on-time" tone="green" />
+        <KpiCard icon={ClipboardList} label="Total Tasks" value={null} tone="violet" />
+        <KpiCard icon={Clock} label="Due This Week" value={null} tone="amber" />
+        <KpiCard icon={AlertTriangle} label="Overdue" value={null} deltaTone="down" tone="pink" />
+        <KpiCard icon={CheckCircle2} label="Completed" value={null} tone="green" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

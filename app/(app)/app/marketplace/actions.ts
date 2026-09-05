@@ -5,7 +5,8 @@ import { MarketplaceProductType, Prisma, SellerStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
 import { getMarketplaceViewer, guardMarketplace } from "@/lib/server/marketplace-access";
-import { getPaymentProvider, issueSignedUrl, requiresPaymentProvider } from "@/lib/marketplace/providers";
+import { getPaymentProvider, issueSignedUrl, malwareScanRequired, requiresPaymentProvider } from "@/lib/marketplace/providers";
+import { fulfilOrder } from "@/lib/server/marketplace-fulfilment";
 
 export type MpResult = { ok: true; message: string } | { ok: false; error: string };
 
@@ -285,6 +286,7 @@ export type CheckoutQuote = {
   currency: string;
   requiresProvider: boolean;
   providerConfigured: boolean;
+  providerId: string | null;
 };
 
 /**
@@ -302,6 +304,7 @@ export async function getCheckoutQuote(): Promise<CheckoutQuote> {
     currency: "USD",
     requiresProvider: false,
     providerConfigured: false,
+    providerId: null,
   };
   const viewer = await getMarketplaceViewer();
   if (!viewer.userId) return empty;
@@ -310,20 +313,32 @@ export async function getCheckoutQuote(): Promise<CheckoutQuote> {
     const items = await prisma.marketplaceCartItem.findMany({ where: { userId: viewer.userId } });
     if (items.length === 0) return { ...empty, connected: true };
 
-    const versions = await prisma.marketplaceProductVersion.findMany({
-      where: { id: { in: items.map((i) => i.versionId) } },
-      include: { product: { select: { id: true, title: true, status: true } } },
+    // Always price against the newest published version of each product, not
+    // the version captured when the item was added to the cart.
+    const products = await prisma.marketplaceProduct.findMany({
+      where: { id: { in: items.map((i) => i.productId) }, status: "PUBLISHED" },
+      select: {
+        id: true,
+        title: true,
+        versions: {
+          where: { status: "PUBLISHED" },
+          orderBy: { version: "desc" },
+          take: 1,
+          select: { id: true, priceCents: true, currency: true, licenseVersion: true },
+        },
+      },
     });
 
     const lines: CheckoutLine[] = items.flatMap((i) => {
-      const v = versions.find((x) => x.id === i.versionId);
-      if (!v || v.product.status !== "PUBLISHED") return [];
+      const p = products.find((x) => x.id === i.productId);
+      const v = p?.versions[0];
+      if (!p || !v) return [];
       return [
         {
           itemId: i.id,
-          productId: v.product.id,
+          productId: p.id,
           versionId: v.id,
-          title: v.product.title,
+          title: p.title,
           unitPriceCents: v.priceCents,
           currency: v.currency,
           licenseVersion: v.licenseVersion,
@@ -342,6 +357,7 @@ export async function getCheckoutQuote(): Promise<CheckoutQuote> {
       currency: lines[0]?.currency ?? "USD",
       requiresProvider: requiresPaymentProvider(subtotalCents),
       providerConfigured: provider !== null,
+      providerId: provider?.id ?? null,
     };
   } catch {
     return empty;
@@ -349,10 +365,13 @@ export async function getCheckoutQuote(): Promise<CheckoutQuote> {
 }
 
 /**
- * Places the order. A zero-total order completes end to end today: it is marked
- * paid, entitlements activate, and seller ledger entries are written. An order
- * with a balance due needs a configured payment provider and is refused until
- * one exists — no fake charge is ever recorded.
+ * Places an order.
+ *
+ * Placing never grants access. The order is created in INITIATED, its line
+ * items snapshot exactly what was bought, and entitlements start PENDING.
+ * Fulfilment (PAID -> ACCESS_READY, entitlements ACTIVE, seller ledger) happens
+ * only in `fulfilOrder`, which requires either a zero total or a payment the
+ * provider has confirmed via webhook.
  */
 export async function placeOrder(): Promise<MpResult> {
   const viewer = await getMarketplaceViewer();
@@ -370,17 +389,18 @@ export async function placeOrder(): Promise<MpResult> {
     };
   }
 
+  let orderId: string;
   try {
     const order = await prisma.$transaction(async (tx) => {
       const created = await tx.marketplaceOrder.create({
         data: {
           buyerUserId: viewer.userId!,
-          status: "PAID",
+          status: quote.totalCents > 0 ? "PAYMENT_PENDING" : "INITIATED",
           subtotalCents: quote.subtotalCents,
           taxCents: quote.taxCents,
           totalCents: quote.totalCents,
           currency: quote.currency,
-          placedAt: new Date(),
+          paymentProvider: quote.totalCents > 0 ? quote.providerId : null,
         },
       });
 
@@ -407,50 +427,46 @@ export async function placeOrder(): Promise<MpResult> {
           },
         });
 
+        // Pending until payment is confirmed (or the total is zero).
         await tx.marketplaceEntitlement.create({
           data: {
             orderItemId: item.id,
             buyerUserId: viewer.userId!,
             productVersionId: line.versionId,
-            status: "ACTIVE",
-            activatedAt: new Date(),
+            status: "PENDING",
           },
         });
-
-        if (line.unitPriceCents > 0) {
-          // Commission rate is an unconfirmed commercial decision, so no fee is
-          // deducted here; gross and net match until a rate is configured.
-          await tx.marketplaceLedgerEntry.create({
-            data: {
-              sellerId: version.product.sellerId,
-              orderItemId: item.id,
-              entryType: "sale",
-              grossCents: line.unitPriceCents,
-              feeCents: 0,
-              netCents: line.unitPriceCents,
-              currency: line.currency,
-              availableAt: new Date(),
-            },
-          });
-        }
       }
 
-      await tx.marketplaceOrder.update({ where: { id: created.id }, data: { status: "ACCESS_READY" } });
       await tx.marketplaceCartItem.deleteMany({ where: { userId: viewer.userId! } });
       return created;
     });
-
-    await audit(viewer.userId, "marketplace.order.placed", "MarketplaceOrder", order.id, {
-      totalCents: quote.totalCents,
-      lines: quote.lines.length,
-    });
-
-    revalidatePath("/app/marketplace/purchases");
-    revalidatePath("/app/marketplace/cart");
-    return { ok: true, message: `Order placed. Reference ${order.id}` };
+    orderId = order.id;
   } catch {
     return { ok: false, error: "Could not place the order — the platform database was unreachable." };
   }
+
+  await audit(viewer.userId, "marketplace.order.placed", "MarketplaceOrder", orderId, {
+    totalCents: quote.totalCents,
+    lines: quote.lines.length,
+  });
+
+  // Nothing to charge: fulfil immediately.
+  if (quote.totalCents === 0) {
+    const res = await fulfilOrder(orderId, "zero_total");
+    if (!res.ok) return { ok: false, error: res.error };
+    revalidatePath("/app/marketplace/purchases");
+    revalidatePath("/app/marketplace/cart");
+    return { ok: true, message: `Order complete. Reference ${orderId}` };
+  }
+
+  // Paid order: awaiting the provider. Access unlocks when the webhook confirms.
+  revalidatePath("/app/marketplace/purchases");
+  revalidatePath("/app/marketplace/cart");
+  return {
+    ok: true,
+    message: `Order ${orderId} created and awaiting payment confirmation. Access unlocks once the payment provider confirms the charge.`,
+  };
 }
 
 export type DownloadResult = { ok: true; url: string } | { ok: false; error: string };
@@ -475,8 +491,14 @@ export async function issueDownload(entitlementId: string): Promise<DownloadResu
 
     const asset = ent.productVersion.assets[0];
     if (!asset) return { ok: false, error: "No deliverable file is attached to this product version yet." };
-    if (asset.scanStatus !== "CLEAN") {
-      return { ok: false, error: "This file has not passed a malware scan, so it cannot be downloaded." };
+    if (asset.scanStatus === "INFECTED") {
+      return { ok: false, error: "This file failed a malware scan and cannot be downloaded." };
+    }
+    if (asset.scanStatus !== "CLEAN" && (await malwareScanRequired())) {
+      return {
+        ok: false,
+        error: "This file has not been scanned yet. Downloads unlock once a malware scanner is connected, or once an operator records a decision to run without one.",
+      };
     }
 
     const signed = await issueSignedUrl(asset.storageKey);

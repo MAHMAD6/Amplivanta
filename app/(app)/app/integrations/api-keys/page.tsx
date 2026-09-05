@@ -26,8 +26,8 @@ export default function ApiKeysPage() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Key} label="Active Keys" value={String(API_KEYS.filter((k) => k.status === "Active").length)} tone="violet" />
-        <KpiCard icon={Activity} label="Calls (7d)" value="454K" delta="18%" tone="blue" />
-        <KpiCard icon={Activity} label="Rate Limit Used" value="24%" delta="of 5K/min" tone="green" />
+        <KpiCard icon={Activity} label="Calls (7d)" value={null} tone="blue" />
+        <KpiCard icon={Activity} label="Rate Limit Used" value={null} tone="green" />
         <KpiCard icon={AlertTriangle} label="Revoked" value={String(API_KEYS.filter((k) => k.status === "Revoked").length)} tone="pink" />
       </div>
 

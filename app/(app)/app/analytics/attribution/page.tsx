@@ -24,10 +24,10 @@ export default function AttributionPage() {
       <AnalyticsSubnav />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={DollarSign} label="Attributed Revenue" value={`$${(totalRev / 1000).toFixed(0)}K`} delta="22%" tone="green" />
+        <KpiCard icon={DollarSign} label="Attributed Revenue" value={`$${(totalRev / 1000).toFixed(0)}K`} tone="green" />
         <KpiCard icon={DollarSign} label="Total Spend" value={`$${(totalSpend / 1000).toFixed(0)}K`} tone="pink" />
         <KpiCard icon={TrendingUp} label="Blended ROAS" value={`${(totalRev / totalSpend).toFixed(1)}×`} tone="violet" />
-        <KpiCard icon={Zap} label="Assisted Conv." value="11.9K" tone="blue" />
+        <KpiCard icon={Zap} label="Assisted Conv." value={null} tone="blue" />
       </div>
 
       <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">

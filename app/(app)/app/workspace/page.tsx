@@ -43,11 +43,11 @@ export default function WorkspaceHomePage() {
       <WorkspaceSubnav />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <KpiCard icon={FolderKanban} label="Active Projects" value={String(WS_CAMPAIGNS.length)} delta="2 this week" tone="violet" />
-        <KpiCard icon={Workflow} label="Active Automations" value="34" delta="4 launched" tone="pink" />
-        <KpiCard icon={CheckCircle2} label="Pending Approvals" value="3" delta="2 overdue" deltaTone="down" tone="amber" />
-        <KpiCard icon={ClipboardList} label="Tasks Due" value="7" delta="6 this week" tone="blue" />
-        <KpiCard icon={DollarSign} label="Revenue Influenced" value="$342K" delta="24%" tone="green" />
+        <KpiCard icon={FolderKanban} label="Active Projects" value={String(WS_CAMPAIGNS.length)} tone="violet" />
+        <KpiCard icon={Workflow} label="Active Automations" value={null} tone="pink" />
+        <KpiCard icon={CheckCircle2} label="Pending Approvals" value={null} deltaTone="down" tone="amber" />
+        <KpiCard icon={ClipboardList} label="Tasks Due" value={null} tone="blue" />
+        <KpiCard icon={DollarSign} label="Revenue Influenced" value={null} tone="green" />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">

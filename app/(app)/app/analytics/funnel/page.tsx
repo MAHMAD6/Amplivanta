@@ -26,9 +26,9 @@ export default function FunnelPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Users} label="Top of Funnel" value={top.toLocaleString()} tone="violet" />
-        <KpiCard icon={MousePointer} label="Overall Conv." value="0.3%" delta="Target 0.5%" deltaTone="down" tone="pink" />
-        <KpiCard icon={Target} label="Biggest Drop" value="Form → MQL" delta="65% loss" tone="red" />
-        <KpiCard icon={DollarSign} label="Revenue per Customer" value="$4.2K" delta="12%" tone="green" />
+        <KpiCard icon={MousePointer} label="Overall Conv." value={null} deltaTone="down" tone="pink" />
+        <KpiCard icon={Target} label="Biggest Drop" value={null} tone="red" />
+        <KpiCard icon={DollarSign} label="Revenue per Customer" value={null} tone="green" />
       </div>
 
       <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">

@@ -37,14 +37,14 @@ export default function ABTestingPage() {
       <MarketingSubnav />
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-8">
-        <KpiCard icon={FlaskConical} tone="violet" label="Active Tests" value="7" delta="16.7% vs 30 days" />
-        <KpiCard icon={Trophy} tone="amber" label="Winning Variants" value="4" delta="57% win rate" deltaTone="neutral" />
-        <KpiCard icon={TrendingUp} tone="green" label="Avg. Conversion Lift" value="+18.6%" delta="4.3% vs 30 days" />
-        <KpiCard icon={ShieldCheck} tone="blue" label="Statistical Confidence" value="92.4%" delta="8.1% vs 30 days" />
-        <KpiCard icon={Users2} tone="indigo" label="Total Visitors" value="48,752" delta="16.0% vs 30 days" />
-        <KpiCard icon={UserPlus} tone="teal" label="Signups" value="2,843" delta="21.3% vs 30 days" />
-        <KpiCard icon={Percent} tone="orange" label="Bounce Rate" value="38.2%" delta="6.1% vs 30 days" deltaTone="down" />
-        <KpiCard icon={DollarSign} tone="pink" label="Revenue Impact" value="$124,680" delta="26.8% vs 30 days" />
+        <KpiCard icon={FlaskConical} tone="violet" label="Active Tests" value={null} />
+        <KpiCard icon={Trophy} tone="amber" label="Winning Variants" value={null} deltaTone="neutral" />
+        <KpiCard icon={TrendingUp} tone="green" label="Avg. Conversion Lift" value={null} />
+        <KpiCard icon={ShieldCheck} tone="blue" label="Statistical Confidence" value={null} />
+        <KpiCard icon={Users2} tone="indigo" label="Total Visitors" value={null} />
+        <KpiCard icon={UserPlus} tone="teal" label="Signups" value={null} />
+        <KpiCard icon={Percent} tone="orange" label="Bounce Rate" value={null} deltaTone="down" />
+        <KpiCard icon={DollarSign} tone="pink" label="Revenue Impact" value={null} />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr_0.9fr]">

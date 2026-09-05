@@ -25,9 +25,9 @@ export default function CompetitorsPage() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Users} label="Tracked" value={String(COMPETITORS.length)} tone="violet" />
-        <KpiCard icon={MessageSquare} label="Posts (7d)" value="52" delta="24%" tone="blue" />
-        <KpiCard icon={TrendingUp} label="Avg. Engagement" value="4.8K" delta="12%" tone="pink" />
-        <KpiCard icon={Target} label="Opportunities" value={String(COMPETITOR_OPPORTUNITIES.length)} delta="AI flagged" tone="amber" />
+        <KpiCard icon={MessageSquare} label="Posts (7d)" value={null} tone="blue" />
+        <KpiCard icon={TrendingUp} label="Avg. Engagement" value={null} tone="pink" />
+        <KpiCard icon={Target} label="Opportunities" value={String(COMPETITOR_OPPORTUNITIES.length)} tone="amber" />
       </div>
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">

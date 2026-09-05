@@ -34,7 +34,7 @@ export default function WSAutomationsPage() {
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Zap} label="Active" value={String(active.length)} tone="violet" />
         <KpiCard icon={TrendingUp} label="Contacts Enrolled" value={String(WS_AUTOMATIONS.reduce((s, a) => s + a.contacts, 0).toLocaleString())} tone="blue" />
-        <KpiCard icon={DollarSign} label="Revenue Influenced" value={`$${(totalRev / 1000).toFixed(0)}K`} delta="24%" tone="green" />
+        <KpiCard icon={DollarSign} label="Revenue Influenced" value={`$${(totalRev / 1000).toFixed(0)}K`} tone="green" />
         <KpiCard icon={AlertTriangle} label="Health Warnings" value={String(warn.length)} deltaTone={warn.length ? "down" : "up"} delta={warn.length ? "1 needs review" : "All healthy"} tone={warn.length ? "amber" : "green"} />
       </div>
 

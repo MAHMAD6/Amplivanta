@@ -30,7 +30,7 @@ export default function QueuePage() {
         <KpiCard icon={ListChecks} label="Queued" value={String(QUEUE.filter((q) => q.status === "Queued").length)} tone="blue" />
         <KpiCard icon={Zap} label="Publishing Now" value={String(QUEUE.filter((q) => q.status === "Publishing").length)} tone="violet" />
         <KpiCard icon={AlertTriangle} label="Failed" value={String(QUEUE.filter((q) => q.status === "Failed").length)} deltaTone="down" delta="Retry available" tone="pink" />
-        <KpiCard icon={Timer} label="Avg. Wait" value="4m" delta="Healthy" tone="green" />
+        <KpiCard icon={Timer} label="Avg. Wait" value={null} tone="green" />
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">

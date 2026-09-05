@@ -27,9 +27,9 @@ export default function TrendingPage() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={TrendingUp} label="Trending Topics" value={String(TRENDS.length)} tone="violet" />
-        <KpiCard icon={Zap} label="Avg. Velocity" value="34" delta="12 pts" tone="pink" />
-        <KpiCard icon={Globe} label="Sources" value="5" tone="blue" />
-        <KpiCard icon={MessageCircle} label="Mentions (24h)" value="37.4K" delta="22%" tone="green" />
+        <KpiCard icon={Zap} label="Avg. Velocity" value={null} tone="pink" />
+        <KpiCard icon={Globe} label="Sources" value={null} tone="blue" />
+        <KpiCard icon={MessageCircle} label="Mentions (24h)" value={null} tone="green" />
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">

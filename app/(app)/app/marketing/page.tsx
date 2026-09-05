@@ -36,12 +36,12 @@ export default async function MarketingDashboardPage() {
       <MarketingSubnav />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <KpiCard icon={Target} label="Active Campaigns" value="4" delta="2 this week" tone="violet" />
-        <KpiCard icon={WFI} label="Active Workflows" value="34" delta="4 launched" tone="pink" />
-        <KpiCard icon={Users} label="New Leads (30d)" value="2,543" delta="18.6%" tone="blue" />
-        <KpiCard icon={Mail} label="Emails Sent" value="128K" delta="24%" tone="orange" />
-        <KpiCard icon={TrendingUp} label="Conversion Rate" value="4.2%" delta="0.6 pts" tone="green" />
-        <KpiCard icon={DollarSign} label="Revenue Influenced" value="$342K" delta="22%" tone="teal" />
+        <KpiCard icon={Target} label="Active Campaigns" value={null} tone="violet" />
+        <KpiCard icon={WFI} label="Active Workflows" value={null} tone="pink" />
+        <KpiCard icon={Users} label="New Leads (30d)" value={null} tone="blue" />
+        <KpiCard icon={Mail} label="Emails Sent" value={null} tone="orange" />
+        <KpiCard icon={TrendingUp} label="Conversion Rate" value={null} tone="green" />
+        <KpiCard icon={DollarSign} label="Revenue Influenced" value={null} tone="teal" />
       </div>
 
       <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">

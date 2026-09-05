@@ -26,9 +26,9 @@ export default function FormsPage() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={ClipboardList} label="Total Forms" value={String(FORMS.length)} tone="violet" />
-        <KpiCard icon={Activity} label="Submissions (30d)" value="5.4K" delta="18%" tone="blue" />
-        <KpiCard icon={TrendingUp} label="Avg. Conv. Rate" value="12.6%" delta="1.4 pts" tone="green" />
-        <KpiCard icon={ShieldCheck} label="Compliant" value="100%" delta="Consent enforced" tone="teal" />
+        <KpiCard icon={Activity} label="Submissions (30d)" value={null} tone="blue" />
+        <KpiCard icon={TrendingUp} label="Avg. Conv. Rate" value={null} tone="green" />
+        <KpiCard icon={ShieldCheck} label="Compliant" value={null} tone="teal" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

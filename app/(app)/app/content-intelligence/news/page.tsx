@@ -36,10 +36,10 @@ export default function NewsPage() {
       <IntelSubnav />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Newspaper} label="Stories Today" value="24" delta="↑ 12%" tone="violet" />
-        <KpiCard icon={TrendingUp} label="High Impact" value="4" tone="pink" />
-        <KpiCard icon={BellI} label="Alerts" value="3" tone="amber" />
-        <KpiCard icon={Bookmark} label="Saved" value="12" tone="blue" />
+        <KpiCard icon={Newspaper} label="Stories Today" value={null} tone="violet" />
+        <KpiCard icon={TrendingUp} label="High Impact" value={null} tone="pink" />
+        <KpiCard icon={BellI} label="Alerts" value={null} tone="amber" />
+        <KpiCard icon={Bookmark} label="Saved" value={null} tone="blue" />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">

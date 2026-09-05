@@ -35,9 +35,9 @@ export default async function WorkflowsPage() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Zap} label="Active Workflows" value={String(workflows.filter((w) => w.status === "Active").length)} tone="violet" />
-        <KpiCard icon={Mail} label="Enrolled (30d)" value="4.2K" delta="18%" tone="blue" />
-        <KpiCard icon={Clock} label="Avg. Completion" value="34%" delta="4 pts" tone="green" />
-        <KpiCard icon={GitBranch} label="Steps Executed" value="128K" delta="22%" tone="pink" />
+        <KpiCard icon={Mail} label="Enrolled (30d)" value={null} tone="blue" />
+        <KpiCard icon={Clock} label="Avg. Completion" value={null} tone="green" />
+        <KpiCard icon={GitBranch} label="Steps Executed" value={null} tone="pink" />
       </div>
 
       {/* Builder sandbox preview */}

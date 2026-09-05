@@ -21,9 +21,9 @@ export default function AutoTemplatesPage() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Zap} label="Templates Available" value={String(AUTO_TEMPLATES.length)} tone="violet" />
-        <KpiCard icon={Sparkles} label="AI Recommended" value="3" tone="pink" />
-        <KpiCard icon={Clock} label="Fastest Setup" value="10 min" tone="green" />
-        <KpiCard icon={Zap} label="Total Uses" value="3.4K" delta="This month" tone="blue" />
+        <KpiCard icon={Sparkles} label="AI Recommended" value={null} tone="pink" />
+        <KpiCard icon={Clock} label="Fastest Setup" value={null} tone="green" />
+        <KpiCard icon={Zap} label="Total Uses" value={null} tone="blue" />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">

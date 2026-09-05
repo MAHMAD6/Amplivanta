@@ -42,10 +42,10 @@ export default async function ActivitiesPage() {
       {live && <LiveBadge label={`Live · ${activities.length} activities from database`} />}
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Mail} label="Emails Sent" value="428" delta="18% vs last 30 days" tone="blue" />
-        <KpiCard icon={Phone} label="Calls Logged" value="142" delta="9%" tone="green" />
-        <KpiCard icon={CalIcon} label="Meetings" value="38" delta="4 upcoming" tone="violet" />
-        <KpiCard icon={StickyNote} label="Notes Added" value="256" delta="24%" tone="amber" />
+        <KpiCard icon={Mail} label="Emails Sent" value={null} tone="blue" />
+        <KpiCard icon={Phone} label="Calls Logged" value={null} tone="green" />
+        <KpiCard icon={CalIcon} label="Meetings" value={null} tone="violet" />
+        <KpiCard icon={StickyNote} label="Notes Added" value={null} tone="amber" />
       </div>
 
       <div className="rounded-2xl border border-line bg-white p-6 shadow-card">

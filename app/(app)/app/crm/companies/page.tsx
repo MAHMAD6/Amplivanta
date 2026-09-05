@@ -56,12 +56,12 @@ export default async function CompaniesPage() {
       {live && <LiveBadge label={`Live · ${total} companies from database`} />}
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <KpiCard icon={Building2} tone="violet" label="Total Companies" value={total.toLocaleString()} delta="12.3% vs last month" />
-        <KpiCard icon={Users2} tone="green" label="Active Accounts" value={active.toLocaleString()} delta="8.7% vs last month" />
-        <KpiCard icon={Snowflake} tone="blue" label="New This Month" value={String(Math.max(1, Math.round(total * 0.06)))} delta="20.0% vs last month" />
-        <KpiCard icon={TrendingUp} tone="orange" label="Expansion Opps" value={String(openDeals)} delta="15.5% vs last month" />
-        <KpiCard icon={DollarSign} tone="indigo" label="Total ARR" value={money(totalArr)} delta="9.4% vs last month" />
-        <KpiCard icon={HeartPulse} tone="pink" label="Health Score" value={String(avgHealth)} delta="6 pts vs last month" />
+        <KpiCard icon={Building2} tone="violet" label="Total Companies" value={total.toLocaleString()} />
+        <KpiCard icon={Users2} tone="green" label="Active Accounts" value={active.toLocaleString()} />
+        <KpiCard icon={Snowflake} tone="blue" label="New This Month" value={String(Math.max(1, Math.round(total * 0.06)))} />
+        <KpiCard icon={TrendingUp} tone="orange" label="Expansion Opps" value={String(openDeals)} />
+        <KpiCard icon={DollarSign} tone="indigo" label="Total ARR" value={money(totalArr)} />
+        <KpiCard icon={HeartPulse} tone="pink" label="Health Score" value={String(avgHealth)} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">

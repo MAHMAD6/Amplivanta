@@ -30,8 +30,8 @@ export default function ChannelPlanPage() {
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={DollarSign} label="Planned Budget" value={`$${(totalBudget / 1000).toFixed(0)}K`} tone="violet" />
         <KpiCard icon={DollarSign} label="Actual Spend" value={`$${(totalSpend / 1000).toFixed(0)}K`} delta={`${Math.round((totalSpend / totalBudget) * 100)}% used`} tone="pink" />
-        <KpiCard icon={Target} label="Leads" value={totalLeads.toLocaleString()} delta="14%" tone="blue" />
-        <KpiCard icon={TrendingUp} label="Avg. ROAS" value={`${avgRoas.toFixed(1)}×`} delta="Target 3×+" tone="green" />
+        <KpiCard icon={Target} label="Leads" value={totalLeads.toLocaleString()} tone="blue" />
+        <KpiCard icon={TrendingUp} label="Avg. ROAS" value={`${avgRoas.toFixed(1)}×`} tone="green" />
       </div>
 
       <div className="mb-6 rounded-2xl border border-line bg-white p-5 shadow-card">

@@ -56,12 +56,12 @@ export default async function DeliverabilityPage() {
       {live && <LiveBadge label={`Live · ${campaigns.length} campaigns from database`} />}
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <KpiCard icon={ShieldCheck} tone="violet" label="Deliverability Score" value={`${score}/100`} delta="6 pts vs last week" />
-        <KpiCard icon={Inbox} tone="blue" label="Inbox Placement Rate" value={`${avgInbox}%`} delta="5.3% vs last week" />
-        <KpiCard icon={MailWarning} tone="teal" label="Bounce Rate" value={`${avgBounce}%`} delta="0.18% vs last week" deltaTone="down" />
-        <KpiCard icon={AlertTriangle} tone="orange" label="Spam Complaint Rate" value={`${avgSpam}%`} delta="0.02% vs last week" deltaTone="down" />
-        <KpiCard icon={Award} tone="indigo" label="Sender Reputation" value="Good" delta="Improving" deltaTone="neutral" />
-        <KpiCard icon={BadgeCheck} tone="green" label="Auth Coverage" value="100%" delta="Fully Authenticated" deltaTone="neutral" />
+        <KpiCard icon={ShieldCheck} tone="violet" label="Deliverability Score" value={`${score}/100`} />
+        <KpiCard icon={Inbox} tone="blue" label="Inbox Placement Rate" value={`${avgInbox}%`} />
+        <KpiCard icon={MailWarning} tone="teal" label="Bounce Rate" value={`${avgBounce}%`} deltaTone="down" />
+        <KpiCard icon={AlertTriangle} tone="orange" label="Spam Complaint Rate" value={`${avgSpam}%`} deltaTone="down" />
+        <KpiCard icon={Award} tone="indigo" label="Sender Reputation" value={null} deltaTone="neutral" />
+        <KpiCard icon={BadgeCheck} tone="green" label="Auth Coverage" value={null} deltaTone="neutral" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">

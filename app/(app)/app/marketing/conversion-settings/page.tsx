@@ -35,10 +35,10 @@ export default async function ConversionSettingsPage() {
       {live && <LiveBadge label={`Live · ${rows.length} conversion events from database`} />}
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard icon={Target} tone="violet" label="Active Conversions" value={String(activeCount)} delta="2 this month" />
-        <KpiCard icon={TrendingUp} tone="green" label="Total Conversions" value={totalConv.toLocaleString()} delta="18.6% vs last month" />
-        <KpiCard icon={PieChart} tone="blue" label="Avg. Conversion Rate" value={`${avgRate}%`} delta="0.92% vs last month" />
-        <KpiCard icon={DollarSign} tone="orange" label="Revenue Attributed" value={`$${revenue.toLocaleString()}`} delta="21.4% vs last month" />
+        <KpiCard icon={Target} tone="violet" label="Active Conversions" value={String(activeCount)} />
+        <KpiCard icon={TrendingUp} tone="green" label="Total Conversions" value={totalConv.toLocaleString()} />
+        <KpiCard icon={PieChart} tone="blue" label="Avg. Conversion Rate" value={`${avgRate}%`} />
+        <KpiCard icon={DollarSign} tone="orange" label="Revenue Attributed" value={`$${revenue.toLocaleString()}`} />
       </div>
 
       <div className="rounded-2xl border border-line bg-white shadow-card">

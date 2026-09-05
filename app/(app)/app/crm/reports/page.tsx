@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Download, Share2, DollarSign, Target, TrendingUp, Users, Percent, Timer } from "lucide-react";
 import { PageHeader } from "@/components/amplivanta/page-header";
+import { ChartPlaceholder } from "@/components/amplivanta/chart-placeholder";
 import { CrmSubnav } from "@/components/amplivanta/crm-subnav";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
@@ -35,12 +36,12 @@ export default function CrmReportsPage() {
       <CrmSubnav />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <KpiCard icon={DollarSign} label="Revenue (30d)" value="$342K" delta="22%" tone="green" />
-        <KpiCard icon={Target} label="Deals Won" value="65" delta="15%" tone="violet" />
-        <KpiCard icon={Percent} label="Win Rate" value="34%" delta="4 pts" tone="pink" />
-        <KpiCard icon={Timer} label="Avg. Cycle" value="42d" delta="6d faster" tone="blue" />
-        <KpiCard icon={TrendingUp} label="Avg. Deal Size" value="$5,262" delta="8%" tone="orange" />
-        <KpiCard icon={Users} label="Active Reps" value="8" tone="teal" />
+        <KpiCard icon={DollarSign} label="Revenue (30d)" value={null} tone="green" />
+        <KpiCard icon={Target} label="Deals Won" value={null} tone="violet" />
+        <KpiCard icon={Percent} label="Win Rate" value={null} tone="pink" />
+        <KpiCard icon={Timer} label="Avg. Cycle" value={null} tone="blue" />
+        <KpiCard icon={TrendingUp} label="Avg. Deal Size" value={null} tone="orange" />
+        <KpiCard icon={Users} label="Active Reps" value={null} tone="teal" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -49,19 +50,7 @@ export default function CrmReportsPage() {
             <div className="text-[14px] font-bold text-ink">Revenue Trend</div>
             <span className="text-[11px] text-ink-muted">Last 12 weeks</span>
           </div>
-          <svg viewBox="0 0 600 220" className="h-56 w-full">
-            <defs>
-              <linearGradient id="revGrad" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0" stopColor="#6D3BF5" stopOpacity="0.5" />
-                <stop offset="1" stopColor="#6D3BF5" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path d="M0,180 C60,140 120,150 180,120 C240,90 300,110 360,80 C420,50 480,70 540,40 L600,30 L600,220 L0,220 Z" fill="url(#revGrad)" />
-            <path d="M0,180 C60,140 120,150 180,120 C240,90 300,110 360,80 C420,50 480,70 540,40 L600,30" fill="none" stroke="#6D3BF5" strokeWidth="2.5" />
-            {[0, 100, 200, 300, 400, 500, 600].map((x) => (
-              <line key={x} x1={x} y1="0" x2={x} y2="220" stroke="#e9e7f0" strokeDasharray="2 4" />
-            ))}
-          </svg>
+          <ChartPlaceholder />
         </div>
 
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">

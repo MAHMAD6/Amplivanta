@@ -32,8 +32,8 @@ export default function IntegrationsHomePage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Puzzle} label="Connected Apps" value={String(connected.length)} tone="violet" />
         <KpiCard icon={Zap} label="Available" value={String(INTEGRATIONS.length - connected.length)} tone="pink" />
-        <KpiCard icon={Activity} label="Sync Health" value="98.4%" tone="green" />
-        <KpiCard icon={Webhook} label="Active Webhooks" value="3" tone="blue" />
+        <KpiCard icon={Activity} label="Sync Health" value={null} tone="green" />
+        <KpiCard icon={Webhook} label="Active Webhooks" value={null} tone="blue" />
       </div>
 
       {attention.length > 0 && (

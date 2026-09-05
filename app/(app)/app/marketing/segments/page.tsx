@@ -26,10 +26,10 @@ export default function SegmentsPage() {
       <MarketingSubnav />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Users} label="Total Contacts" value="28.4K" delta="12%" tone="violet" />
-        <KpiCard icon={TrendingUp} label="Segments" value={String(SEGMENTS.length)} delta="1 this week" tone="pink" />
+        <KpiCard icon={Users} label="Total Contacts" value={null} tone="violet" />
+        <KpiCard icon={TrendingUp} label="Segments" value={String(SEGMENTS.length)} tone="pink" />
         <KpiCard icon={Zap} label="Auto-refreshing" value={String(SEGMENTS.filter((s) => s.type === "Dynamic").length)} tone="blue" />
-        <KpiCard icon={Sparkles} label="AI Suggestions" value="3" delta="New" tone="teal" />
+        <KpiCard icon={Sparkles} label="AI Suggestions" value={null} tone="teal" />
       </div>
 
       <div className="mb-4 flex h-10 max-w-md items-center gap-2 rounded-xl border border-line bg-white px-3">

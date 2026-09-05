@@ -36,10 +36,10 @@ export default function AssetLibraryPage() {
       <WorkspaceSubnav />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={HardDrive} label="Storage Used" value="42 / 100 GB" tone="violet" />
-        <KpiCard icon={Folder} label="Folders" value="12" tone="amber" />
-        <KpiCard icon={ImageIcon} label="Assets" value="128" delta="14 this week" tone="pink" />
-        <KpiCard icon={Sparkles} label="AI Generated" value="42" tone="blue" />
+        <KpiCard icon={HardDrive} label="Storage Used" value={null} tone="violet" />
+        <KpiCard icon={Folder} label="Folders" value={null} tone="amber" />
+        <KpiCard icon={ImageIcon} label="Assets" value={null} tone="pink" />
+        <KpiCard icon={Sparkles} label="AI Generated" value={null} tone="blue" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[220px_1fr]">

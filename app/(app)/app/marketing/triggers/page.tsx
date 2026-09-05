@@ -40,12 +40,12 @@ export default async function TriggersPage() {
       {live && <LiveBadge label={`Live · ${triggers.length} triggers from database`} />}
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <KpiCard icon={Zap} tone="violet" label="Active Triggers" value={String(active)} delta="12.5% vs last month" />
-        <KpiCard icon={Share2} tone="blue" label="Events Processed" value="245,832" delta="18.6% vs last month" />
-        <KpiCard icon={CheckCircle2} tone="green" label="Success Rate" value="98.72%" delta="2.1% vs last month" />
-        <KpiCard icon={XCircle} tone="red" label="Failed Events" value="1,842" delta="14.3% vs last month" deltaTone="down" />
-        <KpiCard icon={Clock} tone="indigo" label="Avg. Response Time" value="412ms" delta="8.4% vs last month" deltaTone="down" />
-        <KpiCard icon={Target} tone="teal" label="Automation Coverage" value="78.4%" delta="7.8% vs last month" />
+        <KpiCard icon={Zap} tone="violet" label="Active Triggers" value={String(active)} />
+        <KpiCard icon={Share2} tone="blue" label="Events Processed" value={null} />
+        <KpiCard icon={CheckCircle2} tone="green" label="Success Rate" value={null} />
+        <KpiCard icon={XCircle} tone="red" label="Failed Events" value={null} deltaTone="down" />
+        <KpiCard icon={Clock} tone="indigo" label="Avg. Response Time" value={null} deltaTone="down" />
+        <KpiCard icon={Target} tone="teal" label="Automation Coverage" value={null} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">

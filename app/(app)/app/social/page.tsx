@@ -35,11 +35,11 @@ export default function SocialDashboardPage() {
       <SocialSubnav />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <KpiCard icon={FileText} label="Posts Published" value="48" delta="24% vs last 7 days" tone="violet" />
-        <KpiCard icon={CalIcon} label="Scheduled" value="36" delta="18%" tone="blue" />
-        <KpiCard icon={TrendingUp} label="Engagement" value="8.7K" delta="30%" tone="green" />
-        <KpiCard icon={BarChart3} label="Impressions" value="142K" delta="22%" tone="orange" />
-        <KpiCard icon={Users} label="Profile Visits" value="2.6K" delta="16%" tone="pink" />
+        <KpiCard icon={FileText} label="Posts Published" value={null} tone="violet" />
+        <KpiCard icon={CalIcon} label="Scheduled" value={null} tone="blue" />
+        <KpiCard icon={TrendingUp} label="Engagement" value={null} tone="green" />
+        <KpiCard icon={BarChart3} label="Impressions" value={null} tone="orange" />
+        <KpiCard icon={Users} label="Profile Visits" value={null} tone="pink" />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_1fr]">

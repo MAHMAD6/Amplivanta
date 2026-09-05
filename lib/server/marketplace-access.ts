@@ -3,6 +3,7 @@ import { cache } from "react";
 import { SellerStatus } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getEffectiveAccess } from "@/lib/server/rbac";
 import {
   MARKETPLACE_FLAGS,
   MARKETPLACE_MODULE_ID,
@@ -33,18 +34,46 @@ export type MarketplaceViewer = {
   seller: { id: string; status: SellerStatus; storeName: string; slug: string } | null;
   isApprovedSeller: boolean;
   permissions: Set<MarketplacePermission>;
+  /** Permissions granted only within an organization / workspace / module. */
+  scopedPermissions: { permission: string; scope: { level: string; organizationId?: string | null; workspaceId?: string | null; moduleKey?: string | null } }[];
   flags: Record<string, boolean>;
   /** True when the platform database could not be reached. */
   degraded: boolean;
 };
 
-/** Resolves module state from ModuleControl, defaulting to disabled when unset. */
-async function resolveModuleEnabled(): Promise<{ enabled: boolean; degraded: boolean }> {
+/**
+ * Resolves module availability in the approved evaluation order:
+ *   global kill switch -> plan/entitlement -> organization/workspace override.
+ * Each step can only narrow access, never widen it.
+ */
+async function resolveModuleEnabled(
+  organizationId: string | null,
+  planId: string | null,
+): Promise<{ enabled: boolean; degraded: boolean }> {
   try {
-    const row = await prisma.moduleControl.findUnique({ where: { key: MARKETPLACE_MODULE_ID } });
-    // Absent row means the operator has not turned Marketplace on yet. The
-    // approved default is configuration-driven, so we do not assume "on".
-    return { enabled: row?.status === "ENABLED", degraded: false };
+    // 1. global kill switch — absent row means the operator has not enabled it.
+    const globalRow = await prisma.moduleControl.findUnique({
+      where: { key: MARKETPLACE_MODULE_ID },
+    });
+    if (globalRow?.status !== "ENABLED") return { enabled: false, degraded: false };
+
+    // 2. plan / entitlement — when the plan declares the feature, it must be on.
+    if (planId) {
+      const ent = await prisma.featureEntitlement.findUnique({
+        where: { planId_featureKey: { planId, featureKey: MARKETPLACE_MODULE_ID } },
+      });
+      if (ent && !ent.enabled) return { enabled: false, degraded: false };
+    }
+
+    // 3. organization / workspace override.
+    if (organizationId) {
+      const orgRow = await prisma.moduleControl.findFirst({
+        where: { key: MARKETPLACE_MODULE_ID, organizationId },
+      });
+      if (orgRow && orgRow.status !== "ENABLED") return { enabled: false, degraded: false };
+    }
+
+    return { enabled: true, degraded: false };
   } catch {
     return { enabled: false, degraded: true };
   }
@@ -62,18 +91,12 @@ async function resolveFlags(): Promise<Record<string, boolean>> {
   return out;
 }
 
-function permissionsFor(role: string | null, sellerStatus: SellerStatus | null): Set<MarketplacePermission> {
-  const grants: MarketplacePermission[] = [];
-  if (role === "SUPER_ADMIN") grants.push(...MARKETPLACE_ROLE_GRANTS.super_admin);
-  else if (role === "ADMIN" || role === "OWNER") grants.push(...MARKETPLACE_ROLE_GRANTS.marketplace_operations_admin);
-
-  if (sellerStatus === SellerStatus.APPROVED) grants.push(...MARKETPLACE_ROLE_GRANTS.approved_seller);
-  else if (sellerStatus === SellerStatus.APPLICANT || sellerStatus === SellerStatus.UNDER_REVIEW) {
-    grants.push(...MARKETPLACE_ROLE_GRANTS.seller_applicant);
-  } else {
-    grants.push(...MARKETPLACE_ROLE_GRANTS.authenticated_buyer);
+function sellerGrants(sellerStatus: SellerStatus | null): MarketplacePermission[] {
+  if (sellerStatus === SellerStatus.APPROVED) return [...MARKETPLACE_ROLE_GRANTS.approved_seller];
+  if (sellerStatus === SellerStatus.APPLICANT || sellerStatus === SellerStatus.UNDER_REVIEW) {
+    return [...MARKETPLACE_ROLE_GRANTS.seller_applicant];
   }
-  return new Set(grants);
+  return [...MARKETPLACE_ROLE_GRANTS.authenticated_buyer];
 }
 
 /** Cached per request so a page and its children resolve access once. */
@@ -81,7 +104,29 @@ export const getMarketplaceViewer = cache(async (): Promise<MarketplaceViewer> =
   const session = await auth();
   const user = session?.user as { id?: string; email?: string; name?: string; role?: string } | undefined;
 
-  const [{ enabled, degraded }, flags] = await Promise.all([resolveModuleEnabled(), resolveFlags()]);
+  // Tenant context drives the plan/entitlement and org-override steps.
+  let organizationId: string | null = null;
+  let planId: string | null = null;
+  if (user?.id) {
+    try {
+      const membership = await prisma.membership.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "asc" },
+        select: { workspace: { select: { subscriptions: { select: { planId: true }, take: 1 } } } },
+      });
+      planId = membership?.workspace.subscriptions[0]?.planId ?? null;
+    } catch {
+      planId = null;
+    }
+  }
+
+  const [{ enabled, degraded }, flags] = await Promise.all([
+    resolveModuleEnabled(organizationId, planId),
+    resolveFlags(),
+  ]);
+
+  // Scoped RBAC: assignment-derived permissions, not just the account role.
+  const access = await getEffectiveAccess(user?.id ?? null, user?.role ?? null);
 
   let seller: MarketplaceViewer["seller"] = null;
   if (user?.id) {
@@ -101,9 +146,13 @@ export const getMarketplaceViewer = cache(async (): Promise<MarketplaceViewer> =
     moduleEnabled: enabled,
     seller,
     isApprovedSeller: seller?.status === SellerStatus.APPROVED,
-    permissions: permissionsFor(user?.role ?? null, seller?.status ?? null),
+    permissions: new Set([
+      ...access.global,
+      ...sellerGrants(seller?.status ?? null),
+    ] as MarketplacePermission[]),
+    scopedPermissions: access.scoped,
     flags,
-    degraded,
+    degraded: degraded || access.degraded,
   };
 });
 

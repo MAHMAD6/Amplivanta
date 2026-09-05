@@ -35,10 +35,10 @@ export default function ContentHubPage() {
       <WorkspaceSubnav />
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={FileText} label="Total Content" value="128" delta="12 this week" tone="violet" />
-        <KpiCard icon={Sparkles} label="AI Generated" value="42" delta="8 today" tone="pink" />
-        <KpiCard icon={Calendar} label="Scheduled" value="18" tone="blue" />
-        <KpiCard icon={FileText} label="Published (30d)" value="62" delta="24%" tone="green" />
+        <KpiCard icon={FileText} label="Total Content" value={null} tone="violet" />
+        <KpiCard icon={Sparkles} label="AI Generated" value={null} tone="pink" />
+        <KpiCard icon={Calendar} label="Scheduled" value={null} tone="blue" />
+        <KpiCard icon={FileText} label="Published (30d)" value={null} tone="green" />
       </div>
 
       {/* Quick create */}
