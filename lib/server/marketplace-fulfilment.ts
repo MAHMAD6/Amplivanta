@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { canFulfil, type FulfilReason } from "@/lib/marketplace/order-policy";
 
 /**
  * Order fulfilment.
@@ -10,8 +11,6 @@ import { prisma } from "@/lib/prisma";
  * payment has actually been confirmed — either because the order total was zero
  * (nothing to charge) or because a verified payment-provider webhook said so.
  */
-
-export type FulfilReason = "zero_total" | "provider_confirmed";
 
 /**
  * Marks an order paid, activates its entitlements and writes seller ledger
@@ -26,17 +25,10 @@ export async function fulfilOrder(orderId: string, reason: FulfilReason, provide
     });
     if (!order) return { ok: false as const, error: "Order not found." };
 
-    // Already fulfilled — do nothing rather than duplicating entitlements.
-    if (order.status === "ACCESS_READY" || order.status === "PAID") {
-      return { ok: true as const, alreadyFulfilled: true };
-    }
-    if (!["INITIATED", "PAYMENT_PENDING"].includes(order.status)) {
-      return { ok: false as const, error: `An order in ${order.status.toLowerCase()} cannot be fulfilled.` };
-    }
-    // Guard: a non-zero order may only be fulfilled by a confirmed payment.
-    if (order.totalCents > 0 && reason !== "provider_confirmed") {
-      return { ok: false as const, error: "A paid order cannot be fulfilled without a confirmed payment." };
-    }
+    // Shared, unit-tested policy decides whether fulfilment is allowed.
+    const decision = canFulfil({ status: order.status, totalCents: order.totalCents }, reason);
+    if (!decision.ok) return { ok: false as const, error: decision.error };
+    if (decision.alreadyFulfilled) return { ok: true as const, alreadyFulfilled: true };
 
     await tx.marketplaceOrder.update({
       where: { id: orderId },

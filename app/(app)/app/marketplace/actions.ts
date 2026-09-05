@@ -7,6 +7,7 @@ import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
 import { getMarketplaceViewer, guardMarketplace } from "@/lib/server/marketplace-access";
 import { getPaymentProvider, issueSignedUrl, malwareScanRequired, requiresPaymentProvider } from "@/lib/marketplace/providers";
 import { fulfilOrder } from "@/lib/server/marketplace-fulfilment";
+import { nextOrderStatusOnPlace } from "@/lib/marketplace/order-policy";
 
 export type MpResult = { ok: true; message: string } | { ok: false; error: string };
 
@@ -395,7 +396,7 @@ export async function placeOrder(): Promise<MpResult> {
       const created = await tx.marketplaceOrder.create({
         data: {
           buyerUserId: viewer.userId!,
-          status: quote.totalCents > 0 ? "PAYMENT_PENDING" : "INITIATED",
+          status: nextOrderStatusOnPlace(quote.totalCents),
           subtotalCents: quote.subtotalCents,
           taxCents: quote.taxCents,
           totalCents: quote.totalCents,

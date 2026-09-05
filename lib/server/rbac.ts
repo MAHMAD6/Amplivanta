@@ -3,6 +3,7 @@ import { cache } from "react";
 import { AdminScopeLevel } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { MARKETPLACE_ROLE_GRANTS, type MarketplacePermission } from "@/lib/marketplace/config";
+import type { EffectiveAccess, Scope } from "@/lib/rbac-policy";
 
 /**
  * Scoped RBAC.
@@ -15,24 +16,6 @@ import { MARKETPLACE_ROLE_GRANTS, type MarketplacePermission } from "@/lib/marke
  * This is what makes sub-admins and the moderator / finance-admin roles real:
  * they are granted through AdminAssignment rather than by changing User.role.
  */
-
-export type Scope = {
-  level: AdminScopeLevel;
-  organizationId?: string | null;
-  workspaceId?: string | null;
-  moduleKey?: string | null;
-};
-
-export type EffectiveAccess = {
-  /** Permissions valid platform-wide. */
-  global: Set<string>;
-  /** Permissions valid only within a specific organization / workspace / module. */
-  scoped: { permission: string; scope: Scope }[];
-  /** True when the platform database could not be reached. */
-  degraded: boolean;
-};
-
-const EMPTY: EffectiveAccess = { global: new Set(), scoped: [], degraded: false };
 
 /** Base grants implied by the account-level role. */
 function baseGrants(role: string | null): MarketplacePermission[] {
@@ -84,32 +67,6 @@ export const getEffectiveAccess = cache(async (userId: string | null, role: stri
   }
 });
 
-/** Does the user hold `permission`, optionally within a specific scope? */
-export function hasPermission(access: EffectiveAccess, permission: string, scope?: Scope) {
-  if (access.global.has(permission)) return true;
-  if (!scope) return false;
-  return access.scoped.some((s) => {
-    if (s.permission !== permission) return false;
-    if (s.scope.level !== scope.level) return false;
-    if (scope.organizationId && s.scope.organizationId !== scope.organizationId) return false;
-    if (scope.workspaceId && s.scope.workspaceId !== scope.workspaceId) return false;
-    if (scope.moduleKey && s.scope.moduleKey !== scope.moduleKey) return false;
-    return true;
-  });
-}
+export { hasPermission, canGrant } from "@/lib/rbac-policy";
 
-/**
- * Guards against privilege escalation: a granter may only assign permissions
- * they themselves hold globally. Super admins are exempt.
- */
-export function canGrant(access: EffectiveAccess, role: string | null, permissions: string[]) {
-  if (role === "SUPER_ADMIN") return { ok: true as const };
-  const missing = permissions.filter((p) => !access.global.has(p));
-  if (missing.length > 0) {
-    return {
-      ok: false as const,
-      error: `You cannot grant permissions you do not hold: ${missing.slice(0, 3).join(", ")}${missing.length > 3 ? "…" : ""}`,
-    };
-  }
-  return { ok: true as const };
-}
+export type { EffectiveAccess, Scope } from "@/lib/rbac-policy";

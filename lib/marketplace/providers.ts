@@ -44,14 +44,7 @@ export async function malwareScanRequired(): Promise<boolean> {
 export const getPayoutProvider = () => readSetting("payout.provider");
 export const getStorageProvider = () => readSetting("storage.provider");
 
-/**
- * A zero-total order needs no payment provider, so free products complete the
- * full purchase → entitlement → download flow today. Anything with a balance
- * due requires a configured provider.
- */
-export function requiresPaymentProvider(totalCents: number) {
-  return totalCents > 0;
-}
+export { requiresPaymentProvider } from "@/lib/marketplace/providers.policy";
 
 export type SignedUrlResult =
   | { ok: true; url: string; expiresAt: Date }
