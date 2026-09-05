@@ -49,9 +49,9 @@ export function AppTopbar({ user }: { user?: { name?: string | null; email?: str
             <Sparkles className="h-3.5 w-3.5" />
             AI Workspace
           </Link>
-          <IconBtn icon={Gift} />
-          <IconBtn icon={Bell} badge="3" onClick={() => setNotifOpen(true)} />
-          <IconBtn icon={HelpCircle} />
+          <IconBtn icon={Gift} label="Rewards" />
+          <IconBtn icon={Bell} onClick={() => setNotifOpen(true)} label="Notifications" />
+          <IconBtn icon={HelpCircle} label="Help" />
           <button className="ml-2 flex items-center gap-2 rounded-xl border border-line bg-white p-1 pr-3 transition hover:border-ink/30">
             <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-violet to-orange-brand" />
             <div className="hidden text-left leading-tight lg:block">
@@ -66,10 +66,11 @@ export function AppTopbar({ user }: { user?: { name?: string | null; email?: str
   );
 }
 
-function IconBtn({ icon: Icon, badge, onClick }: { icon: React.ComponentType<{ className?: string }>; badge?: string; onClick?: () => void }) {
+function IconBtn({ icon: Icon, badge, onClick, label }: { icon: React.ComponentType<{ className?: string }>; badge?: string; onClick?: () => void; label: string }) {
   return (
     <button
       onClick={onClick}
+      aria-label={label}
       className={cn("relative flex h-9 w-9 items-center justify-center rounded-xl text-ink-soft transition hover:bg-bg-soft hover:text-ink")}
     >
       <Icon className="h-4 w-4" />

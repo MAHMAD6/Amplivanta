@@ -29,7 +29,7 @@ export function AppShell({
       {/* Mobile topbar */}
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-white px-4 lg:hidden">
         <div className="flex items-center gap-2">
-          <LogoMark className="h-7 w-7" />
+          <LogoMark className="h-7 w-7" gradientId="amp-mark-app-mobile" />
           <span className="text-[14px] font-bold text-ink">Amplivanta</span>
         </div>
         <button onClick={() => setMobileOpen(true)} className="rounded-lg p-2 text-ink" aria-label="Open menu">

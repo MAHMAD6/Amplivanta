@@ -73,7 +73,7 @@ type Search = Record<string, string | string[] | undefined>;
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
   const found = findAdminPage(slug);
-  return { title: found ? `${found.page.page} — Super Admin` : "Super Admin" };
+  return { title: found ? `${found.page.page} — Admin` : "Admin" };
 }
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);

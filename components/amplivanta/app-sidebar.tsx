@@ -40,7 +40,7 @@ export function AppSidebar({
     <aside className="fixed inset-y-0 left-0 z-30 flex w-[248px] flex-col border-r border-navy-border bg-[#0d0b18] text-white">
       {/* Logo */}
       <div className="flex h-16 items-center gap-2.5 px-5">
-        <LogoMark className="h-8 w-8" />
+        <LogoMark className="h-8 w-8" gradientId="amp-mark-app-sidebar" />
         <div>
           <div className="text-[15px] font-bold leading-none">Amplivanta</div>
           <div className="mt-1 text-[9px] font-medium uppercase tracking-wider text-white/50">We Engineer Growth</div>
@@ -55,7 +55,7 @@ export function AppSidebar({
         >
           <div className="min-w-0">
             <div className="truncate text-[12.5px] font-semibold">{activeWs?.name ?? "No workspace"}</div>
-            <div className="text-[10px] text-white/50">{activeWs ? `${activeWs.plan} plan` : "None available"}</div>
+            <div className="text-[10px] text-white/70">{activeWs ? `${activeWs.plan} plan` : "None available"}</div>
           </div>
           <ChevronsUpDown className="h-3.5 w-3.5 text-white/50" />
         </button>
@@ -108,7 +108,7 @@ export function AppSidebar({
           if (items.length === 0) return null;
           return (
           <div key={section.label} className="mb-4">
-            <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-wider text-white/40">
+            <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-wider text-white/65">
               {section.label}
             </div>
             <div className="space-y-0.5">
@@ -172,7 +172,7 @@ export function AppSidebar({
       <div className="mx-3 mb-3 rounded-xl border border-white/10 bg-white/5 p-3">
         <div className="text-[10px] font-bold uppercase tracking-wider text-white/60">Your AI Credits</div>
         <div className="mt-1 text-[12px] text-white/50">No balance available yet</div>
-        <Link href="/app/settings/billing" className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-violet hover:text-white">
+        <Link href="/app/settings/billing" className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#c4b2ff] hover:text-white">
           Manage Credits →
         </Link>
       </div>
