@@ -35,8 +35,8 @@ export default function KnowledgeBasePage() {
         </button>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] min-w-[640px]">
-        <div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
           {/* Search hero */}
           <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet/[0.12] via-royal-tint to-violet/[0.06] p-8 shadow-card">
             <div className="max-w-xl">

@@ -30,8 +30,8 @@ export default function HelpCenterPage() {
     <div className="mx-auto max-w-[1500px]">
       <ResourceBreadcrumb current="Help Center" />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] min-w-[672px]">
-        <div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
           {/* Hero */}
           <section className="relative overflow-hidden rounded-3xl bg-white p-2">
             <div className="grid items-center gap-6 lg:grid-cols-[1.2fr_0.8fr]">

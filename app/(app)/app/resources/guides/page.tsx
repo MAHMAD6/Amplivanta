@@ -29,8 +29,8 @@ export default function GuidesPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] min-w-[640px]">
-        <div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="min-w-0">
           {/* Tracks */}
           <div className="grid gap-4 sm:grid-cols-2">
             {GUIDE_TRACKS.map((t) => (
