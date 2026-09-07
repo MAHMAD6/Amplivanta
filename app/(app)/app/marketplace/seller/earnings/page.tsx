@@ -73,7 +73,7 @@ export default async function SellerEarningsPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <MpStat label="Available balance" value={money(ledger?.availableCents)} />
         <MpStat label="Lifetime earnings" value={money(ledger?.lifetimeCents)} />
         <MpStat label="Ledger entries" value={ledger ? ledger.entries.toLocaleString("en-US") : null} />

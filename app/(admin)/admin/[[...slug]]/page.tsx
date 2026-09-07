@@ -365,7 +365,7 @@ export default async function SuperCatchAllPage({
     const o = await loadMarketplaceOverview();
     return (
       <>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <SuperStatCard icon={Wallet} label="Total sales" value={o.totalSales} />
           <SuperStatCard icon={ShoppingBag} label="Total orders" value={o.orders} />
           <SuperStatCard icon={Handshake} label="Active sellers" value={o.sellers} />

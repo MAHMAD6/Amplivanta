@@ -24,7 +24,7 @@ export default function ApiKeysPage() {
       />
       <IntegrationsSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Key} label="Active Keys" value={String(API_KEYS.filter((k) => k.status === "Active").length)} tone="violet" />
         <KpiCard icon={Activity} label="Calls (7d)" value={null} tone="blue" />
         <KpiCard icon={Activity} label="Rate Limit Used" value={null} tone="green" />
@@ -81,7 +81,7 @@ export default function ApiKeysPage() {
 
       <div className="mt-6 rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
         <div className="mb-2 flex items-center gap-1.5 text-[13px] font-bold text-ink"><BookOpen className="h-3.5 w-3.5 text-violet" /> Developer Resources</div>
-        <div className="grid gap-2 md:grid-cols-3 text-[12px]">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 text-[12px]">
           <a href="#" className="rounded-xl border border-line bg-white p-3 hover:border-violet/30"><div className="font-bold text-ink">REST API Reference</div><div className="text-[11px] text-ink-muted">Every endpoint · versioned</div></a>
           <a href="#" className="rounded-xl border border-line bg-white p-3 hover:border-violet/30"><div className="font-bold text-ink">SDKs</div><div className="text-[11px] text-ink-muted">TypeScript · Python · Go</div></a>
           <a href="#" className="rounded-xl border border-line bg-white p-3 hover:border-violet/30"><div className="font-bold text-ink">Rate limits</div><div className="text-[11px] text-ink-muted">5K req/min · burst 10K</div></a>

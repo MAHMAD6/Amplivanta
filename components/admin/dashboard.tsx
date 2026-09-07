@@ -74,7 +74,7 @@ export async function SuperDashboard() {
   return (
     <>
       {/* Status strip */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <SuperStatCard icon={ShieldCheck} label="System Status" value={null} tone="positive" href="/admin/system-management/system-health" />
         <SuperStatCard icon={Building2} label="Organizations" value={count(summary.organizations)} href="/admin/organizations/organizations" />
         <SuperStatCard icon={Users} label="Users" value={count(summary.users)} href="/admin/user-management/all-users" />
@@ -90,7 +90,7 @@ export async function SuperDashboard() {
             <p className="mt-0.5 text-[13px] text-ink-soft">Quick access to key administrative areas</p>
           </div>
         </div>
-        <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
           {MODULES.map((m) => (
             <Link
               key={m.name}
@@ -133,7 +133,7 @@ export async function SuperDashboard() {
       </SuperCard>
 
       {/* Activity / overview / quick actions */}
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
         <SuperCard>
           <div className="px-6 pt-6">
             <h2 className="text-[16px] font-bold text-admin-navy">Activity Center</h2>

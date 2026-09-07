@@ -38,7 +38,7 @@ export default function CrmPipelinePage() {
     <>
       {/* Hero */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-[1240px] items-start gap-10 px-4 py-12 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1240px] items-start gap-10 px-4 py-12 lg:grid-cols-2 lg:px-8">
           <div>
             <span className="inline-block rounded-full bg-royal-tint px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-royal-blue">CRM &amp; Pipeline</span>
             <h1 className="mt-4 font-display text-[44px] font-extrabold leading-[1.05] text-deep-navy lg:text-[52px]">Build Stronger Relationships. Grow Revenue.</h1>
@@ -53,13 +53,13 @@ export default function CrmPipelinePage() {
       </section>
 
       <Section title="Everything you need to manage customer relationships">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {NEED.map((c) => <FeatureCard key={c.title} {...c} center />)}
         </div>
       </Section>
 
       <Section title="Powerful features for growing businesses" bg>
-        <div className="grid gap-x-8 gap-y-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
             <div key={f.title} className="flex gap-3">
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${TONE[f.tone]}`}><f.icon className="h-5 w-5" /></span>
@@ -70,7 +70,7 @@ export default function CrmPipelinePage() {
       </Section>
 
       <Section title="Built for teams across your organization">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {TEAMS.map((t) => (
             <div key={t.title} className="rounded-2xl border border-line bg-white p-4 shadow-card">
               <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${TONE[t.tone]}`}><t.icon className="h-4 w-4" /></span>

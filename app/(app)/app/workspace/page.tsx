@@ -42,7 +42,7 @@ export default function WorkspaceHomePage() {
       />
       <WorkspaceSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <KpiCard icon={FolderKanban} label="Active Projects" value={String(WS_CAMPAIGNS.length)} tone="violet" />
         <KpiCard icon={Workflow} label="Active Automations" value={null} tone="pink" />
         <KpiCard icon={CheckCircle2} label="Pending Approvals" value={null} deltaTone="down" tone="amber" />
@@ -50,7 +50,7 @@ export default function WorkspaceHomePage() {
         <KpiCard icon={DollarSign} label="Revenue Influenced" value={null} tone="green" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Recent projects */}
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
@@ -99,7 +99,7 @@ export default function WorkspaceHomePage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Cross-Module Activity</div>

@@ -32,7 +32,7 @@ export default function VideoPage() {
       <CreativeSubnav />
 
       {/* Modes */}
-      <div className="mb-6 grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
         {MODES.map((m) => (
           <button key={m.label} className="flex flex-col items-start gap-2 rounded-xl border border-line bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-violet/30 hover:shadow-card">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet/10 text-violet">
@@ -70,7 +70,7 @@ export default function VideoPage() {
           <div className="text-[14px] font-bold text-ink">Video Library</div>
           <span className="text-[11px] text-ink-muted">{VIDEOS.length} videos</span>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {VIDEOS.map((v) => (
             <div key={v.id} className="overflow-hidden rounded-xl border border-line bg-white shadow-card">
               <div className={`relative aspect-video bg-gradient-to-br ${v.thumb}`}>

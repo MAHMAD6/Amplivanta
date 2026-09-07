@@ -52,7 +52,7 @@ export default function WebinarsPage() {
         <div>
           {/* Featured */}
           <article className="overflow-hidden rounded-3xl border border-line bg-white shadow-card">
-            <div className="grid gap-0 lg:grid-cols-[1fr_1fr]">
+            <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1fr_1fr]">
               <div className="relative flex min-h-[220px] flex-col justify-end bg-gradient-to-br from-[#1B1360] via-[#3B2494] to-[#E8398F] p-7 text-white">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500 px-2.5 py-1 text-[10px] font-bold uppercase">
@@ -126,7 +126,7 @@ export default function WebinarsPage() {
           </div>
 
           {/* Grid */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {WEBINARS.map((w) => (
               <article
                 key={w.id}

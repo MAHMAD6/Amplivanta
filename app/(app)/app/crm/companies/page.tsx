@@ -64,7 +64,7 @@ export default async function CompaniesPage() {
         <KpiCard icon={HeartPulse} tone="pink" label="Health Score" value={String(avgHealth)} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
         {/* Table */}
         <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
@@ -188,7 +188,7 @@ export default async function CompaniesPage() {
       </div>
 
       {/* Bottom analytics panels */}
-      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Panel title="Segments">
           <Donut segments={[["Enterprise", 32, "#6A35F0"], ["Growth", 31, "#16A56A"], ["Mid-Market", 20, "#F59E0B"], ["Small Business", 11, "#3B82F6"], ["Other", 6, "#94A3B8"]]} total={total} />
         </Panel>

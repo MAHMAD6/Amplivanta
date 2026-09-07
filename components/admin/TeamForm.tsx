@@ -108,10 +108,10 @@ export function TeamForm({ initial }: { initial?: TeamMember }) {
       </div>
 
       {activeTab === "edit" ? (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-5 rounded-2xl border border-[#e9e7f0] bg-white p-6 shadow-sm">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#4a4756]">
                   Full Name
@@ -159,7 +159,7 @@ export function TeamForm({ initial }: { initial?: TeamMember }) {
               <ImageUpload value={form.image} onChange={(v) => setForm({ ...form, image: v })} />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#4a4756]">
                   <Linkedin className="h-3.5 w-3.5 text-blue-600" /> LinkedIn URL

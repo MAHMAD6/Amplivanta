@@ -37,7 +37,7 @@ export default async function MarketplaceHomePage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <MpStat label="Published products" value={n(c?.products)} />
         <MpStat label="Categories" value={n(c?.categories)} />
         <MpStat label="Approved sellers" value={n(c?.sellers)} />

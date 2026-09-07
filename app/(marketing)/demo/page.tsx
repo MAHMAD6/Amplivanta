@@ -21,7 +21,7 @@ export default function DemoPage() {
   return (
     <>
       <section className="bg-gradient-to-b from-royal-tint/50 to-white py-14">
-        <div className="mx-auto grid max-w-[1200px] items-start gap-8 px-4 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] items-start gap-8 px-4 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
           <div>
             <span className="text-[12px] font-bold uppercase tracking-wider text-royal-blue">Contact Sales / Book a Demo</span>
             <h1 className="mt-3 font-display text-[42px] font-extrabold leading-[1.05] text-deep-navy lg:text-[50px]">See Amplivanta in Action.</h1>
@@ -49,7 +49,7 @@ export default function DemoPage() {
 
       {/* What to expect + talk now */}
       <section className="bg-white py-12">
-        <div className="mx-auto grid max-w-[1200px] gap-10 px-4 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] gap-10 px-4 lg:grid-cols-2 lg:px-8">
           <div>
             <h2 className="text-[18px] font-bold text-deep-navy">What to Expect</h2>
             <p className="mt-0.5 text-[13px] text-ink-soft">A demo built around your goals.</p>

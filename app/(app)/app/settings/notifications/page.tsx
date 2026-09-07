@@ -47,7 +47,7 @@ export default function NotificationSettingsPage() {
 
       <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
         <div className="mb-3 text-[14px] font-bold text-ink">Digest Settings</div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Daily digest time" value="8:00 AM PST" />
           <Field label="Weekly digest day" value="Monday" />
           <Field label="Digest email" value="alex@amplivanta.com" />

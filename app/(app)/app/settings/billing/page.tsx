@@ -46,7 +46,7 @@ export default async function BillingPage() {
             )}
           </div>
         </div>
-        <div className="grid gap-4 border-t border-line pt-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 border-t border-line pt-4 sm:grid-cols-3">
           <div><div className="text-[10.5px] text-ink-muted">Seats</div><div className="text-[15px] font-bold text-ink">{BILLING.seatsUsed} / {BILLING.seatsIncluded}</div></div>
           <div><div className="text-[10.5px] text-ink-muted">Payment method</div><div className="text-[13px] font-bold text-ink">{BILLING.paymentMethod}</div></div>
           <div><div className="text-[10.5px] text-ink-muted">Billing contact</div><div className="text-[13px] font-bold text-ink">{BILLING.billingContact}</div></div>

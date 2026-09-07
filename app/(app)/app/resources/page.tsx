@@ -46,7 +46,7 @@ export default function ResourcesHubPage() {
       </div>
 
       {/* Category cards */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {CATEGORIES.map((c) => (
           <Link key={c.name} href={c.href} className="rounded-2xl border border-line bg-white p-4 shadow-card transition hover:-translate-y-0.5 hover:border-violet/30">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${TONE[c.tone]}`}><c.icon className="h-5 w-5" /></div>
@@ -57,12 +57,12 @@ export default function ResourcesHubPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
         <div className="space-y-6">
           {/* Featured */}
           <section>
             <div className="mb-3 flex items-center justify-between"><h2 className="text-[15px] font-bold text-ink">Featured Resources</h2><a className="text-[12px] font-semibold text-violet">View all</a></div>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {FEATURED.map((f) => (
                 <div key={f.title} className={`flex flex-col justify-between rounded-2xl bg-gradient-to-br ${f.grad} p-5 text-white shadow-card`}>
                   <div>
@@ -79,7 +79,7 @@ export default function ResourcesHubPage() {
           {/* Learning paths */}
           <section>
             <div className="mb-3 flex items-center justify-between"><h2 className="text-[15px] font-bold text-ink">Learning Paths</h2><a className="text-[12px] font-semibold text-violet">View all</a></div>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {PATHS.map((p) => (
                 <div key={p.name} className="rounded-2xl border border-line bg-white p-4 shadow-card">
                   <div className="flex items-center gap-2.5"><div className={`flex h-10 w-10 items-center justify-center rounded-full ${TONE[p.tone]}`}><p.icon className="h-5 w-5" /></div><div className="text-[14px] font-bold text-ink">{p.name}</div></div>

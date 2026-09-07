@@ -25,7 +25,7 @@ export default function SocialAnalyticsPage() {
       />
       <SocialSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
         <KpiCard icon={Eye} label="Impressions" value={null} tone="blue" />
         <KpiCard icon={Users} label="Reach" value={null} tone="violet" />
         <KpiCard icon={Heart} label="Likes" value={null} tone="pink" />
@@ -34,7 +34,7 @@ export default function SocialAnalyticsPage() {
         <KpiCard icon={TrendingUp} label="Engagement Rate" value={null} tone="green" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 text-[14px] font-bold text-ink">Engagement Trend</div>
           <ChartPlaceholder />

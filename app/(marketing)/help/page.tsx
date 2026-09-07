@@ -29,7 +29,7 @@ export default function HelpCenter() {
           </div>
         </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {topics.map((t) => (
             <Link key={t.title} href="#" className="rounded-2xl border border-line bg-white p-5 shadow-card transition hover:-translate-y-1 hover:border-violet/30">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet/10 text-violet">
@@ -41,7 +41,7 @@ export default function HelpCenter() {
           ))}
         </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             { icon: MessageCircle, title: "Chat with us", desc: "24/7 in-app chat" },
             { icon: Video, title: "Watch tutorials", desc: "Short, focused videos" },

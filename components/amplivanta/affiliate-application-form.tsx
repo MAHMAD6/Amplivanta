@@ -30,7 +30,7 @@ export function AffiliateApplicationForm() {
     <div className="rounded-3xl border border-line bg-white p-6 shadow-card lg:p-8">
       <form onSubmit={onSubmit} className="space-y-6">
         <Group icon={Users2} title="Applicant Information">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Full Name" name="fullName" placeholder="Enter your full name" required />
             <Field label="Email Address" name="email" type="email" placeholder="Enter your email address" required />
           </div>
@@ -40,7 +40,7 @@ export function AffiliateApplicationForm() {
         <Group icon={Monitor} title="Your Platform">
           <Field label="Website URL (if applicable)" name="website" placeholder="https://yourwebsite.com" />
           <Field label="Social Profile URL" name="social" placeholder="https://yourprofile.com" />
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Select label="Audience Type" name="audience" placeholder="Select your primary audience" options={AUDIENCE} required />
             <Select label="Estimated Audience Size (optional)" name="audienceSize" placeholder="Select audience size" options={SIZES} />
           </div>
@@ -49,7 +49,7 @@ export function AffiliateApplicationForm() {
         <Group icon={Gift} title="Promotion Details">
           <div>
             <label className="mb-2 block text-[12px] font-semibold text-deep-navy">Main Promotion Channel <span className="font-normal text-ink-muted">(Select all that apply)</span></label>
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {CHANNELS.map((c) => (
                 <label key={c} className="flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-[12px] text-ink-soft">
                   <input type="checkbox" name="channels" value={c} className="accent-royal-blue" /> {c}

@@ -33,7 +33,7 @@ export default async function WorkflowsPage() {
       <MarketingSubnav />
       {live && <LiveBadge label={`Live · ${workflows.length} workflows from database · Run executes the engine`} />}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Zap} label="Active Workflows" value={String(workflows.filter((w) => w.status === "Active").length)} tone="violet" />
         <KpiCard icon={Mail} label="Enrolled (30d)" value={null} tone="blue" />
         <KpiCard icon={Clock} label="Avg. Completion" value={null} tone="green" />

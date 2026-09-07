@@ -26,7 +26,7 @@ export default function HashtagsPage() {
         <input placeholder="Search hashtags…" className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none" />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {HASHTAG_SETS.map((set) => (
           <div key={set.id} className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-3 flex items-start justify-between">

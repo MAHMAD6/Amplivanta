@@ -26,7 +26,7 @@ export default function BrandSettingsPage() {
   return (
     <div className="space-y-5">
       <Section title="Brand Kits" desc="Manage multiple brand kits. One is the workspace default applied to new creatives.">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {KITS.map((k) => (
             <div key={k.name} className="rounded-2xl border border-line p-4">
               <div className="flex items-center justify-between">
@@ -48,7 +48,7 @@ export default function BrandSettingsPage() {
       </Section>
 
       <Section title="Logos" desc="Uploaded once and exposed to every editor — image, graphic, video, email, landing page.">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {["Primary Logo", "Icon Mark", "Dark Background"].map((l) => (
             <div key={l} className="rounded-2xl border border-line p-4 text-center">
               <div className="flex h-24 items-center justify-center rounded-xl bg-bg-soft text-ink-muted">
@@ -77,7 +77,7 @@ export default function BrandSettingsPage() {
       </Section>
 
       <Section title="Typography" desc="Fonts applied to on-brand generation and templates.">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {FONTS.map((f) => (
             <div key={f.role} className="flex items-center gap-3 rounded-2xl border border-line p-4">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet/10 text-violet">

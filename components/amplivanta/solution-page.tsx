@@ -79,7 +79,7 @@ export function SolutionPage(p: SolutionPageProps) {
 
       {/* Hero */}
       <section className="bg-white pb-14 pt-10">
-        <div className="mx-auto grid max-w-[1280px] items-start gap-12 px-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1280px] items-start gap-12 px-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:px-8">
           <div>
             <span className="inline-flex rounded-md bg-royal-tint px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.14em] text-royal-blue">
               Solution
@@ -109,7 +109,7 @@ export function SolutionPage(p: SolutionPageProps) {
               )}
             </div>
 
-            <div className="mt-10 grid gap-7 sm:grid-cols-3">
+            <div className="mt-10 grid grid-cols-1 gap-7 sm:grid-cols-3">
               {p.pills.map((v) => (
                 <div key={v.title}>
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-royal-tint text-royal-blue">
@@ -141,7 +141,7 @@ export function SolutionPage(p: SolutionPageProps) {
             </p>
           </div>
 
-          <ol className="mt-12 grid gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-6">
+          <ol className="mt-12 grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-6">
             {p.chain.map((s, i) => (
               <li key={s.title} className="relative text-center">
                 {i < p.chain.length - 1 && (
@@ -174,7 +174,7 @@ export function SolutionPage(p: SolutionPageProps) {
           <h2 className="text-center font-display text-[28px] font-extrabold text-deep-navy lg:text-[32px]">
             {p.featuresTitle}
           </h2>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {p.features.map((f) => (
               <div
                 key={f.title}
@@ -193,12 +193,12 @@ export function SolutionPage(p: SolutionPageProps) {
 
       {/* How it works + Built for modern growth teams */}
       <section className="bg-bg-soft py-16">
-        <div className="mx-auto grid max-w-[1280px] gap-6 px-4 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1280px] gap-6 px-4 lg:grid-cols-2 lg:px-8">
           <div className="rounded-3xl border border-line bg-white p-7">
             <h3 className="text-center font-display text-[22px] font-extrabold text-deep-navy">
               How It Works
             </h3>
-            <div className="mt-7 grid gap-4 sm:grid-cols-3">
+            <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
               {p.howItWorks.map((h, i) => (
                 <div key={h.title} className="relative text-center sm:text-left">
                   <div className="flex items-center gap-2">
@@ -220,7 +220,7 @@ export function SolutionPage(p: SolutionPageProps) {
             <h3 className="text-center font-display text-[22px] font-extrabold text-deep-navy">
               Built for Modern Growth Teams
             </h3>
-            <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {p.teams.map((t) => (
                 <div key={t.title} className="text-center">
                   <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-royal-tint text-royal-blue">
@@ -239,7 +239,7 @@ export function SolutionPage(p: SolutionPageProps) {
       <section className="bg-white py-16">
         <div className="mx-auto max-w-[1280px] px-4 lg:px-8">
           <div className="rounded-3xl border border-line bg-white p-8">
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,2fr)]">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,2fr)]">
               <div>
                 <h2 className="font-display text-[26px] font-extrabold leading-tight text-deep-navy">
                   {p.outcomesTitle}
@@ -248,7 +248,7 @@ export function SolutionPage(p: SolutionPageProps) {
                   <p className="mt-3 text-[13.5px] leading-relaxed text-ink-soft">{p.outcomesBlurb}</p>
                 )}
               </div>
-              <div className="grid gap-6 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                 {p.outcomes.map((o) => (
                   <div key={o.title} className="flex gap-3">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-royal-tint text-royal-blue">
@@ -305,7 +305,7 @@ export function SolutionPage(p: SolutionPageProps) {
 
       {/* Trust strip */}
       <section className="border-t border-line bg-white py-8">
-        <ul className="mx-auto grid max-w-[1280px] gap-6 px-4 sm:grid-cols-2 lg:grid-cols-5 lg:px-8">
+        <ul className="mx-auto grid grid-cols-1 max-w-[1280px] gap-6 px-4 sm:grid-cols-2 lg:grid-cols-5 lg:px-8">
           {TRUST.map((t, i) => (
             <li
               key={t.title}

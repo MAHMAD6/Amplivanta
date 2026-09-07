@@ -160,7 +160,7 @@ export function GrantAccessForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <form onSubmit={onSubmit} className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       <SuperCard className="p-6">
         {/* 1. Grant to */}
         <StepLabel n={1}>Grant To</StepLabel>
@@ -231,7 +231,7 @@ export function GrantAccessForm() {
             {tab.hint}
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {isAccess && (
               <label className="block">
                 <span className="mb-1.5 block text-[12.5px] font-bold text-admin-navy">Number of Days</span>

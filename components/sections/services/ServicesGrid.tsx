@@ -21,7 +21,7 @@ export function ServicesGrid({ services }: { services: Service[] }) {
           </div>
         </ScrollReveal>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {services.map((s, i) => (
             <ServiceCard
               key={s.id}

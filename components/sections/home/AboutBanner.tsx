@@ -15,7 +15,7 @@ export function AboutBanner() {
     <section className="px-4 py-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <ScrollReveal>
-          <div className="grid gap-8 rounded-[2.5rem] bg-[#0d0b18] p-6 sm:p-8 md:p-12 lg:grid-cols-[1fr_1.2fr_1fr] items-center">
+          <div className="grid grid-cols-1 gap-8 rounded-[2.5rem] bg-[#0d0b18] p-6 sm:p-8 md:p-12 lg:grid-cols-[1fr_1.2fr_1fr] items-center">
             {/* image */}
             <div className="relative h-56 sm:h-64 lg:h-full min-h-[220px] overflow-hidden rounded-2xl bg-[#0d0b18]">
               <Image

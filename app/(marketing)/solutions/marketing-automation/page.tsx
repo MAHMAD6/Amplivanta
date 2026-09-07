@@ -38,7 +38,7 @@ export default function MarketingAutomationPage() {
   return (
     <>
       <section className="bg-white">
-        <div className="mx-auto grid max-w-[1240px] items-start gap-10 px-4 py-12 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1240px] items-start gap-10 px-4 py-12 lg:grid-cols-2 lg:px-8">
           <div>
             <span className="inline-block rounded-full bg-royal-tint px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-royal-blue">Marketing Automation</span>
             <h1 className="mt-4 font-display text-[44px] font-extrabold leading-[1.05] text-deep-navy lg:text-[52px]">Automate Smarter. Grow Consistently.</h1>
@@ -53,7 +53,7 @@ export default function MarketingAutomationPage() {
       </section>
 
       <Section title="What you can automate" sub="Build meaningful journeys that engage your audience and move them closer to becoming loyal customers.">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
           {AUTOMATE.map((c) => (
             <div key={c.title} className="rounded-2xl border border-line bg-white p-5 text-center shadow-card">
               <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${TONE[c.tone]}`}><c.icon className="h-6 w-6" /></span>
@@ -65,7 +65,7 @@ export default function MarketingAutomationPage() {
       </Section>
 
       <Section title="Powerful capabilities to drive results" sub="Everything you need to run, optimize, and scale your marketing—all in one place." bg>
-        <div className="grid gap-x-8 gap-y-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2 lg:grid-cols-3">
           {CAPS.map((f) => (
             <div key={f.title} className="flex gap-3">
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${TONE[f.tone]}`}><f.icon className="h-5 w-5" /></span>
@@ -76,7 +76,7 @@ export default function MarketingAutomationPage() {
       </Section>
 
       <Section title="Built for growth-focused teams" sub="Whether you're a startup or an established business, our tools help every team work smarter.">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {TEAMS.map((t) => (
             <div key={t.title} className="rounded-2xl border border-line bg-white p-4 shadow-card">
               <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${TONE[t.tone]}`}><t.icon className="h-4 w-4" /></span>

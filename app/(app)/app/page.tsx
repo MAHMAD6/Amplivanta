@@ -48,7 +48,7 @@ export default async function CommandCenterPage() {
       {cc.live && <LiveBadge label="Live · reflecting your real workspace state" />}
 
       {/* KPI cards — truthful empty states */}
-      <div className="mb-6 grid gap-4 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-4">
         <KpiEmpty icon={Target} title="Growth Score" heading="No score yet" body="Connect your data to get your Growth Score and insights." cta="Connect Data" href="/app/integrations" ring />
         <KpiEmpty icon={Crosshair} title="Top Opportunity" heading="Connect your data" body="We'll analyze your performance to identify your highest-priority opportunity." />
         <KpiEmpty icon={TrendingUp} title="Potential Impact" heading="—" body="Impact will be shown here once we analyze your data." />
@@ -63,7 +63,7 @@ export default async function CommandCenterPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
         {/* AI Recommended Next Action */}
         <div className="rounded-2xl border border-line bg-white p-6 shadow-card">
           <div className="mb-2 flex items-center gap-2"><Sparkles className="h-5 w-5 text-violet" /><div><div className="text-[15px] font-bold text-ink">AI Recommended Next Action</div><div className="text-[11.5px] text-ink-muted">AI insight based on your data and goals</div></div></div>
@@ -100,7 +100,7 @@ export default async function CommandCenterPage() {
       </div>
 
       {/* Bottom row */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Performance Overview */}
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-1 flex items-center justify-between"><span className="text-[14px] font-bold text-ink">Performance Overview</span><span className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-ink-soft">Last 7 days</span></div>

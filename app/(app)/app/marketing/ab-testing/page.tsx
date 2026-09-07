@@ -47,7 +47,7 @@ export default function ABTestingPage() {
         <KpiCard icon={DollarSign} tone="pink" label="Revenue Impact" value={null} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr_0.9fr]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.4fr_1fr_0.9fr]">
         {/* Current experiment */}
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-1 flex items-center justify-between">
@@ -60,7 +60,7 @@ export default function ABTestingPage() {
           <div className="flex items-center gap-2"><span className="text-[15px] font-bold text-ink">Spring Lead Magnet Campaign</span><StatusPill tone="green">Running</StatusPill></div>
           <div className="mt-0.5 text-[11.5px] text-ink-muted">Started May 14, 2024 · 12 days remaining</div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <VariantCard label="Variant A" tag="Control" tone="violet" v={VARIANT_A} />
             <VariantCard label="Variant B" tag="Challenger" tone="green" v={VARIANT_B} winning />
           </div>
@@ -101,7 +101,7 @@ export default function ABTestingPage() {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr_1fr]">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.2fr_1fr]">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[13px] font-bold text-ink">Goals &amp; Hypothesis</div>
           <dl className="space-y-3 text-[12.5px]">

@@ -16,7 +16,7 @@ export default function PlatformIndexPage() {
           <h1 className="mt-4 font-display text-5xl font-extrabold text-ink">One platform. Every growth job.</h1>
           <p className="mx-auto mt-4 max-w-2xl text-ink-soft">17 modules. 93 pages. Zero duct tape.</p>
         </div>
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {CAPABILITIES.map((c) => {
             const Icon = iconMap[c.icon as keyof typeof iconMap] ?? Sparkles;
             return (

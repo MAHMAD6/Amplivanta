@@ -25,7 +25,7 @@ export default function TrendingPage() {
       />
       <IntelSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={TrendingUp} label="Trending Topics" value={String(TRENDS.length)} tone="violet" />
         <KpiCard icon={Zap} label="Avg. Velocity" value={null} tone="pink" />
         <KpiCard icon={Globe} label="Sources" value={null} tone="blue" />
@@ -41,7 +41,7 @@ export default function TrendingPage() {
         <select className="rounded-xl border border-line bg-white px-3 py-2 text-[12px]"><option>Last 24h</option><option>Last 7 days</option><option>Last 30 days</option></select>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {TRENDS.map((t) => (
           <div key={t.id} className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-2 flex items-start justify-between">

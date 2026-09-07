@@ -29,7 +29,7 @@ export default function IntegrationsHomePage() {
       />
       <IntegrationsSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Puzzle} label="Connected Apps" value={String(connected.length)} tone="violet" />
         <KpiCard icon={Zap} label="Available" value={String(INTEGRATIONS.length - connected.length)} tone="pink" />
         <KpiCard icon={Activity} label="Sync Health" value={null} tone="green" />
@@ -67,7 +67,7 @@ export default function IntegrationsHomePage() {
       {popular.length > 0 && (
         <div className="mb-6">
           <div className="mb-3 text-[13px] font-bold text-ink">Popular</div>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
             {popular.map((i) => <IntgCard key={i.id} i={i} />)}
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function IntegrationsHomePage() {
 
       <div>
         <div className="mb-3 text-[13px] font-bold text-ink">All Integrations</div>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {INTEGRATIONS.map((i) => <IntgCard key={i.id} i={i} />)}
         </div>
       </div>

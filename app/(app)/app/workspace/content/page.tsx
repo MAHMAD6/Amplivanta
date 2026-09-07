@@ -34,7 +34,7 @@ export default function ContentHubPage() {
       />
       <WorkspaceSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={FileText} label="Total Content" value={null} tone="violet" />
         <KpiCard icon={Sparkles} label="AI Generated" value={null} tone="pink" />
         <KpiCard icon={Calendar} label="Scheduled" value={null} tone="blue" />
@@ -44,7 +44,7 @@ export default function ContentHubPage() {
       {/* Quick create */}
       <div className="mb-6 rounded-2xl border border-violet/25 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
         <div className="mb-3 flex items-center gap-2 text-[13px] font-bold text-ink"><Sparkles className="h-4 w-4 text-violet" /> Quick Create with AI</div>
-        <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">
           {QUICK.map((q) => (
             <button key={q.label} className="flex items-center gap-2 rounded-xl border border-line bg-white p-3 hover:border-violet/30">
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${TONE_CLS[q.tone]}`}><q.icon className="h-3.5 w-3.5" /></div>

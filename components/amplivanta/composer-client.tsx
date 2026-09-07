@@ -40,7 +40,7 @@ export function ComposerClient() {
     });
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,_1.4fr)_minmax(0,_1fr)]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,_1.4fr)_minmax(0,_1fr)]">
       {/* LEFT: editor */}
       <div className="space-y-4">
         {/* Platforms */}
@@ -129,7 +129,7 @@ export function ComposerClient() {
         {/* Post settings */}
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[13px] font-bold text-ink">Post Settings</div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <SettingField label="Campaign" value="Spring Launch" />
             <SettingField label="Tags" value="product-launch, spring" />
             <SettingField label="UTM Source" value="social" />
@@ -153,7 +153,7 @@ export function ComposerClient() {
               </button>
             ))}
           </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1.5 flex items-center gap-1.5 text-[12px] font-bold text-ink">
                 <Calendar aria-hidden className="h-3.5 w-3.5 text-ink-muted" /> Schedule for

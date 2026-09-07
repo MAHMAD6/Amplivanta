@@ -73,7 +73,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
         {/* Left: main */}
         <div className="space-y-4">
           {/* Deal header card */}

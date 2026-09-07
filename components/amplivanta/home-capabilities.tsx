@@ -16,7 +16,7 @@ export function HomeCapabilities() {
     <section className="bg-white py-8">
       <div className="mx-auto max-w-[1280px] px-4 lg:px-8">
         <h2 className="sr-only">Platform capabilities</h2>
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
           {HOME_CAPABILITIES.map((cap) => {
             const Icon = iconMap[cap.icon as keyof typeof iconMap];
             return (

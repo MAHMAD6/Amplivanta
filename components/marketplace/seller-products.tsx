@@ -132,7 +132,7 @@ export function SellerProductRows({
 
                 {editFor === p.id && (
                   <form
-                    className="mt-4 grid gap-3 rounded-xl border border-line bg-bg-soft px-4 py-4 md:grid-cols-2"
+                    className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-line bg-bg-soft px-4 py-4 md:grid-cols-2"
                     onSubmit={(e) => {
                       e.preventDefault();
                       const form = e.currentTarget;

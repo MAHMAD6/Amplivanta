@@ -42,7 +42,7 @@ export function ServiceDetail({ service }: { service: Service }) {
 
       {/* Overview + Features */}
       <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2 lg:items-start">
+        <div className="mx-auto grid grid-cols-1 max-w-7xl gap-12 lg:grid-cols-2 lg:items-start">
           <ScrollReveal>
             <div>
               {service.image && (
@@ -112,7 +112,7 @@ export function ServiceDetail({ service }: { service: Service }) {
             </div>
           </ScrollReveal>
 
-          <div className="relative mt-14 grid gap-6 md:grid-cols-4">
+          <div className="relative mt-14 grid grid-cols-1 gap-6 md:grid-cols-4">
             {/* Connecting line */}
             <div className="pointer-events-none absolute left-0 right-0 top-10 hidden h-px bg-[#e9e7f0] md:block" />
 

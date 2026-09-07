@@ -30,7 +30,7 @@ export default function WebhooksPage() {
       />
       <IntegrationsSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={WHIcon} label="Active Endpoints" value={String(WEBHOOKS.filter((w) => w.status === "Active").length)} tone="violet" />
         <KpiCard icon={Activity} label="Deliveries (24h)" value={null} tone="green" />
         <KpiCard icon={AlertTriangle} label="Failing" value={String(WEBHOOKS.filter((w) => w.status === "Failing").length)} deltaTone="down" tone="red" />

@@ -32,7 +32,7 @@ export default function PartnerApplyPage() {
       </section>
 
       <section className="bg-white py-12">
-        <div className="mx-auto grid max-w-[1200px] gap-6 px-4 lg:grid-cols-[1.3fr_0.7fr] lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] gap-6 px-4 lg:grid-cols-[1.3fr_0.7fr] lg:px-8">
           <PartnerApplicationForm />
           <div className="space-y-4">
             <div className="rounded-2xl border border-line bg-white p-5 shadow-card">

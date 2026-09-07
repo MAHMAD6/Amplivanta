@@ -121,7 +121,7 @@ export function BlogForm({ initial }: { initial?: BlogPost }) {
       </div>
 
       {activeTab === "edit" ? (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Main Content Column */}
           <div className="lg:col-span-2 space-y-5 rounded-2xl border border-[#e9e7f0] bg-white p-6 shadow-sm">
             <div>

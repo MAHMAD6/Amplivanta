@@ -35,7 +35,7 @@ export default function CrmReportsPage() {
       />
       <CrmSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
         <KpiCard icon={DollarSign} label="Revenue (30d)" value={null} tone="green" />
         <KpiCard icon={Target} label="Deals Won" value={null} tone="violet" />
         <KpiCard icon={Percent} label="Win Rate" value={null} tone="pink" />
@@ -44,7 +44,7 @@ export default function CrmReportsPage() {
         <KpiCard icon={Users} label="Active Reps" value={null} tone="teal" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Revenue Trend</div>
@@ -74,7 +74,7 @@ export default function CrmReportsPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">Top Owners (Revenue)</div>
           <div className="overflow-x-auto">

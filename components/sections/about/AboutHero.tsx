@@ -29,7 +29,7 @@ export function AboutHero() {
       {/* Decorative background grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-40 pointer-events-none" />
 
-      <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-12 lg:items-center">
+      <div className="relative mx-auto grid grid-cols-1 max-w-7xl gap-12 lg:grid-cols-12 lg:items-center">
         <ScrollReveal className="lg:col-span-7">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#e9e7f0] bg-[#f8f7fb] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#14121f]">
             <span className="h-2 w-2 rounded-full bg-[#6D3BF5] animate-pulse" />
@@ -45,7 +45,7 @@ export function AboutHero() {
             We bridge the gap between creative storytelling and rigorous analytical marketing to build compound brand equity.
           </p>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {PILLARS.map((item, idx) => {
               const Icon = item.icon;
               return (

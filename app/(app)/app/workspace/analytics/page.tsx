@@ -22,7 +22,7 @@ export default function WSAnalyticsPage() {
       />
       <WorkspaceSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <KpiCard icon={Eye} label="Sessions" value={null} tone="violet" />
         <KpiCard icon={Users} label="Leads" value={null} tone="blue" />
         <KpiCard icon={TrendingUp} label="Conversions" value={null} tone="green" />
@@ -30,7 +30,7 @@ export default function WSAnalyticsPage() {
         <KpiCard icon={DollarSign} label="Revenue" value={null} tone="orange" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 text-[14px] font-bold text-ink">Sessions Trend</div>
           <ChartPlaceholder />
@@ -57,7 +57,7 @@ export default function WSAnalyticsPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">Attribution Model</div>
           <div className="mb-3 flex flex-wrap gap-1">

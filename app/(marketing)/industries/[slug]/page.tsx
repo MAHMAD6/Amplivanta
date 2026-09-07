@@ -48,7 +48,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
         <div className="mx-auto max-w-[1200px] px-4 pt-6 lg:px-8">
           <MarketingBreadcrumb items={[["Home", "/"], ["Industries", "/industries"], [name, null]]} />
         </div>
-        <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 py-12 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] items-center gap-10 px-4 py-12 lg:grid-cols-2 lg:px-8">
           <div>
             <h1 className="font-display text-[42px] font-extrabold leading-[1.05] lg:text-[48px]">Marketing for <span className="text-royal-soft">{name}</span> Companies</h1>
             <p className="mt-4 max-w-[440px] text-[15px] leading-relaxed text-white/70">{data.subtitle}</p>
@@ -74,7 +74,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
         <div className="mx-auto max-w-[1200px] px-4 text-center lg:px-8">
           <h2 className="font-display text-2xl font-extrabold text-deep-navy">Built for {name.toLowerCase()} teams.</h2>
           <p className="mx-auto mt-2 max-w-2xl text-[13.5px] text-ink-soft">From early-stage startups to established {name.toLowerCase()} companies, Amplivanta helps brands attract the right buyers, engage at every stage, and drive growth that lasts.</p>
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {CAPS.map((c) => (
               <div key={c.title}>
                 <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-royal-tint text-royal-blue"><c.icon className="h-6 w-6" /></span>
@@ -90,7 +90,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
       <section className="bg-bg-soft/50 py-12">
         <div className="mx-auto max-w-[1200px] px-4 text-center lg:px-8">
           <h2 className="font-display text-2xl font-extrabold text-deep-navy">Use cases that drive results.</h2>
-          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             {USE_CASES.map((u) => (
               <div key={u.title} className="rounded-2xl border border-line bg-white p-5 text-left shadow-card">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-royal-tint text-royal-blue"><u.icon className="h-5 w-5" /></span>
@@ -107,7 +107,7 @@ export default async function IndustryPage({ params }: { params: Promise<{ slug:
       <section className="bg-white py-12">
         <div className="mx-auto max-w-[1200px] px-4 text-center lg:px-8">
           <h2 className="font-display text-2xl font-extrabold text-deep-navy">Why {name.toLowerCase()} companies choose Amplivanta.</h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {WHY.map((w) => (
               <div key={w.title} className="flex gap-3 text-left">
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-royal-blue" />

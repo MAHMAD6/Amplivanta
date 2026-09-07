@@ -26,11 +26,11 @@ export default function TrafficAnalyticsPage() {
       />
       <AnalyticsSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {TRAFFIC_KPIS.map((k, i) => <KpiCard key={k.label} icon={ICONS[i]} label={k.label} value={k.value} delta={k.delta} tone={TONES[i]} />)}
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 text-[14px] font-bold text-ink">Traffic Sources</div>
           <div className="space-y-2">
@@ -66,7 +66,7 @@ export default function TrafficAnalyticsPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">Top Landing Pages</div>
           <div className="overflow-x-auto">

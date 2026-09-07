@@ -40,7 +40,7 @@ function DocGroup({ title, docs }: { title: string; docs: { slug: string; title:
   return (
     <section className="mt-12">
       <h2 className="font-display text-2xl font-extrabold text-deep-navy">{title}</h2>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {docs.map((d) => (
           <Link
             key={d.slug}

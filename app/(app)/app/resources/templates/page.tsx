@@ -73,7 +73,7 @@ export default function TemplatesPage() {
               View All Types <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {TEMPLATE_TYPES.map((t) => (
               <Link
                 key={t.title}
@@ -110,7 +110,7 @@ export default function TemplatesPage() {
           </div>
 
           {/* Template grid */}
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {TEMPLATES.map((t) => (
               <article
                 key={t.id}

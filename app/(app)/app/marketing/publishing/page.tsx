@@ -35,7 +35,7 @@ export default function PublishingPage() {
       />
       <MarketingSubnav />
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 flex items-start justify-between">
             <div>

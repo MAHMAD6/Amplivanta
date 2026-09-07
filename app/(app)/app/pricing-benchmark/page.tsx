@@ -144,7 +144,7 @@ export default async function PricingBenchmarkPage() {
             )}
           </MpCard>
 
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             <MpCard className="p-6">
               <h3 className="text-[15px] font-bold text-deep-navy">Amplivanta Positioning</h3>
               <div className="py-8 text-center">

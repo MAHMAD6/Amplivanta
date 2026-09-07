@@ -52,7 +52,7 @@ export function SubmitReviewForm() {
   };
 
   return (
-    <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-[#e9e7f0] bg-white shadow-[0_24px_60px_-30px_rgba(30, 20, 60,0.35)] md:grid-cols-[0.85fr_1fr]">
+    <div className="mx-auto grid grid-cols-1 max-w-5xl overflow-hidden rounded-3xl border border-[#e9e7f0] bg-white shadow-[0_24px_60px_-30px_rgba(30, 20, 60,0.35)] md:grid-cols-[0.85fr_1fr]">
       {/* intro panel */}
       <div className="relative overflow-hidden bg-[#0d0b18] p-8 lg:p-10">
         <div
@@ -91,7 +91,7 @@ export function SubmitReviewForm() {
         <p className="mt-2 text-sm text-[#4a4756]">We&apos;d love to hear about your experience.</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <input
               {...register("name")}

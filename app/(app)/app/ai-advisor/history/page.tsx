@@ -26,7 +26,7 @@ export default function RecommendationHistoryPage() {
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0">
           {/* Stat cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {HISTORY_STATS.map((s) => (
               <div key={s.label} className="rounded-2xl border border-line bg-white p-4 shadow-card">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${s.tone}`}>

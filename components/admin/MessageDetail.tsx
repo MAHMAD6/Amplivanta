@@ -35,7 +35,7 @@ export function MessageDetail({ message }: { message: ContactMessage }) {
   };
 
   return (
-    <div className="grid max-w-4xl gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-2">
       <div className="rounded-2xl border border-[#e9e7f0] bg-white p-6">
         <h2 className="font-display text-lg font-bold text-[#14121f]">{message.name}</h2>
         <dl className="mt-4 space-y-2 text-sm">

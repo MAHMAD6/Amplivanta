@@ -41,8 +41,8 @@ export default function IdeasPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {IDEAS.map((i) => (
             <div key={i.id} className="rounded-2xl border border-line bg-white p-4 shadow-card hover:border-violet/30">
               <div className="mb-2 flex items-start justify-between">

@@ -24,7 +24,7 @@ export default function PersonasPage() {
       />
       <StrategySubnav />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {PERSONAS.map((p) => (
           <div key={p.id} className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-3 flex items-start gap-3">
@@ -37,7 +37,7 @@ export default function PersonasPage() {
             </div>
             <div className="text-[11.5px] text-ink-muted">{p.demographics}</div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <PersonaBlock title="Needs" items={p.needs} tone="bg-emerald-500/10 text-emerald-700" />
               <PersonaBlock title="Pain Points" items={p.painPoints} tone="bg-red-500/10 text-red-700" />
               <PersonaBlock title="Preferred Channels" items={p.channels} tone="bg-blue-500/10 text-blue-700" />

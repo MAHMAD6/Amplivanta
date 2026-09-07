@@ -36,7 +36,7 @@ export function PortfolioExplorer({ items }: { items: Portfolio[] }) {
           ))}
         </div>
 
-        <motion.div layout className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 md:gap-8">
+        <motion.div layout className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 md:gap-8">
           <AnimatePresence mode="popLayout">
             {filtered.map((p, i) => (
               <motion.div

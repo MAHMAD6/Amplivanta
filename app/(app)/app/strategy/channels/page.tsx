@@ -27,7 +27,7 @@ export default function ChannelPlanPage() {
       />
       <StrategySubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={DollarSign} label="Planned Budget" value={`$${(totalBudget / 1000).toFixed(0)}K`} tone="violet" />
         <KpiCard icon={DollarSign} label="Actual Spend" value={`$${(totalSpend / 1000).toFixed(0)}K`} delta={`${Math.round((totalSpend / totalBudget) * 100)}% used`} tone="pink" />
         <KpiCard icon={Target} label="Leads" value={totalLeads.toLocaleString()} tone="blue" />

@@ -28,7 +28,7 @@ export default function ContactPage() {
     <>
       {/* Hero */}
       <section className="bg-gradient-to-b from-royal-tint/60 to-white">
-        <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 py-16 lg:grid-cols-2 lg:px-8 lg:py-20">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] items-center gap-10 px-4 py-16 lg:grid-cols-2 lg:px-8 lg:py-20">
           <div>
             <span className="text-[12px] font-bold uppercase tracking-wider text-royal-blue">Contact Us</span>
             <h1 className="mt-3 font-display text-[44px] font-extrabold leading-[1.05] text-deep-navy lg:text-[52px]">
@@ -37,7 +37,7 @@ export default function ContactPage() {
             <p className="mt-5 max-w-[440px] text-[15px] leading-relaxed text-ink-soft">
               Have a question, need a demo, or want to explore how Amplivanta can help your business grow? Our team is here to listen and help.
             </p>
-            <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
               {POINTS.map((p) => (
                 <div key={p.title}>
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-royal-tint text-royal-blue"><p.icon className="h-5 w-5" /></span>
@@ -67,7 +67,7 @@ export default function ContactPage() {
 
       {/* Form + reach */}
       <section id="form" className="bg-white py-14">
-        <div className="mx-auto grid max-w-[1200px] gap-6 px-4 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] gap-6 px-4 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
           <MarketingContactForm />
           <div className="rounded-3xl border border-line bg-white p-6 shadow-card lg:p-8">
             <h2 className="font-display text-2xl font-extrabold text-deep-navy">Other ways to reach us</h2>
@@ -92,7 +92,7 @@ export default function ContactPage() {
         <div className="mx-auto max-w-[1200px] px-4 lg:px-8">
           <div className="rounded-3xl bg-royal-tint/50 p-8">
             <h3 className="text-center font-display text-2xl font-extrabold text-deep-navy">We&apos;re here for every stage of your journey.</h3>
-            <div className="mt-8 grid gap-6 md:grid-cols-3">
+            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
               {JOURNEY.map((j) => (
                 <div key={j.title} className="text-center">
                   <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-royal-blue shadow-card"><j.icon className="h-5 w-5" /></span>

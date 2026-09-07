@@ -19,7 +19,7 @@ export default function AutoTemplatesPage() {
       />
       <MarketingSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Zap} label="Templates Available" value={String(AUTO_TEMPLATES.length)} tone="violet" />
         <KpiCard icon={Sparkles} label="AI Recommended" value={null} tone="pink" />
         <KpiCard icon={Clock} label="Fastest Setup" value={null} tone="green" />
@@ -36,7 +36,7 @@ export default function AutoTemplatesPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {AUTO_TEMPLATES.map((t) => (
           <div key={t.id} className="flex flex-col rounded-2xl border border-line bg-white p-5 shadow-card transition hover:-translate-y-1 hover:border-violet/30">
             <div className="mb-3 flex items-start justify-between">

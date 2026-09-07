@@ -34,7 +34,7 @@ export default function SocialDashboardPage() {
       />
       <SocialSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <KpiCard icon={FileText} label="Posts Published" value={null} tone="violet" />
         <KpiCard icon={CalIcon} label="Scheduled" value={null} tone="blue" />
         <KpiCard icon={TrendingUp} label="Engagement" value={null} tone="green" />
@@ -42,7 +42,7 @@ export default function SocialDashboardPage() {
         <KpiCard icon={Users} label="Profile Visits" value={null} tone="pink" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
         {/* Content Calendar preview */}
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 flex items-center justify-between">
@@ -142,7 +142,7 @@ export default function SocialDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Publishing Activity</div>

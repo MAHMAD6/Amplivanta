@@ -48,9 +48,9 @@ export default async function TriggersPage() {
         <KpiCard icon={Target} tone="teal" label="Automation Coverage" value={null} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
         <div className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
               <div className="mb-2 text-[13px] font-bold text-ink">Event Activity Trend</div>
               <AreaChart data={[18, 22, 16, 24, 20, 28, 23, 30, 26, 32]} />
@@ -68,7 +68,7 @@ export default async function TriggersPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-line bg-white shadow-card">
               <div className="flex items-center justify-between border-b border-line px-4 py-3"><span className="text-[13px] font-bold text-ink">Trigger Library / Rules</span><a className="text-[11px] font-semibold text-violet">View all</a></div>
               <div className="overflow-x-auto">
@@ -126,7 +126,7 @@ export default async function TriggersPage() {
           </div>
 
           {/* Best practices */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             {BEST.map(([t, d], i) => (
               <div key={t} className="rounded-2xl border border-line bg-white p-4 shadow-card">
                 <div className="text-[12.5px] font-bold text-ink">{i + 1}. {t}</div>

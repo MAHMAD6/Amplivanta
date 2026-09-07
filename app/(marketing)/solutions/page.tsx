@@ -13,7 +13,7 @@ export default function SolutionsIndex() {
           <span className="text-[11px] font-bold uppercase tracking-wider text-violet">Solutions</span>
           <h1 className="mt-4 font-display text-5xl font-extrabold text-ink">Pick the outcome. We&apos;ll route the tools.</h1>
         </div>
-        <div className="mt-12 grid gap-5 sm:grid-cols-2">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2">
           {Object.entries(SOLUTION_PAGES).map(([slug, data]) => (
             <Link key={slug} href={`/solutions/${slug}`} className="group rounded-2xl border border-line bg-white p-6 shadow-card transition hover:-translate-y-1 hover:border-violet/30 hover:shadow-card-lg">
               <div className="text-[11px] font-bold uppercase tracking-wider text-violet">{data.eyebrow}</div>

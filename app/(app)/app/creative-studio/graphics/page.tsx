@@ -53,7 +53,7 @@ export default function GraphicsPage() {
       </div>
 
       {/* Types */}
-      <div className="mb-6 grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">
         {TYPES.map((t) => (
           <button key={t} className="rounded-xl border border-line bg-white p-4 text-center transition hover:-translate-y-0.5 hover:border-violet/30 hover:shadow-card">
             <Layers className="mx-auto h-5 w-5 text-violet" />
@@ -65,7 +65,7 @@ export default function GraphicsPage() {
       {/* Tools */}
       <div className="mb-6 rounded-2xl border border-line bg-white p-5 shadow-card">
         <div className="mb-3 text-[13px] font-bold text-ink">Design Tools</div>
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           {TOOLS.map((t) => (
             <button key={t.label} className="flex items-center gap-3 rounded-xl border border-line p-3 hover:border-violet/30">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet/10 text-violet">
@@ -83,7 +83,7 @@ export default function GraphicsPage() {
           <div className="text-[14px] font-bold text-ink">Recent Graphics</div>
           <a href="/app/creative-studio/templates" className="text-[12px] font-semibold text-violet">Browse templates →</a>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {GRAPHICS.map((g) => (
             <div key={g.id} className="overflow-hidden rounded-xl border border-line bg-white shadow-card">
               <div className={`aspect-[16/10] bg-gradient-to-br ${g.thumb}`} />

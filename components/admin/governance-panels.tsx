@@ -76,7 +76,7 @@ export function RolesPanel({ roles, connected }: { roles: Role[]; connected: boo
               const form = e.currentTarget;
               run(() => upsertRoleDefinition(new FormData(form)), () => { form.reset(); setOpen(false); });
             }}
-            className="grid gap-4 md:grid-cols-2"
+            className="grid grid-cols-1 gap-4 md:grid-cols-2"
           >
             <label className="block">
               <span className="mb-1.5 block text-[12.5px] font-bold text-admin-navy">Role name</span>
@@ -164,7 +164,7 @@ export function AccessAssignmentsPanel({
             const form = e.currentTarget;
             run(() => grantAdminAssignment(new FormData(form)), () => form.reset());
           }}
-          className="grid gap-4 md:grid-cols-2"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2"
         >
           <label className="block">
             <span className="mb-1.5 block text-[12.5px] font-bold text-admin-navy">User</span>
@@ -284,7 +284,7 @@ export function InvitationsPanel({
             const form = e.currentTarget;
             run(() => createInvitation(new FormData(form)), () => form.reset());
           }}
-          className="grid gap-4 md:grid-cols-2"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2"
         >
           <label className="block">
             <span className="mb-1.5 block text-[12.5px] font-bold text-admin-navy">Email</span>
@@ -407,7 +407,7 @@ export function SuspensionsPanel({
             const form = e.currentTarget;
             run(() => suspendUser(String(fd.get("userId")), String(fd.get("reason"))), () => form.reset());
           }}
-          className="grid gap-4 md:grid-cols-2"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2"
         >
           <label className="block">
             <span className="mb-1.5 block text-[12.5px] font-bold text-admin-navy">User</span>

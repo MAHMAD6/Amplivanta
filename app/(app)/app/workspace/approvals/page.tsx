@@ -22,14 +22,14 @@ export default function WSApprovalsPage() {
       />
       <WorkspaceSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Clock} label="Pending" value={String(groups.Pending.length)} deltaTone="down" tone="amber" />
         <KpiCard icon={Check} label="Approved (7d)" value={String(groups.Approved.length)} tone="green" />
         <KpiCard icon={MessageSquare} label="Changes Requested" value={String(groups["Changes Requested"].length)} tone="blue" />
         <KpiCard icon={X} label="Rejected" value={String(groups.Rejected.length)} tone="red" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         {(Object.keys(groups) as (keyof typeof groups)[]).map((s) => (
           <div key={s} className="rounded-2xl border border-line bg-bg-soft/40 p-3">
             <div className="mb-3 flex items-center justify-between px-1">

@@ -25,7 +25,7 @@ export default function SegmentsPage() {
       />
       <MarketingSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Users} label="Total Contacts" value={null} tone="violet" />
         <KpiCard icon={TrendingUp} label="Segments" value={String(SEGMENTS.length)} tone="pink" />
         <KpiCard icon={Zap} label="Auto-refreshing" value={String(SEGMENTS.filter((s) => s.type === "Dynamic").length)} tone="blue" />

@@ -48,7 +48,7 @@ export default function DocumentsPage() {
       </div>
 
       {/* AI tools */}
-      <div className="mb-6 grid gap-3 md:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-4">
         {AI_TOOLS.map((t) => (
           <button key={t.label} className="flex items-center gap-3 rounded-xl border border-line bg-white p-3 hover:border-violet/30">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet/10 text-violet"><t.icon className="h-4 w-4" /></div>

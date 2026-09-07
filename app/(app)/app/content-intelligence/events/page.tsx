@@ -26,7 +26,7 @@ export default function EventsPage() {
       />
       <IntelSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Calendar} label="Upcoming Events" value={String(EVENTS.length)} tone="violet" />
         <KpiCard icon={Star} label="High Impact" value={String(highImpact.length)} tone="pink" />
         <KpiCard icon={CalendarCheck} label="Holidays (30d)" value={null} tone="amber" />
@@ -41,7 +41,7 @@ export default function EventsPage() {
         <select className="rounded-xl border border-line bg-white px-3 py-2 text-[12px]"><option>Goal: Any</option><option>Awareness</option><option>Lead Gen</option><option>Retention</option></select>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Calendar */}
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 text-[14px] font-bold text-ink">September 2026</div>
@@ -83,7 +83,7 @@ export default function EventsPage() {
         <div className="border-b border-line p-4"><div className="text-[14px] font-bold text-ink">Event List</div></div>
         <div className="divide-y divide-line">
           {EVENTS.map((e) => (
-            <div key={e.id} className="grid gap-3 p-4 md:grid-cols-[100px_1fr_180px] lg:items-center">
+            <div key={e.id} className="grid grid-cols-1 gap-3 p-4 md:grid-cols-[100px_1fr_180px] lg:items-center">
               <div>
                 <div className="text-[12px] font-bold text-violet">{e.date}</div>
                 <StatusPill tone={CAT_TONE[e.category]} className="mt-1">{e.category}</StatusPill>

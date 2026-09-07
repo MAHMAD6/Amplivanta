@@ -50,13 +50,13 @@ function IntegrationGraph() {
 export function HomeIndustries() {
   return (
     <section className="bg-white py-8">
-      <div className="mx-auto grid max-w-[1280px] gap-6 px-4 lg:grid-cols-2 lg:px-8">
+      <div className="mx-auto grid grid-cols-1 max-w-[1280px] gap-6 px-4 lg:grid-cols-2 lg:px-8">
         {/* Industries */}
         <div className="rounded-xl border border-line bg-white p-6">
           <h2 className="font-display text-[20px] font-extrabold text-royal-blue">
             Built for Multiple Industries
           </h2>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {HOME_INDUSTRIES.map((ind) => {
               const Icon = iconMap[ind.icon as keyof typeof iconMap];
               return (
@@ -75,7 +75,7 @@ export function HomeIndustries() {
 
         {/* Integrations */}
         <div className="rounded-xl border border-line bg-white p-6">
-          <div className="grid gap-6 sm:grid-cols-[1.2fr_1fr] sm:items-center">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-[1.2fr_1fr] sm:items-center">
             <div>
               <h2 className="font-display text-[20px] font-extrabold text-royal-blue">
                 Connected Integrations

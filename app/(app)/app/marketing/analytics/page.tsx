@@ -24,7 +24,7 @@ export default function AutomationAnalyticsPage() {
       />
       <MarketingSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <KpiCard icon={Zap} label="Runs" value={null} tone="violet" />
         <KpiCard icon={Target} label="Completion" value={null} tone="green" />
         <KpiCard icon={TrendingUp} label="Contacts Enrolled" value={null} tone="blue" />
@@ -32,7 +32,7 @@ export default function AutomationAnalyticsPage() {
         <KpiCard icon={AlertTriangle} label="Failures" value={null} tone="teal" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 text-[14px] font-bold text-ink">Performance Over Time</div>
           <ChartPlaceholder />
@@ -66,7 +66,7 @@ export default function AutomationAnalyticsPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">Top Workflows</div>
           <div className="overflow-x-auto">

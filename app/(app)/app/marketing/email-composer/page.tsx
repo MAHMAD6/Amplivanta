@@ -21,7 +21,7 @@ export default function EmailComposerPage() {
       />
       <MarketingSubnav />
 
-      <div className="grid gap-4 lg:grid-cols-[220px_1fr_260px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr_260px]">
         {/* Blocks panel */}
         <aside className="rounded-2xl border border-line bg-white p-3 shadow-card">
           <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-ink-muted">Blocks</div>

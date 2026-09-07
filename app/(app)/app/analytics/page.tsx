@@ -27,7 +27,7 @@ export default function AnalyticsDashboardPage() {
       />
       <AnalyticsSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <KpiCard icon={Eye} label="Sessions" value={null} tone="violet" />
         <KpiCard icon={Users} label="Leads" value={null} tone="blue" />
         <KpiCard icon={Target} label="Conv. Rate" value={null} tone="pink" />
@@ -35,7 +35,7 @@ export default function AnalyticsDashboardPage() {
         <KpiCard icon={TrendingUp} label="ROAS" value={null} tone="orange" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 text-[14px] font-bold text-ink">Traffic Over Time</div>
           <ChartPlaceholder />
@@ -57,7 +57,7 @@ export default function AnalyticsDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Top Campaigns</div>
@@ -105,7 +105,7 @@ export default function AnalyticsDashboardPage() {
 
       <div className="mt-6 rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
         <div className="mb-3 flex items-center gap-1.5 text-[14px] font-bold text-ink"><Sparkles className="h-4 w-4 text-violet" /> AI Insights & Recommendations</div>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
           {AI_ANALYTICS_INSIGHTS.map((i) => {
             const tone = { green: "bg-emerald-500/10 text-emerald-600", amber: "bg-amber-500/10 text-amber-700", violet: "bg-violet/10 text-violet", red: "bg-red-500/10 text-red-600" }[i.tone as string];
             return (

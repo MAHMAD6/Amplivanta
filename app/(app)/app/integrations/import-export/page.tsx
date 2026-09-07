@@ -54,14 +54,14 @@ export default function ImportExportPage() {
       />
       <IntegrationsSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={ArrowDownToLine} label="Imports (30d)" value={null} tone="violet" />
         <KpiCard icon={ArrowUpFromLine} label="Exports (30d)" value={null} tone="blue" />
         <KpiCard icon={CheckCircle2} label="Success Rate" value={null} tone="green" />
         <KpiCard icon={Clock} label="Avg. Job Time" value={null} tone="amber" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Import */}
         <section className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <h2 className="text-[14px] font-bold text-ink">Import Data</h2>

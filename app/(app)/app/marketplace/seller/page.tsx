@@ -37,7 +37,7 @@ export default async function SellerDashboardPage() {
         action={<MpButton href="/app/marketplace" icon={ExternalLink}>Visit Marketplace</MpButton>}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MpStat label="Total Sales" value={money(stats?.grossCents)} hint="All time" />
         <MpStat label="Total Orders" value={num(stats?.orders)} hint="All time" />
         <MpStat label="Total Earnings" value={money(stats?.grossCents)} hint="All time" />
@@ -55,7 +55,7 @@ export default async function SellerDashboardPage() {
         />
       </MpCard>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <MpCard>
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
             <h2 className="text-[15px] font-bold text-deep-navy">Recent Orders</h2>

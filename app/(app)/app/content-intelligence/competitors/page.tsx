@@ -23,14 +23,14 @@ export default function CompetitorsPage() {
       />
       <IntelSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Users} label="Tracked" value={String(COMPETITORS.length)} tone="violet" />
         <KpiCard icon={MessageSquare} label="Posts (7d)" value={null} tone="blue" />
         <KpiCard icon={TrendingUp} label="Avg. Engagement" value={null} tone="pink" />
         <KpiCard icon={Target} label="Opportunities" value={String(COMPETITOR_OPPORTUNITIES.length)} tone="amber" />
       </div>
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {COMPETITORS.map((c) => (
           <div key={c.id} className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-3 flex items-center gap-3">
@@ -58,7 +58,7 @@ export default function CompetitorsPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Top Competitor Posts</div>

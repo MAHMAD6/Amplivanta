@@ -50,7 +50,7 @@ export default function LoginPage() {
             New to Amplivanta? <Link href="/signup" className="ml-1.5 font-bold text-royal-blue hover:underline">Create an account</Link>
           </div>
 
-          <div className="mx-auto mt-6 grid max-w-[1000px] gap-10 lg:grid-cols-2">
+          <div className="mx-auto mt-6 grid grid-cols-1 max-w-[1000px] gap-10 lg:grid-cols-2">
             <div>
               <h1 className="font-display text-[46px] font-extrabold leading-none text-deep-navy">Welcome back</h1>
               <p className="mt-3 text-[15px] text-ink-soft">Sign in to your Amplivanta account</p>

@@ -64,16 +64,16 @@ export default async function DeliverabilityPage() {
         <KpiCard icon={BadgeCheck} tone="green" label="Auth Coverage" value={null} deltaTone="neutral" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
           {/* Trend charts */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <ChartCard title="Inbox Placement Trend" series={[["Inbox", "#16A56A", [86, 89, 87, 88, 90, 88, 89]], ["Promotions", "#3B82F6", [10, 8, 11, 9, 7, 9, 8]], ["Spam", "#EF4444", [3, 2, 2, 3, 2, 2, 2]]]} />
             <ChartCard title="Engagement vs Bounce" series={[["Open", "#7C3AED", [28, 31, 27, 29, 26, 30, 31]], ["Click", "#3B82F6", [11, 12, 10, 11, 12, 10, 12]], ["Bounce", "#EF4444", [1, 1, 1.2, 0.9, 1, 0.8, 1]]]} />
           </div>
 
           {/* Auth / reputation / providers */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Panel title="Authentication & Domain Setup">
               {AUTH.map(([k, v, tone]) => (
                 <div key={k} className="flex items-center justify-between py-1 text-[12.5px]"><span className="text-ink-soft">{k}</span><StatusPill tone={tone}>{v}</StatusPill></div>

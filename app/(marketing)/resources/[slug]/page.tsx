@@ -43,7 +43,7 @@ export default async function ResourcePage({ params }: { params: Promise<{ slug:
 
   return (
     <section className="bg-white py-8">
-      <div className="mx-auto grid max-w-[1320px] gap-8 px-4 lg:grid-cols-[220px_1fr_240px] lg:px-8">
+      <div className="mx-auto grid grid-cols-1 max-w-[1320px] gap-8 px-4 lg:grid-cols-[220px_1fr_240px] lg:px-8">
         {/* Left browse */}
         <aside className="hidden lg:block">
           <div className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Browse Resources</div>
@@ -99,7 +99,7 @@ export default async function ResourcePage({ params }: { params: Promise<{ slug:
           {/* Related */}
           <div className="mt-10 rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-3 flex items-center justify-between"><span className="text-[14px] font-bold text-deep-navy">Related Resources</span><Link href="/resources" className="text-[12px] font-semibold text-royal-blue">View all guides →</Link></div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {RELATED.map((r) => (
                 <div key={r.title} className="rounded-xl border border-line p-3">
                   <div className="text-[10px] font-bold uppercase tracking-wide text-royal-blue">{r.tag}</div>

@@ -35,7 +35,7 @@ export default function NewsPage() {
       />
       <IntelSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Newspaper} label="Stories Today" value={null} tone="violet" />
         <KpiCard icon={TrendingUp} label="High Impact" value={null} tone="pink" />
         <KpiCard icon={BellI} label="Alerts" value={null} tone="amber" />
@@ -52,7 +52,7 @@ export default function NewsPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         <div className="space-y-3">
           {/* Top story */}
           <div className="rounded-2xl border border-violet/25 bg-gradient-to-br from-violet/[0.03] to-orange-brand/[0.03] p-5 shadow-card">

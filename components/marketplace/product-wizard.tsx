@@ -158,7 +158,7 @@ export function ProductWizard({
     <form ref={formRef} onSubmit={(e) => e.preventDefault()}>
       {/* Step rail */}
       <MpCard className="p-5">
-        <ol className="grid gap-4 md:grid-cols-5">
+        <ol className="grid grid-cols-1 gap-4 md:grid-cols-5">
           {STEPS.map((s) => {
             const done = s.id < step;
             const current = s.id === step;
@@ -202,7 +202,7 @@ export function ProductWizard({
       <div hidden={step !== 1}>
         <MpCard className="mt-5 p-6">
           <h2 className="text-[16px] font-extrabold text-deep-navy">Product Details</h2>
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
             <div className="md:col-span-2">
               <Field label="Product title" required>
                 <input
@@ -281,7 +281,7 @@ export function ProductWizard({
           <h2 className="flex items-center gap-2 text-[16px] font-extrabold text-deep-navy">
             <ImageIcon aria-hidden className="h-4 w-4 text-royal-blue" /> Media &amp; Files
           </h2>
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
             <Field label="Main image URL" hint="The primary listing image.">
               <input
                 name="coverImage"
@@ -327,7 +327,7 @@ export function ProductWizard({
       <div hidden={step !== 3}>
         <MpCard className="mt-5 p-6">
           <h2 className="text-[16px] font-extrabold text-deep-navy">Pricing &amp; License</h2>
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
             <Field label="Price (USD)" hint="Set 0 for a free product.">
               <input
                 name="price"
@@ -352,7 +352,7 @@ export function ProductWizard({
 
       {/* ------------------------------------------ 4. SEO & discoverability */}
       <div hidden={step !== 4}>
-        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <MpCard className="p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -424,7 +424,7 @@ export function ProductWizard({
             <h3 className="mt-6 flex items-center gap-2 text-[13.5px] font-extrabold text-deep-navy">
               <Globe aria-hidden className="h-4 w-4 text-royal-blue" /> Search Engine Optimization
             </h3>
-            <div className="mt-4 grid gap-5 md:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2">
               <Field label="SEO title" count={`${seoTitle.length}/60`} hint="The title search engines will see.">
                 <input
                   name="seoTitle"

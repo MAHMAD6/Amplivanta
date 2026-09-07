@@ -26,7 +26,7 @@ export function MarketingFooter() {
   return (
     <footer className="bg-deep-navy text-white/80">
       <div className="mx-auto max-w-[1280px] px-4 py-12 lg:px-8">
-        <div className="grid gap-x-6 gap-y-10 lg:grid-cols-[1.25fr_repeat(6,_minmax(0,0.86fr))_1.35fr]">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-10 lg:grid-cols-[1.25fr_repeat(6,_minmax(0,0.86fr))_1.35fr]">
           {/* Brand */}
           <div>
             <Logo dark />

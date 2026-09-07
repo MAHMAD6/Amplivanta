@@ -41,7 +41,7 @@ export default async function ActivitiesPage() {
       <CrmSubnav />
       {live && <LiveBadge label={`Live · ${activities.length} activities from database`} />}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Mail} label="Emails Sent" value={null} tone="blue" />
         <KpiCard icon={Phone} label="Calls Logged" value={null} tone="green" />
         <KpiCard icon={CalIcon} label="Meetings" value={null} tone="violet" />

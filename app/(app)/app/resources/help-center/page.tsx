@@ -34,7 +34,7 @@ export default function HelpCenterPage() {
         <div className="min-w-0">
           {/* Hero */}
           <section className="relative overflow-hidden rounded-3xl bg-white p-2">
-            <div className="grid items-center gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-[1.2fr_0.8fr]">
               <div className="p-4">
                 <h1 className="font-display text-[36px] font-extrabold leading-tight text-ink">
                   How can we help you?
@@ -79,7 +79,7 @@ export default function HelpCenterPage() {
               View All Topics <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {HELP_TOPICS.map((t) => (
               <Link
                 key={t.title}

@@ -23,13 +23,13 @@ export function HomeResources() {
   return (
     <section className="bg-white py-8">
       <div className="mx-auto max-w-[1280px] px-4 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,_0.85fr)_minmax(0,_1.6fr)]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,_0.85fr)_minmax(0,_1.6fr)]">
           {/* featured */}
           <div>
             <h2 className="font-display text-[20px] font-extrabold text-royal-blue">
               Resources to Accelerate Growth
             </h2>
-            <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_auto] sm:items-start">
+            <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-[1fr_auto] sm:items-start">
               <div>
                 <span className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-ink-muted">
                   Featured Resource
@@ -62,7 +62,7 @@ export function HomeResources() {
           </div>
 
           {/* resource grid */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {HOME_RESOURCES.map((r) => {
               const Icon = iconMap[r.icon as keyof typeof iconMap];
               return (

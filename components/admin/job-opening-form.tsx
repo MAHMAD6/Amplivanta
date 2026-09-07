@@ -35,7 +35,7 @@ export function JobOpeningForm() {
       }}
     >
       <SuperCard className="p-6">
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div className="md:col-span-2">
             <Field label="Job title">
               <input name="title" required placeholder="e.g. Senior Product Designer" className={field} />

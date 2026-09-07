@@ -104,7 +104,7 @@ export default async function ConversionSettingsPage() {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[13px] font-bold text-ink">Tracking Methods</div>
           <div className="space-y-3">

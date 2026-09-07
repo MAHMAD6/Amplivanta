@@ -33,7 +33,7 @@ const SECTIONS: { icon: typeof FileText; title: string; sub: string; body: strin
 export default function DpaPage() {
   return (
     <section className="bg-white py-8">
-      <div className="mx-auto grid max-w-[1240px] gap-8 px-4 lg:grid-cols-[280px_1fr] lg:px-8">
+      <div className="mx-auto grid grid-cols-1 max-w-[1240px] gap-8 px-4 lg:grid-cols-[280px_1fr] lg:px-8">
         {/* Left sidebar */}
         <aside className="hidden lg:block">
           <div className="sticky top-24">
@@ -70,7 +70,7 @@ export default function DpaPage() {
           <p className="mt-4 text-[15px] leading-relaxed text-ink-soft">This Data Processing Agreement (“DPA”) sets out the terms under which Amplivanta, operator of the Services (the “Processor” or “Service Provider”), processes Personal Data on behalf of its customers (the “Controller” or “Customer”).</p>
 
           {/* Highlights */}
-          <div className="mt-6 grid gap-3 rounded-2xl border border-line bg-white p-5 shadow-card sm:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-3 rounded-2xl border border-line bg-white p-5 shadow-card sm:grid-cols-3">
             {HIGHLIGHTS.map((h) => (
               <div key={h.title} className="flex gap-2.5">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-royal-tint text-royal-blue"><h.icon className="h-4 w-4" /></span>

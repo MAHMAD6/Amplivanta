@@ -28,7 +28,7 @@ export default function CampaignAnalyticsPage() {
       />
       <AnalyticsSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Users} label="Total Reach" value={`${(totalReach / 1000).toFixed(0)}K`} tone="violet" />
         <KpiCard icon={MousePointer} label="Total Conversions" value={totalConv.toLocaleString()} tone="blue" />
         <KpiCard icon={DollarSign} label="Total Revenue" value={`$${(totalRev / 1000).toFixed(0)}K`} tone="green" />

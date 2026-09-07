@@ -27,7 +27,7 @@ export default function WSTasksPage() {
       />
       <WorkspaceSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={ListChecks} label="Total Tasks" value={String(WS_TASKS.length)} tone="violet" />
         <KpiCard icon={Clock} label="Due This Week" value={null} tone="blue" />
         <KpiCard icon={AlertTriangle} label="Overdue" value={null} deltaTone="down" tone="pink" />
@@ -42,7 +42,7 @@ export default function WSTasksPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {COLS.map((col) => {
           const tasks = WS_TASKS.filter((t) => t.status === col);
           return (

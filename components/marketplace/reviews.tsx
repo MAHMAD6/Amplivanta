@@ -54,7 +54,7 @@ export function ProductReviewsSection({ productId, data }: { productId: string; 
             });
           }}
         >
-          <div className="grid gap-4 md:grid-cols-[120px_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[120px_minmax(0,1fr)]">
             <label className="block">
               <span className="mb-1.5 block text-[12.5px] font-bold text-deep-navy">Rating</span>
               <select name="rating" required defaultValue="5" className="h-11 w-full rounded-xl border border-line px-3 text-[13.5px]">

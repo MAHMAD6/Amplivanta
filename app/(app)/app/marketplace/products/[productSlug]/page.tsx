@@ -209,9 +209,9 @@ export default async function ProductDetailPage({
         ]}
       />
 
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0">
-          <div className="grid gap-7 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
             <ProductGallery images={images} title={product.title} />
 
             <div>
@@ -267,7 +267,7 @@ export default async function ProductDetailPage({
                 id: "overview",
                 label: "Overview",
                 content: (
-                  <div className="grid gap-7 md:grid-cols-[minmax(0,1fr)_320px]">
+                  <div className="grid grid-cols-1 gap-7 md:grid-cols-[minmax(0,1fr)_320px]">
                     <div>
                       <h2 className="text-[17px] font-extrabold text-deep-navy">About This Product</h2>
                       <p className="mt-3 whitespace-pre-line text-[14px] leading-relaxed text-ink-soft">
@@ -277,7 +277,7 @@ export default async function ProductDetailPage({
                       {product.perfectFor.length > 0 && (
                         <>
                           <h3 className="mt-7 text-[15px] font-extrabold text-deep-navy">Perfect For</h3>
-                          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                          <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                             {product.perfectFor.map((item) => (
                               <li key={item} className="flex gap-2.5 text-[13.5px] text-ink-soft">
                                 <BadgeCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-royal-blue" />
@@ -308,7 +308,7 @@ export default async function ProductDetailPage({
                 label: "What's Included",
                 content:
                   product.highlights.length > 0 || assets.length > 0 ? (
-                    <div className="grid gap-7 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
                       {product.highlights.length > 0 && (
                         <div>
                           <h2 className="text-[15px] font-extrabold text-deep-navy">In this product</h2>
@@ -442,7 +442,7 @@ export default async function ProductDetailPage({
               View All
             </Link>
           </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {related.map((r) => (
               <Link
                 key={r.id}

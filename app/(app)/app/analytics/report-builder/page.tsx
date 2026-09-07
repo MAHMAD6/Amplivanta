@@ -46,7 +46,7 @@ export default function ReportBuilderPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-[220px_1fr_280px]">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[220px_1fr_280px]">
         {/* Widget library */}
         <div className="rounded-2xl border border-line bg-white p-3 shadow-card">
           <div className="mb-2 flex gap-3 border-b border-line pb-2 text-[12.5px] font-semibold"><span className="text-violet">Widgets</span><span className="text-ink-muted">Layout</span></div>
@@ -87,7 +87,7 @@ export default function ReportBuilderPage() {
             ))}
           </div>
 
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <div className="rounded-xl border-2 border-dashed border-violet/50 bg-white p-4 shadow-card">
               <div className="mb-1 text-[12.5px] font-bold text-ink">Revenue Over Time</div>
               <MiniLine />
@@ -139,7 +139,7 @@ export default function ReportBuilderPage() {
       </div>
 
       {/* Bottom rail */}
-      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
           <div className="mb-2 flex items-center gap-2 text-[12.5px] font-bold text-ink"><AlertTriangle className="h-4 w-4 text-amber-500" /> Validation <StatusPill tone="amber">2 issues</StatusPill></div>
           <ul className="space-y-2 text-[11.5px] text-ink-soft"><li><b className="text-ink">Data freshness</b> — HubSpot data is 15m old.</li><li><b className="text-ink">Missing filter</b> — Add a date filter for accurate results.</li></ul>

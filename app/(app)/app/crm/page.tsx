@@ -35,7 +35,7 @@ export default async function CrmDashboardPage() {
       />
       <CrmSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <KpiCard icon={Users} label="Total Contacts" value={null} tone="violet" />
         <KpiCard icon={UserPlus} label="New Contacts" value={null} tone="blue" />
         <KpiCard icon={DollarSign} label="Active Deals" value={null} tone="orange" />
@@ -51,7 +51,7 @@ export default async function CrmDashboardPage() {
           </div>
           <Link href="/app/crm/deals" className="text-[12px] font-semibold text-violet">View pipeline →</Link>
         </div>
-        <div className="grid gap-3 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
           {PIPELINE_STAGES.map((s) => (
             <div key={s.key} className="rounded-xl border border-line bg-bg-soft/60 p-4">
               <div className="flex items-center justify-between">
@@ -65,7 +65,7 @@ export default async function CrmDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Top Deals</div>
@@ -127,7 +127,7 @@ export default async function CrmDashboardPage() {
           <div className="text-[14px] font-bold text-ink">Recent Leads</div>
           <Link href="/app/crm/contacts" className="text-[12px] font-semibold text-violet">View contacts →</Link>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
           {recentContacts.map((c) => (
             <Link
               key={c.id}

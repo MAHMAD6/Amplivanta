@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Data Management" };
 export default function DataManagementPage() {
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <ActionCard icon={Download} label="Export Data" desc="Full workspace export as CSV or JSON" cta="Request Export" />
         <ActionCard icon={Upload} label="Import Data" desc="Contacts, deals, activities from CSV" cta="Upload File" />
         <ActionCard icon={Database} label="Backup" desc="Manual snapshot + auto-daily backups" cta="Trigger Backup" />

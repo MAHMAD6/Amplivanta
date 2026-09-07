@@ -29,7 +29,7 @@ export default function AffiliateApplyPage() {
       </section>
 
       <section className="bg-white py-10">
-        <div className="mx-auto grid max-w-[1200px] gap-6 px-4 lg:grid-cols-[1.35fr_0.65fr] lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] gap-6 px-4 lg:grid-cols-[1.35fr_0.65fr] lg:px-8">
           <AffiliateApplicationForm />
           <div className="space-y-4">
             <div className="rounded-2xl border border-line bg-white p-5 text-center shadow-card">

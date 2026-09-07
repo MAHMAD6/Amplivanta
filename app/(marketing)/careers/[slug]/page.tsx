@@ -51,7 +51,7 @@ export default async function JobPage({ params }: { params: Promise<{ slug: stri
 
       {/* Body */}
       <section className="bg-white py-12">
-        <div className="mx-auto grid max-w-[1200px] gap-8 px-4 lg:grid-cols-[1.5fr_0.9fr] lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] gap-8 px-4 lg:grid-cols-[1.5fr_0.9fr] lg:px-8">
           <div className="space-y-8">
             <Block icon={ClipboardList} title="About the Role"><p className="text-[14px] leading-relaxed text-ink-soft">{job.about}</p></Block>
             <Block icon={Target} title="What You'll Do"><Bullets items={job.doList} /></Block>
@@ -92,7 +92,7 @@ export default async function JobPage({ params }: { params: Promise<{ slug: stri
           <div className="rounded-2xl border border-line bg-bg-soft/40 p-8">
             <h2 className="text-center font-display text-2xl font-extrabold text-deep-navy">Why Amplivanta?</h2>
             <p className="mt-1 text-center text-[13px] text-ink-soft">We&apos;re building a culture where talented people do their best work.</p>
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
               {VALUES.map((v) => (
                 <div key={v.title} className="text-center">
                   <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-royal-tint text-royal-blue"><v.icon className="h-5 w-5" /></span>

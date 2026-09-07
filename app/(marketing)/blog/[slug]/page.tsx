@@ -90,7 +90,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
         <div className="mt-14">
           <h2 className="font-display text-2xl font-extrabold text-ink">Keep reading</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
             {more.map((p) => (
               <Link
                 key={p.slug}

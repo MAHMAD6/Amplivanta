@@ -56,7 +56,7 @@ export function SellerApplicationForm() {
       }}
     >
       <MpCard className="p-6">
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div className="md:col-span-2">
             <Field label="Store name" required>
               <input name="storeName" required placeholder="How your store appears to buyers" className={field} />
@@ -140,7 +140,7 @@ export function SellerSettingsForm({
       }}
     >
       <MpCard className="p-6">
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <Field label="Store name" required>
             <input name="storeName" required defaultValue={storeName} className={field} />
           </Field>

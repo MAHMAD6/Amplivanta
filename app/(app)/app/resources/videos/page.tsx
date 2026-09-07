@@ -48,7 +48,7 @@ export default function VideosPage() {
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider">
               <Play className="h-3 w-3" /> {VIDEO_FEATURED.badge}
             </span>
-            <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_360px]">
+            <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
               <div>
                 <h2 className="font-display text-[28px] font-extrabold leading-snug">
                   {VIDEO_FEATURED.title}
@@ -106,7 +106,7 @@ export default function VideosPage() {
               View All Videos <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {VIDEOS.map((v) => (
               <article
                 key={v.id}

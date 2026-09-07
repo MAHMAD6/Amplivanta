@@ -114,9 +114,9 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
           ]}
         />
 
-        <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="min-w-0">
-            <div className="grid gap-7 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-7 md:grid-cols-2">
               <ProductGallery images={images} title={product.title} />
 
               <div>
@@ -165,7 +165,7 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
             {product.highlights.length > 0 && (
               <div className="mt-9">
                 <h2 className="font-display text-xl font-extrabold text-deep-navy">What&apos;s included</h2>
-                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {product.highlights.map((h) => (
                     <li key={h} className="flex gap-2.5 text-[14px] text-ink-soft">
                       <BadgeCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-royal-blue" />
@@ -179,7 +179,7 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
             {product.perfectFor.length > 0 && (
               <div className="mt-9">
                 <h2 className="font-display text-xl font-extrabold text-deep-navy">Perfect for</h2>
-                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {product.perfectFor.map((h) => (
                     <li key={h} className="flex gap-2.5 text-[14px] text-ink-soft">
                       <BadgeCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-royal-blue" />

@@ -76,7 +76,7 @@ export default function HelpSupportPage() {
 
           {/* Topics */}
           <h2 className="mt-6 font-display text-[18px] font-extrabold text-ink">Browse Help Topics</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {TOPICS.map((t) => (
               <div key={t.title} className="rounded-2xl border border-line bg-white p-5 text-center shadow-card">
                 <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${t.tone}`}>
@@ -113,7 +113,7 @@ export default function HelpSupportPage() {
 
           {/* Still need help */}
           <h2 className="mt-8 font-display text-[18px] font-extrabold text-ink">Still Need Help?</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[
               { title: "Contact Support", desc: "Get help from our support team.", cta: "Contact Us", icon: MessageSquare, tone: "text-violet" },
               { title: "Live Chat", desc: "Chat with our team in real time.", cta: "Start Chat", icon: Send, tone: "text-emerald-600" },

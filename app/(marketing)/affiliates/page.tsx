@@ -38,7 +38,7 @@ export default function AffiliatesPage() {
         <div className="mx-auto max-w-[1200px] px-4 pt-6 lg:px-8">
           <MarketingBreadcrumb items={[["Home", "/"], ["Partners & Affiliates", "/affiliates"], ["Affiliate Program", null]]} />
         </div>
-        <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 py-12 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] items-center gap-10 px-4 py-12 lg:grid-cols-2 lg:px-8">
           <div>
             <h1 className="font-display text-[42px] font-extrabold leading-[1.05] lg:text-[50px]">Amplivanta <span className="bg-gradient-to-r from-royal-soft to-pink-brand bg-clip-text text-transparent">Affiliate Program</span></h1>
             <p className="mt-4 max-w-[440px] text-[15px] leading-relaxed text-white/70">Refer businesses to Amplivanta and earn commission when they grow with our all-in-one growth platform.</p>
@@ -68,7 +68,7 @@ export default function AffiliatesPage() {
 
       {/* Why promote */}
       <Section title="Why Promote Amplivanta?" sub="A complete growth platform businesses rely on — and an affiliate program that rewards you.">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {WHY.map((w) => (
             <div key={w.title} className="rounded-2xl border border-line bg-white p-5 text-center shadow-card">
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-royal-tint text-royal-blue"><w.icon className="h-6 w-6" /></span>
@@ -81,7 +81,7 @@ export default function AffiliatesPage() {
 
       {/* How it works + who can join */}
       <section className="bg-white py-8">
-        <div className="mx-auto grid max-w-[1200px] gap-10 px-4 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] gap-10 px-4 lg:grid-cols-2 lg:px-8">
           <div>
             <h2 className="font-display text-2xl font-extrabold text-deep-navy">How It Works</h2>
             <p className="mt-1 text-[13px] text-ink-soft">Simple steps to start earning.</p>
@@ -113,7 +113,7 @@ export default function AffiliatesPage() {
 
       {/* FAQ + guidelines + CTA */}
       <section className="bg-white py-10">
-        <div className="mx-auto grid max-w-[1200px] gap-4 px-4 lg:grid-cols-3 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] gap-4 px-4 lg:grid-cols-3 lg:px-8">
           <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <h3 className="text-[15px] font-bold text-deep-navy">Frequently Asked Questions</h3>
             <div className="mt-3 divide-y divide-line">

@@ -46,7 +46,7 @@ export function SignupForm() {
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-ink">Full name</label>
           <input name="name" required className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm focus:border-violet focus:outline-none focus:ring-2 focus:ring-violet/20" />

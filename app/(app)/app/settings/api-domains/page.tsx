@@ -46,7 +46,7 @@ export default function ApiDomainsPage() {
           </div>
           <Link href="/app/integrations/api-keys" className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink"><Key className="h-3.5 w-3.5" />Manage Keys</Link>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-line p-3">
             <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">Active Keys</div>
             <div className="text-2xl font-extrabold text-ink">3</div>

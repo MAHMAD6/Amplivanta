@@ -46,7 +46,7 @@ export default function AiAdvisorPage() {
   return (
     <div className="mx-auto max-w-[1200px]">
       {/* Hero */}
-      <section className="grid items-start gap-8 lg:grid-cols-[1.5fr_1fr]">
+      <section className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.5fr_1fr]">
         <div>
           <h1 className="font-display text-[34px] font-extrabold leading-[1.1] text-ink lg:text-[40px]">AI Advisor for Smarter Growth Decisions</h1>
           <p className="mt-4 max-w-[520px] text-[15px] leading-relaxed text-ink-soft">Get AI-powered insights, tailored recommendations, and clear action steps to accelerate your growth.</p>
@@ -63,7 +63,7 @@ export default function AiAdvisorPage() {
       </section>
 
       {/* Value props */}
-      <div className="mt-8 grid gap-4 rounded-2xl border border-line bg-white p-6 shadow-card sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid grid-cols-1 gap-4 rounded-2xl border border-line bg-white p-6 shadow-card sm:grid-cols-2 lg:grid-cols-4">
         {VALUES.map((v) => (
           <div key={v.title} className="text-center">
             <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${TONE[v.tone]}`}><v.icon className="h-6 w-6" /></span>
@@ -79,7 +79,7 @@ export default function AiAdvisorPage() {
           <h2 className="text-[16px] font-bold text-ink">Advisor Overview</h2>
           <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[12.5px] font-semibold text-ink">Last 30 days ▾</button>
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div>
             <div className="mb-2 text-[12.5px] font-bold text-ink-soft">Opportunity Areas</div>
             <div className="space-y-2">
@@ -111,7 +111,7 @@ export default function AiAdvisorPage() {
 
       {/* Growth intelligence */}
       <Section title="AI-Powered Growth Intelligence" sub="Advanced AI models analyze your data to deliver the right insight at the right time.">
-        <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
           {INTEL.map((f) => (
             <div key={f.title} className="flex gap-3">
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${TONE[f.tone]}`}><f.icon className="h-5 w-5" /></span>
@@ -123,7 +123,7 @@ export default function AiAdvisorPage() {
 
       {/* How it works */}
       <Section title="How the Growth Advisor Works" sub="From insight to impact in three steps.">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {STEPS.map((s) => (
             <div key={s.n} className="rounded-2xl border border-line bg-white p-5 shadow-card">
               <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${TONE[s.tone]}`}><s.icon className="h-5 w-5" /></span>
@@ -136,7 +136,7 @@ export default function AiAdvisorPage() {
 
       {/* Teams */}
       <Section title="Built for Growth-Focused Teams" sub="Insights designed for every role that drives growth.">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {TEAMS.map((t) => (
             <div key={t.title} className="rounded-2xl border border-line bg-white p-4 shadow-card">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet/10 text-violet"><t.icon className="h-4 w-4" /></span>

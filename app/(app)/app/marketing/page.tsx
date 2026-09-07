@@ -35,7 +35,7 @@ export default async function MarketingDashboardPage() {
       />
       <MarketingSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
         <KpiCard icon={Target} label="Active Campaigns" value={null} tone="violet" />
         <KpiCard icon={WFI} label="Active Workflows" value={null} tone="pink" />
         <KpiCard icon={Users} label="New Leads (30d)" value={null} tone="blue" />
@@ -46,7 +46,7 @@ export default async function MarketingDashboardPage() {
 
       <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">
         <div className="mb-3 text-[14px] font-bold text-ink">Lead Conversion Funnel</div>
-        <div className="grid gap-3 sm:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
           {[
             { label: "Visitors", value: "42,800", pct: 100, tone: "bg-violet/70" },
             { label: "Leads", value: "8,420", pct: 20, tone: "bg-violet" },
@@ -66,7 +66,7 @@ export default async function MarketingDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Active Campaigns</div>
@@ -128,7 +128,7 @@ export default async function MarketingDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-amber-300/50 bg-amber-50/40 p-5 lg:col-span-2">
           <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-amber-700">
             <AlertTriangle className="h-4 w-4" /> 2 issues need attention

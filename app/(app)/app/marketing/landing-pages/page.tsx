@@ -31,7 +31,7 @@ export default function LandingPagesPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {LANDING_PAGES.map((p) => (
           <div key={p.id} className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-card">
             <div className="relative aspect-[16/10] bg-gradient-to-br from-violet/25 via-fuchsia-200/60 to-orange-brand/25">

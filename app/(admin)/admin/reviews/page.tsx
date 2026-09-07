@@ -103,7 +103,7 @@ export default function ReviewsAdminPage() {
   return (
     <div className="space-y-6">
       {/* Metric Cards Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard title="Total Reviews" value={stats.total} icon={Star} variant="default" />
         <StatsCard title="Average Rating" value={`${stats.avgRating} / 5`} icon={Award} variant="success" />
         <StatsCard title="Approved Reviews" value={stats.approved} icon={ThumbsUp} variant="accent" />
@@ -152,7 +152,7 @@ export default function ReviewsAdminPage() {
           No reviews match the selected filter.
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filtered.map((r) => (
             <div
               key={r.id}

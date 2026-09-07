@@ -21,7 +21,7 @@ export default function StrategyReportsPage() {
       />
       <StrategySubnav />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {STRATEGY_REPORTS.map((r) => (
           <div key={r.id} className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-2 flex items-start justify-between">

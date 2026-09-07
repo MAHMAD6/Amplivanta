@@ -26,7 +26,7 @@ export default function PricingPage() {
       <section className="bg-white py-16">
         <div className="mx-auto max-w-[1100px] px-4 lg:px-8">
           <h2 className="text-center font-display text-2xl font-extrabold text-deep-navy">Pricing FAQ</h2>
-          <div className="mt-8 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {PRICING_FAQ.map((f) => (
               <details key={f.q} className="group rounded-xl border border-line bg-white px-4 py-3">
                 <summary className="flex cursor-pointer list-none items-center justify-between text-[13.5px] font-semibold text-deep-navy">

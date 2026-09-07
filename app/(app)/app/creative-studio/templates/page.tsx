@@ -63,7 +63,7 @@ function Section({ title, items }: { title: string; items: typeof CREATIVE_TEMPL
         <div className="text-[14px] font-bold text-ink">{title}</div>
         <button className="text-[12px] font-semibold text-violet">See all →</button>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {items.map((t) => (
           <div key={t.id} className="group overflow-hidden rounded-2xl border border-line bg-white shadow-card transition hover:-translate-y-1 hover:border-violet/30">
             <div className={`relative aspect-[4/5] bg-gradient-to-br ${t.thumb}`}>

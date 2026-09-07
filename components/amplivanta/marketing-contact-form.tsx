@@ -34,7 +34,7 @@ export function MarketingContactForm() {
         </div>
       )}
       <form onSubmit={onSubmit} className="mt-5 space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field name="fullName" placeholder="Full Name *" required />
           <Field name="email" type="email" placeholder="Email Address *" required />
         </div>

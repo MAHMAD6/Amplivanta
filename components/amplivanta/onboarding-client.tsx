@@ -69,7 +69,7 @@ export function OnboardingClient() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
       {/* Main */}
       <div>
         <h1 className="font-display text-[34px] font-extrabold leading-tight text-ink">Welcome to Amplivanta</h1>
@@ -96,7 +96,7 @@ export function OnboardingClient() {
             <>
               <h2 className="text-[16px] font-bold text-ink">Choose your account type</h2>
               <p className="mt-0.5 text-[13px] text-ink-soft">This helps us personalize your experience.</p>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {([["Individual", User, "Perfect for freelancers, consultants, and solo marketers."], ["Company", Building2, "Ideal for teams and organizations growing together."]] as const).map(([label, Icon, hint]) => (
                   <button key={label} onClick={() => { setAccountType(label); persist({ accountType: label }); }} className={cn("relative rounded-2xl border-2 p-6 text-center transition", accountType === label ? "border-violet bg-violet/[0.03]" : "border-line bg-white hover:border-violet/40")}>
                     {accountType === label && <span className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-violet text-white"><Check className="h-3.5 w-3.5" /></span>}
@@ -114,7 +114,7 @@ export function OnboardingClient() {
             <>
               <h2 className="text-[16px] font-bold text-ink">Tell us about your business</h2>
               <p className="mt-0.5 text-[13px] text-ink-soft">Optional — helps our AI tailor recommendations.</p>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input label={accountType === "Company" ? "Company name" : "Your name"} placeholder="Acme Inc." />
                 <Input label="Industry" placeholder="Software / SaaS" />
                 <Input label="Website" placeholder="https://" />
@@ -150,7 +150,7 @@ export function OnboardingClient() {
                 </div>
               </div>
               <div className="mt-4 flex items-center gap-2 text-[12.5px] font-bold text-ink">Recommended integrations <span className="rounded-full bg-violet/10 px-2 py-0.5 text-[10px] font-semibold text-violet">Suggested for you</span></div>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
                 {RECOMMENDED.map((r) => (
                   <div key={r.name} className="rounded-xl border border-line bg-white p-4">
                     <div className="mb-2 flex items-start justify-between"><span className="text-[18px]">{r.logo}</span><span className="rounded-full bg-violet/10 px-2 py-0.5 text-[9.5px] font-semibold text-violet">Recommended</span></div>
@@ -164,7 +164,7 @@ export function OnboardingClient() {
                 ))}
               </div>
               <div className="mt-4 text-[12.5px] font-bold text-ink">More integrations</div>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {MORE_TOOLS.map((n) => (
                   <div key={n} className="rounded-xl border border-line bg-white p-3">
                     <div className="text-[12.5px] font-semibold text-ink">{n}</div>

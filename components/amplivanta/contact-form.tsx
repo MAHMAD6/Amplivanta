@@ -24,7 +24,7 @@ export function ContactForm() {
           <Check className="h-4 w-4" /> Message sent — we&apos;ll be in touch within one business day.
         </div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="First name" name="firstName" required />
         <Field label="Last name" name="lastName" required />
       </div>

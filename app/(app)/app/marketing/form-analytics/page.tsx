@@ -35,14 +35,14 @@ export default function FormAnalyticsPage() {
       />
       <MarketingSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={ClipboardList} label="Submissions (30d)" value={null} tone="violet" />
         <KpiCard icon={TrendingUp} label="Conv. Rate" value={null} tone="green" />
         <KpiCard icon={Users} label="Qualified" value={null} tone="pink" />
         <KpiCard icon={Globe} label="Countries" value={null} tone="blue" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">By Source</div>
           <div className="space-y-3">

@@ -28,7 +28,7 @@ export default function WSNotesPage() {
       />
       <WorkspaceSubnav />
 
-      <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]">
         <aside className="rounded-2xl border border-line bg-white p-3 shadow-card">
           <div className="mb-2 flex h-9 items-center gap-2 rounded-lg border border-line px-3">
             <Search className="h-3.5 w-3.5 text-ink-muted" />
@@ -54,7 +54,7 @@ export default function WSNotesPage() {
           {pinned.length > 0 && (
             <div>
               <div className="mb-3 flex items-center gap-2 text-[12.5px] font-bold text-ink"><Pin className="h-3.5 w-3.5 text-violet" /> Pinned</div>
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 {pinned.map((n) => (
                   <div key={n.id} className="rounded-2xl border border-violet/25 bg-white p-4 shadow-card">
                     <div className="mb-2 flex items-center justify-between">

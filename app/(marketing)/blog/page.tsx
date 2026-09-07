@@ -16,7 +16,7 @@ export default function BlogIndex() {
           <h1 className="mt-4 font-display text-5xl font-extrabold text-ink">Playbooks for growth operators.</h1>
           <p className="mx-auto mt-4 max-w-2xl text-ink-soft">Opinionated writing on marketing, growth, and the AI-native stack.</p>
         </div>
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((p) => (
             <Link key={p.slug} href={`/blog/${p.slug}`} className="group flex flex-col rounded-2xl border border-line bg-white p-6 shadow-card transition hover:-translate-y-1 hover:border-violet/30 hover:shadow-card-lg">
               <div className="aspect-[16/9] rounded-xl bg-gradient-to-br from-violet/20 via-fuchsia-200/60 to-orange-brand/25" />

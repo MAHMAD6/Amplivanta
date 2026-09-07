@@ -25,14 +25,14 @@ export default function GoalsPage() {
       />
       <StrategySubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Target} label="Total Goals" value={String(GOALS.length)} tone="violet" />
         <KpiCard icon={TrendingUp} label="On Track" value={String(GOALS.filter((g) => g.status === "On Track").length)} tone="green" />
         <KpiCard icon={AlertTriangle} label="At Risk" value={String(GOALS.filter((g) => g.status === "At Risk").length)} deltaTone="down" tone="amber" />
         <KpiCard icon={CheckCircle2} label="Achieved" value={String(GOALS.filter((g) => g.status === "Achieved").length)} tone="blue" />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {GOALS.map((g) => {
           const pct = Math.min(100, Math.round((g.current / g.target) * 100));
           return (

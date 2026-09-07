@@ -42,7 +42,7 @@ export function PricingClient() {
         <p className="mt-3 text-center text-[12px] text-ink-muted">Annual pricing reflects 25% launch discount plus additional 10% annual discount (32.5% total savings vs list price).</p>
 
         {/* Plan cards */}
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
           {PLANS.map((plan) => <PlanCard key={plan.key} plan={plan} annual={annual} />)}
         </div>
 
@@ -86,7 +86,7 @@ export function PricingClient() {
         )}
 
         {/* Trust row */}
-        <div className="mt-8 grid gap-6 rounded-2xl bg-royal-tint/40 p-6 md:grid-cols-4">
+        <div className="mt-8 grid grid-cols-1 gap-6 rounded-2xl bg-royal-tint/40 p-6 md:grid-cols-4">
           {TRUST.map((t) => (
             <div key={t.title} className="flex gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-deep-navy shadow-card"><t.icon className="h-5 w-5" /></span>

@@ -36,7 +36,7 @@ export default function BrandKitPage() {
       </div>
 
       {/* Default kit detail */}
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
           {/* Colors */}
           <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
@@ -44,7 +44,7 @@ export default function BrandKitPage() {
               <div className="flex items-center gap-2 text-[13px] font-bold text-ink"><Palette className="h-4 w-4 text-violet" /> Colors</div>
               <button className="text-[11px] font-semibold text-violet">+ Add</button>
             </div>
-            <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">
               {defaultKit.colors.map((c) => (
                 <div key={c} className="overflow-hidden rounded-xl border border-line bg-white">
                   <div className="h-20" style={{ background: c }} />
@@ -59,7 +59,7 @@ export default function BrandKitPage() {
           {/* Typography */}
           <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-3 flex items-center gap-2 text-[13px] font-bold text-ink"><Type className="h-4 w-4 text-violet" /> Typography</div>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="rounded-xl border border-line p-4">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Display</div>
                 <div className="mt-1 font-display text-3xl font-extrabold text-ink">{defaultKit.fonts.display}</div>
@@ -79,7 +79,7 @@ export default function BrandKitPage() {
               <div className="flex items-center gap-2 text-[13px] font-bold text-ink"><ImageIcon className="h-4 w-4 text-violet" /> Logos</div>
               <button className="text-[11px] font-semibold text-violet">+ Upload</button>
             </div>
-            <div className="grid gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
               {["Primary", "Monochrome", "Icon", "Reverse (Dark)"].map((v, i) => (
                 <div key={v} className="overflow-hidden rounded-xl border border-line bg-white">
                   <div className={`flex aspect-square items-center justify-center ${i === 3 ? "bg-[#0d0b18]" : "bg-white"}`}>

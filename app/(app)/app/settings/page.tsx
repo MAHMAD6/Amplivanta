@@ -12,7 +12,7 @@ export default function GeneralSettingsPage() {
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-grad-brand-2 text-lg font-bold text-white">{WORKSPACE_PROFILE.logo}</div>
           <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[12.5px] font-semibold text-ink"><Upload className="h-3.5 w-3.5" />Upload Logo</button>
         </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Workspace name" value={WORKSPACE_PROFILE.name} />
           <Field label="Slug" value={WORKSPACE_PROFILE.slug} mono />
           <Field label="Industry" value={WORKSPACE_PROFILE.industry} />
@@ -21,7 +21,7 @@ export default function GeneralSettingsPage() {
       </Section>
 
       <Section title="Locale & Formatting" desc="Applied across dashboards, exports, notifications.">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Timezone" value={WORKSPACE_PROFILE.timezone} />
           <Field label="Language" value={WORKSPACE_PROFILE.language} />
           <Field label="Date format" value={WORKSPACE_PROFILE.dateFormat} />
@@ -30,7 +30,7 @@ export default function GeneralSettingsPage() {
       </Section>
 
       <Section title="Contact" desc="Where Amplivanta reaches you for account matters.">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Primary contact email" value="alex@amplivanta.com" />
           <Field label="Support phone" value="+1 (555) 000-0000" />
         </div>

@@ -47,7 +47,7 @@ export function MarketingDemoForm() {
         </div>
       )}
       <form onSubmit={onSubmit} className="mt-5 space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Full Name" name="fullName" placeholder="Enter your full name" required />
           <Field label="Work Email" name="email" type="email" placeholder="name@company.com" required />
           <Field label="Company Name" name="company" placeholder="Enter your company name" required />
@@ -58,7 +58,7 @@ export function MarketingDemoForm() {
         <Select label="I'm interested in" name="interest" placeholder="Select solutions" options={SOLUTIONS} />
         <div>
           <label className="mb-2 block text-[12px] font-semibold text-deep-navy">What would you like to achieve? <span className="font-normal text-ink-muted">(Select all that apply)</span></label>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {ACHIEVE.map((a) => (
               <button type="button" key={a.label} onClick={() => toggle(a.label)} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-[12.5px] font-medium transition ${picked.includes(a.label) ? "border-royal-blue bg-royal-tint text-royal-blue" : "border-line text-ink-soft hover:border-royal-blue/40"}`}>
                 <a.icon className="h-4 w-4" /> {a.label}

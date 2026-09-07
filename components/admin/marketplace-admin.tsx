@@ -466,7 +466,7 @@ export function CategoriesPanel({
                 }
               });
             }}
-            className="grid gap-4 md:grid-cols-2"
+            className="grid grid-cols-1 gap-4 md:grid-cols-2"
           >
             <label className="block">
               <span className="mb-1.5 block text-[12.5px] font-bold text-admin-navy">Name</span>

@@ -38,7 +38,7 @@ export function ContactsClient({ contacts = CONTACTS, live = false }: { contacts
   const selected = data.find((c) => c.id === selectedId) ?? data[0];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
       <div className="min-w-0 space-y-4">
         {/* Tabs */}
         <div className="flex items-end gap-6 border-b border-line">
@@ -176,7 +176,7 @@ export function ContactsClient({ contacts = CONTACTS, live = false }: { contacts
               All Pipelines <ChevronDown className="h-3 w-3" />
             </button>
           </div>
-          <div className="grid gap-3 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
             {PIPELINE_STAGES.map((s) => (
               <div key={s.key} className="rounded-xl border border-line bg-bg-soft/40 p-3">
                 <div className="flex items-center justify-between">

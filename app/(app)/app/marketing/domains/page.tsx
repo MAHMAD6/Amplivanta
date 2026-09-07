@@ -24,7 +24,7 @@ export default function DomainsPage() {
       />
       <MarketingSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={ShieldCheck} label="Verified Domains" value={String(DOMAINS.filter((d) => d.status === "Verified").length)} tone="green" />
         <KpiCard icon={AlertTriangle} label="Need Attention" value={String(DOMAINS.filter((d) => d.status !== "Verified" && d.status !== "Available").length)} tone="amber" />
         <KpiCard icon={ShieldCheck} label="SSL Auto-Renew" value={null} tone="blue" />

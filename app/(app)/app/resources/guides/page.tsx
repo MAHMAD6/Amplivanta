@@ -32,7 +32,7 @@ export default function GuidesPage() {
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0">
           {/* Tracks */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {GUIDE_TRACKS.map((t) => (
               <article key={t.title} className="rounded-2xl border border-line bg-white p-5 shadow-card">
                 <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${t.tone}`}>

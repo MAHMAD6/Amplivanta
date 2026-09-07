@@ -27,7 +27,7 @@ export default function SocialPlatformSettingsPage() {
         <div className="space-y-5">
           <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-4 text-[14px] font-bold text-ink">General</div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Workspace name" value="Amplivanta Workspace" />
               <Field label="Timezone" value="America/Los_Angeles (PST · UTC-8)" />
               <Field label="Language" value="English (US)" />

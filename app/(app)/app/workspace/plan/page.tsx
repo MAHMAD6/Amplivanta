@@ -32,11 +32,11 @@ export default function CampaignPlanPage() {
         <StatusPill tone="green" className="ml-2">Live · 84%</StatusPill>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         {/* Plan detail */}
         <div className="space-y-4">
           {/* Overview cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard icon={Target} label="Goal" value={c.goal} tone="violet" />
             <MetricCard icon={Users} label="Audience" value={c.audience} tone="blue" />
             <MetricCard icon={DollarSign} label="Budget" value={`$${(c.budget / 1000).toFixed(0)}K`} tone="green" />
@@ -52,7 +52,7 @@ export default function CampaignPlanPage() {
           {/* Funnel */}
           <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-3 text-[14px] font-bold text-ink">Execution Funnel</div>
-            <div className="grid gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
               {WS_STRATEGY.funnel.map((f, i) => (
                 <div key={f.stage} className="rounded-xl border border-line p-4">
                   <div className="text-[10.5px] font-bold uppercase tracking-wider text-violet">Step {i + 1}</div>

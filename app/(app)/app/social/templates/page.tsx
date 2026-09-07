@@ -34,7 +34,7 @@ export default function TemplatesPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {TEMPLATES.map((t) => (
           <div key={t.id} className="flex flex-col rounded-2xl border border-line bg-white shadow-card transition hover:-translate-y-1 hover:border-violet/30">
             <div className="aspect-[16/10] rounded-t-2xl bg-gradient-to-br from-violet/25 via-fuchsia-200/60 to-orange-brand/25" />

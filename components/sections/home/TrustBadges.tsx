@@ -27,7 +27,7 @@ const BADGES = [
 export function TrustBadges() {
   return (
     <section className="px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid grid-cols-1 max-w-7xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {BADGES.map(({ icon: Icon, title, desc }, i) => (
           <ScrollReveal key={title} delay={i * 0.06} className="flex items-start gap-3.5">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#e9e7f0] bg-[#f8f7fb]">

@@ -70,7 +70,7 @@ export default function KnowledgeBasePage() {
               View All Categories <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {KB_CATEGORIES.map((c) => (
               <Link
                 key={c.title}

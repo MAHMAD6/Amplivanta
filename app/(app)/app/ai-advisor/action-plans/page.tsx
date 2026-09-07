@@ -24,7 +24,7 @@ export default function ActionPlansPage() {
       <AdvisorTabs />
 
       {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {ACTION_PLAN_STATS.map((s) => (
           <div key={s.label} className="rounded-2xl border border-line bg-white p-4 shadow-card">
             <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${s.tone}`}>
@@ -37,7 +37,7 @@ export default function ActionPlansPage() {
       </div>
 
       {/* Plan cards */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {ACTION_PLANS.map((p) => {
           const done = p.tasks.filter((t) => t.done).length;
           return (

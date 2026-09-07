@@ -61,7 +61,7 @@ export default function ProjectsPage() {
           <div className="text-[13px] font-bold text-ink">Folders</div>
           <button className="text-[11.5px] font-semibold text-violet">+ New Folder</button>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
           {FOLDERS.map((f) => (
             <button key={f.name} className="flex items-center gap-3 rounded-xl border border-line p-3 hover:border-violet/30">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600"><Folder className="h-4 w-4" /></div>
@@ -75,7 +75,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* Projects grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {PROJECTS.map((p) => (
           <div key={p.id} id={p.id} className="group overflow-hidden rounded-2xl border border-line bg-white shadow-card transition hover:-translate-y-1 hover:border-violet/30">
             <div className={`relative aspect-video bg-gradient-to-br ${p.thumb}`}>

@@ -38,7 +38,7 @@ export default function SecurityPage() {
     <>
       {/* Hero */}
       <section className="bg-gradient-to-b from-royal-tint/60 to-white">
-        <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 py-16 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] items-center gap-10 px-4 py-16 lg:grid-cols-2 lg:px-8">
           <div>
             <span className="text-[12px] font-bold uppercase tracking-wider text-royal-blue">Public Security / Trust Center</span>
             <h1 className="mt-3 font-display text-[44px] font-extrabold leading-[1.05] text-deep-navy lg:text-[52px]">Built on Security.<br /><span className="text-royal-blue">Backed by Trust.</span></h1>
@@ -62,7 +62,7 @@ export default function SecurityPage() {
       {/* Value cards */}
       <section className="bg-white py-4">
         <div className="mx-auto max-w-[1200px] px-4 lg:px-8">
-          <div className="grid gap-4 rounded-2xl border border-line bg-white p-6 shadow-card md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 rounded-2xl border border-line bg-white p-6 shadow-card md:grid-cols-2 lg:grid-cols-4">
             {VALUES.map((v) => (
               <div key={v.title}>
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-royal-tint text-royal-blue"><v.icon className="h-5 w-5" /></span>
@@ -76,14 +76,14 @@ export default function SecurityPage() {
 
       {/* Approach */}
       <Section title="Our Approach to Security" sub="We follow industry best practices to help protect your data, infrastructure, and operations.">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {APPROACH.map((a) => <Card key={a.title} icon={a.icon} title={a.title} desc={a.desc} />)}
         </div>
       </Section>
 
       {/* Frameworks */}
       <Section title="Security & Privacy Frameworks" sub="We align with recognized standards and follow industry best practices.">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {FRAMEWORKS.map((f, i) => (
             <div key={i} className="flex gap-3 rounded-2xl border border-line bg-white p-4 shadow-card">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-royal-tint text-royal-blue"><f.icon className="h-4 w-4" /></span>
@@ -95,7 +95,7 @@ export default function SecurityPage() {
 
       {/* Policies */}
       <Section title="Policies & Resources" sub="Learn more about how we protect your data and maintain trust.">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {POLICIES.map((p) => (
             <Link key={p.title} href={p.href} className="flex items-center gap-3 rounded-2xl border border-line bg-white p-4 shadow-card transition hover:border-royal-blue/40">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-royal-tint text-royal-blue"><p.icon className="h-4 w-4" /></span>

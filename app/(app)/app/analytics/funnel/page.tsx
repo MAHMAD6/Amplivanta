@@ -24,7 +24,7 @@ export default function FunnelPage() {
       />
       <AnalyticsSubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Users} label="Top of Funnel" value={top.toLocaleString()} tone="violet" />
         <KpiCard icon={MousePointer} label="Overall Conv." value={null} deltaTone="down" tone="pink" />
         <KpiCard icon={Target} label="Biggest Drop" value={null} tone="red" />
@@ -61,7 +61,7 @@ export default function FunnelPage() {
 
       <div className="mt-6 rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
         <div className="mb-3 flex items-center gap-1.5 text-[14px] font-bold text-ink"><Sparkles className="h-4 w-4 text-violet" /> Drop-off Insights</div>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {[
             { stage: "Engaged → Form Views (−38 pts)", body: "Add form CTA above the fold on top 3 landing pages." },
             { stage: "Form Views → Submits (−14 pts)", body: "Shorten form to 4 fields; test password-less signup." },

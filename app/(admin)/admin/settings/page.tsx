@@ -116,7 +116,7 @@ export default function SettingsPage() {
         })}
       </div>
 
-      <form onSubmit={save} className="grid gap-6 lg:grid-cols-3">
+      <form onSubmit={save} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Form Area */}
         <div className="lg:col-span-2 space-y-5 rounded-2xl border border-[#e9e7f0] bg-white p-6 shadow-sm">
           {/* General Tab */}

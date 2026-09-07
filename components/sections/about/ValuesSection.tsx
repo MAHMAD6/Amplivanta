@@ -22,7 +22,7 @@ export function ValuesSection() {
             </h2>
           </div>
         </ScrollReveal>
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {VALUES.map((v, i) => (
             <ScrollReveal key={v.title} delay={i * 0.08}>
               <div className="h-full rounded-2xl border border-[#e9e7f0] bg-white p-6">

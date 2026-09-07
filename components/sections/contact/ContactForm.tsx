@@ -126,7 +126,7 @@ export function ContactForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Name & Email */}
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
             <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#14121f]">
               Full Name *
@@ -159,7 +159,7 @@ export function ContactForm() {
         </div>
 
         {/* Phone & Company */}
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
             <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#14121f]">
               Phone Number

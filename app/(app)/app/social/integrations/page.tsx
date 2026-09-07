@@ -33,7 +33,7 @@ export default function SocialIntegrationsPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {INTEGRATIONS.map((intg) => (
           <div key={intg.name} className="rounded-2xl border border-line bg-white p-5 shadow-card">
             <div className="mb-3 flex items-start justify-between">

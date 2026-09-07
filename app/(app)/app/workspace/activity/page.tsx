@@ -41,7 +41,7 @@ export default function WSActivityPage() {
         <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-3 text-[12px] font-semibold text-ink"><Filter className="h-3.5 w-3.5" /> More</button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm min-w-[720px]">

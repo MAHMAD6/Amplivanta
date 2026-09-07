@@ -219,7 +219,7 @@ export function PartnerProgramsPanel({
       {open && (
         <SuperCard className="mb-4 p-5">
           <form
-            className="grid gap-4 md:grid-cols-2"
+            className="grid grid-cols-1 gap-4 md:grid-cols-2"
             onSubmit={(e) => {
               e.preventDefault();
               const form = e.currentTarget;

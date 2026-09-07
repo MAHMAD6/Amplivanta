@@ -81,7 +81,7 @@ export default function CreativeOverviewPage() {
       {/* Quick create */}
       <div className="mb-6 rounded-2xl border border-line bg-white p-5 shadow-card">
         <div className="mb-3 text-[14px] font-bold text-ink">Quick Create</div>
-        <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-8">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4 lg:grid-cols-8">
           {QUICK_CREATE.map((q) => (
             <Link key={q.label} href={q.href} className="flex flex-col items-center gap-2 rounded-xl border border-line p-4 text-center transition hover:-translate-y-0.5 hover:border-violet/30 hover:shadow-card">
               <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${TONE_CLASS[q.tone]}`}>
@@ -93,14 +93,14 @@ export default function CreativeOverviewPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
         {/* Recent projects */}
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Recent Projects</div>
             <Link href="/app/creative-studio/projects" className="text-[12px] font-semibold text-violet">View all →</Link>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             {recent.map((p) => (
               <Link key={p.id} href={`/app/creative-studio/projects#${p.id}`} className="group overflow-hidden rounded-xl border border-line bg-white shadow-card transition hover:-translate-y-1 hover:border-violet/30">
                 <div className={`aspect-video bg-gradient-to-br ${p.thumb}`} />

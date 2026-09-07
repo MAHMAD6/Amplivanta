@@ -24,7 +24,7 @@ export function ResetShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="grid grid-cols-1 min-h-screen lg:grid-cols-2">
       {/* Left brand panel */}
       <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#081A3A] via-[#0B2350] to-[#123]  p-10 text-white lg:flex lg:flex-col lg:justify-between">
         <div aria-hidden className="absolute -right-24 top-10 h-[420px] w-[420px] rounded-full bg-royal-blue/25 blur-3xl" />

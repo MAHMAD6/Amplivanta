@@ -33,7 +33,7 @@ export default function GrowthAuditPage() {
   return (
     <div className="mx-auto max-w-[1200px]">
       {/* Hero */}
-      <section className="grid items-start gap-8 lg:grid-cols-[1.4fr_1fr]">
+      <section className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.4fr_1fr]">
         <div>
           <span className="inline-block rounded-full bg-violet/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-violet">Growth Audit™</span>
           <h1 className="mt-4 font-display text-[34px] font-extrabold leading-[1.1] text-ink lg:text-[40px]">Growth Audit™ for Clearer, Faster Growth Decisions</h1>
@@ -57,7 +57,7 @@ export default function GrowthAuditPage() {
 
       {/* Areas */}
       <Section title="A complete audit. Focused on what drives growth." sub="Our Growth Audit evaluates the key areas that impact your business performance.">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
           {AREAS.map((a) => (
             <div key={a.title} className="rounded-2xl border border-line bg-white p-4 text-center shadow-card">
               <span className={`mx-auto flex h-11 w-11 items-center justify-center rounded-full ${TONE[a.tone]}`}><a.icon className="h-5 w-5" /></span>
@@ -70,7 +70,7 @@ export default function GrowthAuditPage() {
 
       {/* Opportunities */}
       <Section title="Spot growth opportunities. Take action with confidence." sub="We highlight what's working, where to improve, and the opportunities with the greatest impact.">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {OPPS.map((o) => (
             <div key={o} className="rounded-xl border border-line bg-white p-4 shadow-card"><CheckCircle2 className="h-5 w-5 text-emerald-600" /><p className="mt-2 text-[12px] leading-snug text-ink-soft">{o}</p></div>
           ))}
@@ -79,7 +79,7 @@ export default function GrowthAuditPage() {
 
       {/* How it works */}
       <Section title="How the Growth Audit works" sub="Three simple steps from insight to impact.">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {STEPS.map((s, i) => (
             <div key={s.n} className="relative rounded-2xl border border-line bg-white p-5 shadow-card">
               <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet/10 text-[13px] font-bold text-violet">{s.n}</span><div className="text-[14px] font-bold text-ink">{s.title}</div></div>
@@ -92,7 +92,7 @@ export default function GrowthAuditPage() {
 
       {/* Teams */}
       <Section title="Built for growth-focused teams" sub="Whether you're scaling a startup or leading an enterprise, the Growth Audit gives your team the clarity to move forward.">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {TEAMS.map((t) => (
             <div key={t.title} className="rounded-2xl border border-line bg-white p-4 shadow-card">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet/10 text-violet"><t.icon className="h-4 w-4" /></span>

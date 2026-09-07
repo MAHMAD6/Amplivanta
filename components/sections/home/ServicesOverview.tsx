@@ -36,7 +36,7 @@ export function ServicesOverview() {
           </p>
         </ScrollReveal>
 
-        <div className="mt-11 grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-11 grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f, i) => {
             const Icon = f.icon;
             return (

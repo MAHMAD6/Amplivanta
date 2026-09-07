@@ -46,7 +46,7 @@ export default async function UsageCreditsPage() {
         description="Your plan usage, AI credits and any credits granted to your account."
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <MpStat label="AI credit balance" value={null} hint="No balance source connected" />
         <MpStat label="Recorded AI usage events" value={data ? data.aiCalls.toLocaleString("en-US") : null} />
         <MpStat label="Credits granted to you" value={data ? String(data.grants.length) : null} />

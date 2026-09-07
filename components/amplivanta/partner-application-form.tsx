@@ -28,7 +28,7 @@ export function PartnerApplicationForm() {
     <div className="rounded-3xl border border-line bg-white p-6 shadow-card lg:p-8">
       <h2 className="font-display text-2xl font-extrabold text-deep-navy">Partner Information</h2>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Full Name" name="fullName" icon={User} placeholder="Enter your full name" required />
           <Field label="Work Email" name="email" type="email" icon={Mail} placeholder="Enter your work email" required />
           <Field label="Business / Organization Name" name="company" icon={Building2} placeholder="Enter your business or organization name" required />
@@ -38,7 +38,7 @@ export function PartnerApplicationForm() {
         </div>
         <Area label="Services Offered" name="services" placeholder="Describe the services your business provides." hint="Examples: Implementation, consulting, integration, marketing, training, etc." required />
         <Area label="Markets / Customers Served" name="markets" placeholder="Tell us about the industries, regions, or customer segments you typically serve." required />
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Area label="Why do you want to partner with Amplivanta?" name="why" placeholder="Share what excites you about our platform and why you want to partner with us." required />
           <Area label="How do you plan to promote, sell, implement, or support Amplivanta?" name="plan" placeholder="Describe your go-to-market approach and how you plan to create value for mutual customers." required />
         </div>

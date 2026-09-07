@@ -29,7 +29,7 @@ export default function StrategyDashboardPage() {
       />
       <StrategySubnav />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <KpiCard icon={Target} label="Active Goals" value={String(GOALS.length)} delta={`${GOALS.filter((g) => g.status === "Achieved").length} achieved`} tone="violet" />
         <KpiCard icon={TrendingUp} label="Campaigns Aligned" value={null} tone="pink" />
         <KpiCard icon={DollarSign} label="Planned Budget" value={`$${(totalBudget / 1000).toFixed(0)}K`} delta={`$${(totalSpend / 1000).toFixed(0)}K spent`} tone="green" />
@@ -37,7 +37,7 @@ export default function StrategyDashboardPage() {
         <KpiCard icon={HeartHandshake} label="Strategy Health" value={null} tone="blue" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Goals & Objectives</div>
@@ -84,7 +84,7 @@ export default function StrategyDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14px] font-bold text-ink">Channel Allocation</div>
@@ -132,7 +132,7 @@ export default function StrategyDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">Strategy Roadmap</div>
           <div className="relative space-y-4 border-l border-line pl-6">
@@ -152,7 +152,7 @@ export default function StrategyDashboardPage() {
 
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">SWOT</div>
-          <div className="grid gap-3 sm:grid-cols-2 text-[11.5px]">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 text-[11.5px]">
             {(Object.keys(SWOT) as (keyof typeof SWOT)[]).map((k) => {
               const tone = { Strengths: "bg-emerald-500/10 text-emerald-700", Weaknesses: "bg-amber-500/10 text-amber-700", Opportunities: "bg-violet/10 text-violet", Threats: "bg-red-500/10 text-red-700" }[k];
               return (
@@ -170,7 +170,7 @@ export default function StrategyDashboardPage() {
 
       <div className="mt-6 rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
         <div className="mb-3 flex items-center gap-1.5 text-[14px] font-bold text-ink"><Sparkles className="h-4 w-4 text-violet" /> AI Recommendations → Take Action</div>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {[
             { title: "Launch webinar campaign", body: "AI Playbook webinar drove 340 SQLs last time. Rerun." },
             { title: "Ship comparison LP", body: "Amplivanta vs BuildRev demand up 18% MoM." },

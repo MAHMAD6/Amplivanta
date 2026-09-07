@@ -87,7 +87,7 @@ export function HomeAdvisor() {
               Example: Onboarding Activation
             </div>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {exampleCards.map((c) => (
                 <div key={c.label} className="rounded-lg border border-deep-line bg-deep-navy p-4">
                   <div className="flex items-center gap-2">

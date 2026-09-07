@@ -66,7 +66,7 @@ export function UpgradeDialog({
           <DialogTitle>Choose a plan</DialogTitle>
           <DialogDescription>Upgrade or switch your workspace subscription.</DialogDescription>
         </DialogHeader>
-        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+        <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {plans.map((p) => {
             const current = p.id === currentPlanId;
             return (

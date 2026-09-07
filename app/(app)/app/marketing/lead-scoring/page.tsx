@@ -31,14 +31,14 @@ export default function LeadScoringPage() {
       />
       <MarketingSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Target} label="Hot Leads (80+)" value={null} tone="pink" />
         <KpiCard icon={TrendingUp} label="Avg. Score" value={null} tone="violet" />
         <KpiCard icon={RefreshCw} label="Last Recalc" value={null} tone="blue" />
         <KpiCard icon={Sparkles} label="AI Suggestions" value={null} tone="teal" />
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-4">
         {TIERS.map((t) => (
           <div key={t.name} className="rounded-2xl border border-line bg-white p-4 shadow-card">
             <div className="flex items-center justify-between">

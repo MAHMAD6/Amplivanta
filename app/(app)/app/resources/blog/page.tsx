@@ -110,7 +110,7 @@ export default function ResourcesBlogPage() {
             </Link>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {BLOG_POSTS.map((p) => (
               <article
                 key={p.id}

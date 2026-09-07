@@ -47,7 +47,7 @@ export function MarketplaceSettingsPanel({ settings, connected }: { settings: Se
           stay blocked and say why.
         </p>
         <form
-          className="mt-5 grid gap-4 md:grid-cols-2"
+          className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
@@ -97,7 +97,7 @@ export function MarketplaceSettingsPanel({ settings, connected }: { settings: Se
           explicit, recorded decision, never a silent default.
         </p>
         <form
-          className="mt-5 grid gap-4 md:grid-cols-2"
+          className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);

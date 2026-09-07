@@ -13,7 +13,7 @@ function ProductGrid({ products }: { products: { id: string; slug: string; title
   const money = (c: number, cur: string) =>
     c === 0 ? "Free" : new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(c / 100);
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {products.map((p) => (
         <Link
           key={p.id}

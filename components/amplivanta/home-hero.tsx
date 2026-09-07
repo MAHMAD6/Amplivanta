@@ -108,7 +108,7 @@ function DashboardPreview() {
             </div>
           </div>
 
-          <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
             <PanelCard title="Growth Score">
               <div className="flex items-center gap-3">
                 <div>
@@ -231,7 +231,7 @@ export function HomeHero() {
         )}
       </svg>
 
-      <div className="mx-auto grid max-w-[1280px] items-start gap-10 px-4 pb-14 pt-12 lg:items-center lg:grid-cols-[minmax(0,_0.82fr)_minmax(0,_1.18fr)] lg:gap-12 lg:px-8 lg:pt-16">
+      <div className="mx-auto grid grid-cols-1 max-w-[1280px] items-start gap-10 px-4 pb-14 pt-12 lg:items-center lg:grid-cols-[minmax(0,_0.82fr)_minmax(0,_1.18fr)] lg:gap-12 lg:px-8 lg:pt-16">
         {/* LEFT: copy */}
         <div>
           <h1 className="font-display text-[46px] font-extrabold leading-[1.06] tracking-tight text-deep-navy lg:text-[58px]">
@@ -262,7 +262,7 @@ export function HomeHero() {
             </Link>
           </div>
 
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+          <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-3">
             {heroPoints.map((p) => (
               <div key={p.title} className="flex gap-2.5">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-royal-blue/30 text-royal-blue">

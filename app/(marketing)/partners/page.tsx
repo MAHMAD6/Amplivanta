@@ -34,7 +34,7 @@ export default function PartnersPage() {
         <div className="mx-auto max-w-[1200px] px-4 pt-6 lg:px-8">
           <MarketingBreadcrumb items={[["Home", "/"], ["Company", "/company"], ["Partners & Affiliates", "/partners"], ["Partner Program", null]]} />
         </div>
-        <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-4 py-10 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid grid-cols-1 max-w-[1200px] items-center gap-10 px-4 py-10 lg:grid-cols-2 lg:px-8">
           <div>
             <span className="text-[12px] font-bold uppercase tracking-wider text-royal-blue">Partner Program</span>
             <h1 className="mt-3 font-display text-[40px] font-extrabold leading-[1.05] text-deep-navy lg:text-[48px]">Build More. Deliver More. Engineer Growth Together.</h1>
@@ -57,7 +57,7 @@ export default function PartnersPage() {
 
       {/* Why partner */}
       <Section title="Why Partner with Amplivanta?">
-        <div className="grid gap-4 rounded-2xl border border-line bg-white p-6 shadow-card md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 rounded-2xl border border-line bg-white p-6 shadow-card md:grid-cols-2 lg:grid-cols-4">
           {WHY.map((w) => (
             <div key={w.title} className="text-center">
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-royal-tint text-royal-blue"><w.icon className="h-6 w-6" /></span>
@@ -70,7 +70,7 @@ export default function PartnersPage() {
 
       {/* Opportunities */}
       <Section title="Partner Opportunities" sub="Choose the partnership path that aligns with your expertise.">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {OPPS.map((o) => (
             <div key={o.title} className="rounded-2xl border border-line bg-white p-5 text-center shadow-card">
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-royal-tint text-royal-blue"><o.icon className="h-6 w-6" /></span>
@@ -87,7 +87,7 @@ export default function PartnersPage() {
           <div className="rounded-2xl bg-royal-tint/40 p-8">
             <h2 className="text-center font-display text-2xl font-extrabold text-deep-navy">How the Partner Program Works</h2>
             <p className="mt-1 text-center text-[13px] text-ink-soft">A simple and collaborative path to partnership.</p>
-            <div className="mt-8 grid gap-6 md:grid-cols-4">
+            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-4">
               {STEPS.map((s, i) => (
                 <div key={s.title} className="text-center">
                   <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-deep-navy text-[14px] font-bold text-white">{i + 1}</span>
@@ -103,7 +103,7 @@ export default function PartnersPage() {
       {/* Requirements + CTA */}
       <section className="bg-white py-10">
         <div className="mx-auto max-w-[1200px] px-4 lg:px-8">
-          <div className="grid gap-6 rounded-2xl border border-line bg-white p-6 shadow-card md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 rounded-2xl border border-line bg-white p-6 shadow-card md:grid-cols-2">
             <div>
               <h3 className="text-[15px] font-bold text-deep-navy">Partnership Requirements</h3>
               <ul className="mt-3 space-y-2">

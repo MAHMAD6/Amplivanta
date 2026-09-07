@@ -82,7 +82,7 @@ export function MarketingPage(p: MarketingPageProps) {
         <section className="bg-white py-20">
           <div className="mx-auto max-w-[1200px] px-4 lg:px-8">
             <h2 className="text-center font-display text-3xl font-extrabold text-ink">What&apos;s inside</h2>
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {p.features.map((f) => {
                 const Icon = f.icon;
                 return (

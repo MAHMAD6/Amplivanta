@@ -26,7 +26,7 @@ export default function QueuePage() {
       />
       <SocialSubnav />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={ListChecks} label="Queued" value={String(QUEUE.filter((q) => q.status === "Queued").length)} tone="blue" />
         <KpiCard icon={Zap} label="Publishing Now" value={String(QUEUE.filter((q) => q.status === "Publishing").length)} tone="violet" />
         <KpiCard icon={AlertTriangle} label="Failed" value={String(QUEUE.filter((q) => q.status === "Failed").length)} deltaTone="down" delta="Retry available" tone="pink" />

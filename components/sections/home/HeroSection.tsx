@@ -39,7 +39,7 @@ export function HeroSection() {
         <div className="absolute -right-32 top-40 h-96 w-96 rounded-full bg-[#E8398F]/10 blur-[110px]" />
       </div>
 
-      <div className="mx-auto grid max-w-7xl items-start gap-9 lg:grid-cols-[1.02fr_1.28fr]">
+      <div className="mx-auto grid grid-cols-1 max-w-7xl items-start gap-9 lg:grid-cols-[1.02fr_1.28fr]">
         {/* ---- copy ---- */}
         <div>
           <Eyebrow label="AI-Powered Business Growth Platform" />
