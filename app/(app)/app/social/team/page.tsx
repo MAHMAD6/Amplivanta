@@ -35,7 +35,7 @@ export default function TeamPage() {
       />
       <SocialSubnav />
 
-      <div className="mb-6 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
+      <div className="mb-6 overflow-x-auto rounded-2xl border border-line bg-white shadow-card">
         <div className="border-b border-line p-4">
           <div className="text-[14px] font-bold text-ink">Members ({TEAM.length})</div>
         </div>

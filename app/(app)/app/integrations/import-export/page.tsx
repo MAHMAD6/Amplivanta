@@ -122,7 +122,7 @@ export default function ImportExportPage() {
       </div>
 
       {/* Job history */}
-      <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
+      <section className="mt-6 overflow-x-auto rounded-2xl border border-line bg-white shadow-card">
         <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
           <h2 className="text-[14px] font-bold text-ink">Job History</h2>
           <button className="text-[12px] font-semibold text-violet">View all</button>

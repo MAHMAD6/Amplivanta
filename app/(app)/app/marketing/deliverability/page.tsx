@@ -86,14 +86,16 @@ export default async function DeliverabilityPage() {
               <div className="mt-2 flex items-center justify-between py-1 text-[12.5px]"><span className="text-ink-soft">Warm-up Status</span><span className="font-semibold text-ink">78%</span></div>
             </Panel>
             <Panel title="Mailbox Provider Performance">
-              <table className="w-full text-[11.5px]">
-                <thead><tr className="text-left text-ink-muted"><th className="py-1 font-semibold">Provider</th><th className="py-1 font-semibold">Inbox</th><th className="py-1 font-semibold">Open</th><th className="py-1 font-semibold">Status</th></tr></thead>
-                <tbody>
-                  {PROVIDERS.map(([p, inbox, open, , st]) => (
-                    <tr key={p} className="border-t border-line/60"><td className="py-1.5 font-medium text-ink">{p}</td><td className="py-1.5">{inbox}%</td><td className="py-1.5">{open}%</td><td className="py-1.5"><StatusPill tone={st === "Excellent" ? "green" : "green"}>{st}</StatusPill></td></tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[11.5px]">
+                  <thead><tr className="text-left text-ink-muted"><th className="py-1 font-semibold">Provider</th><th className="py-1 font-semibold">Inbox</th><th className="py-1 font-semibold">Open</th><th className="py-1 font-semibold">Status</th></tr></thead>
+                  <tbody>
+                    {PROVIDERS.map(([p, inbox, open, , st]) => (
+                      <tr key={p} className="border-t border-line/60"><td className="py-1.5 font-medium text-ink">{p}</td><td className="py-1.5">{inbox}%</td><td className="py-1.5">{open}%</td><td className="py-1.5"><StatusPill tone={st === "Excellent" ? "green" : "green"}>{st}</StatusPill></td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </Panel>
           </div>
 

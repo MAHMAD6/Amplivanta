@@ -74,7 +74,7 @@ export default async function WorkflowsPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
+      <div className="overflow-x-auto rounded-2xl border border-line bg-white shadow-card">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
