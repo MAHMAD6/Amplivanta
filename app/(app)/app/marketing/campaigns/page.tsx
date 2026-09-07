@@ -9,7 +9,7 @@ import { ResourceDialog } from "@/components/amplivanta/crud/resource-dialog";
 import { CAMPAIGN_FIELDS } from "@/components/amplivanta/crud/module-fields";
 import { loadCampaigns } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "Campaigns — Amplivanta" };
+export const metadata: Metadata = { title: "Campaigns" };
 export const dynamic = "force-dynamic";
 
 export default async function CampaignsPage() {

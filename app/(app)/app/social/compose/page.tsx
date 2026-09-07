@@ -4,7 +4,7 @@ import { SocialSubnav } from "@/components/amplivanta/social-subnav";
 import { ComposerClient } from "@/components/amplivanta/composer-client";
 import { Save, Send, Sparkles } from "lucide-react";
 
-export const metadata: Metadata = { title: "Create Post — Amplivanta" };
+export const metadata: Metadata = { title: "Create Post" };
 
 export default function ComposePage() {
   return (

@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Check, Lock } from "lucide-react";
 import { ResetShell } from "@/components/amplivanta/reset-shell";
 
 export const metadata: Metadata = {
-  title: "Create a new password — Amplivanta",
+  title: "Create a new password",
   description: "Choose a new, secure password to regain access to your account.",
 };
 

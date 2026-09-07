@@ -5,7 +5,7 @@ import { AnalyticsSubnav } from "@/components/amplivanta/analytics-subnav";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { TRAFFIC_KPIS, TRAFFIC_SOURCES, TRAFFIC_DEVICES, TRAFFIC_GEO, TRAFFIC_TOP_PAGES } from "@/lib/analytics-data";
 
-export const metadata: Metadata = { title: "Traffic Analytics — Amplivanta" };
+export const metadata: Metadata = { title: "Traffic Analytics" };
 
 const ICONS = [Eye, Users, MousePointer, Clock];
 const TONES: any[] = ["violet", "blue", "pink", "green"];

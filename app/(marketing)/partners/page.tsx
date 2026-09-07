@@ -4,7 +4,7 @@ import { TrendingUp, Layers, GraduationCap, ShieldCheck, Users2, Briefcase, Code
 import { LogoMark } from "@/components/layout/LogoMark";
 import { MarketingBreadcrumb } from "@/components/amplivanta/marketing-breadcrumb";
 
-export const metadata: Metadata = { title: "Partner Program — Amplivanta" };
+export const metadata: Metadata = { title: "Partner Program" };
 
 const WHY = [
   { icon: TrendingUp, title: "Growth Enablement", desc: "Access our capabilities, tools, and resources to create new collaboration and customer opportunities." },

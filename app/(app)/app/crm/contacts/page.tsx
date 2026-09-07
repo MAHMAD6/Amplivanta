@@ -7,7 +7,7 @@ import { CONTACT_FIELDS } from "@/components/amplivanta/crm/crm-fields";
 import { UserPlus } from "lucide-react";
 import { loadContacts } from "@/lib/server/crm";
 
-export const metadata: Metadata = { title: "Contacts — Amplivanta" };
+export const metadata: Metadata = { title: "Contacts" };
 export const dynamic = "force-dynamic";
 
 export default async function ContactsPage() {

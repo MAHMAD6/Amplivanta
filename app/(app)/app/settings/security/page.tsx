@@ -3,7 +3,7 @@ import { ShieldCheck, Smartphone, Key, AlertTriangle, LogOut } from "lucide-reac
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { SESSIONS } from "@/lib/settings-data";
 
-export const metadata: Metadata = { title: "Security & 2FA — Amplivanta" };
+export const metadata: Metadata = { title: "Security & 2FA" };
 
 export default function SecurityPage() {
   return (

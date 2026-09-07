@@ -5,7 +5,7 @@ import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { LANDING_PAGES, PAGE_STATUS_TONE } from "@/lib/marketing-auto-data";
 
-export const metadata: Metadata = { title: "Landing Page Publishing — Amplivanta" };
+export const metadata: Metadata = { title: "Landing Page Publishing" };
 
 const CHECKS = [
   { label: "Domain configured", ok: true },

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Check, Plus, Type, Upload } from "lucide-react";
 
-export const metadata: Metadata = { title: "Brand Settings — Amplivanta" };
+export const metadata: Metadata = { title: "Brand Settings" };
 
 const COLORS = [
   { name: "Primary", value: "#6D3BF5" },

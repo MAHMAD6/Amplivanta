@@ -7,7 +7,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { QUEUE, PLATFORM_META } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Publishing Queue — Amplivanta" };
+export const metadata: Metadata = { title: "Publishing Queue" };
 
 const STATUS_TONE_LOCAL = { Queued: "blue", Publishing: "violet", Retrying: "amber", Failed: "red", Paused: "gray" } as const;
 

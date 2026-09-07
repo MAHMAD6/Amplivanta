@@ -5,7 +5,7 @@ import { IntegrationsSubnav } from "@/components/amplivanta/integrations-subnav"
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { HUBSPOT_SETUP_STEPS, HUBSPOT_FIELD_MAP } from "@/lib/integrations-data";
 
-export const metadata: Metadata = { title: "HubSpot Setup — Amplivanta" };
+export const metadata: Metadata = { title: "HubSpot Setup" };
 
 export default function HubspotSetupPage() {
   const doneCount = HUBSPOT_SETUP_STEPS.filter((s) => s.done).length;

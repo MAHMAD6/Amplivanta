@@ -9,6 +9,7 @@ import { getPaymentProvider, getStorageProvider, issueSignedUrl, malwareScanRequ
 import { canSellerEdit, canSellerTransition, canSubmit, type ProductStatus } from "@/lib/marketplace/product-policy";
 import { fulfilOrder } from "@/lib/server/marketplace-fulfilment";
 import { nextOrderStatusOnPlace } from "@/lib/marketplace/order-policy";
+import { complete } from "@/lib/ai";
 
 export type MpResult = { ok: true; message: string } | { ok: false; error: string };
 
@@ -932,5 +933,215 @@ export async function loadProductReviews(productId: string): Promise<ProductRevi
     };
   } catch {
     return empty;
+  }
+}
+
+
+/* ------------------------------------------------------------ favourites */
+
+/**
+ * Toggle a product in the buyer's wishlist.
+ *
+ * A favourite is a private bookmark. It grants nothing, so it is safe to add
+ * and remove freely — but it is still per-user data, so it requires a signed-in
+ * viewer and is never keyed by anything the client supplies about identity.
+ */
+export async function toggleFavorite(productId: string): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, { flag: MARKETPLACE_FLAGS.favorites });
+  if (!gate.ok) return { ok: false, error: "Wishlists are not available right now." };
+  if (!viewer.userId) return { ok: false, error: "Sign in to save products to your wishlist." };
+
+  try {
+    const key = { productId_buyerUserId: { productId, buyerUserId: viewer.userId } };
+    const existing = await prisma.marketplaceFavorite.findUnique({ where: key });
+    if (existing) {
+      await prisma.marketplaceFavorite.delete({ where: key });
+      revalidatePath("/app/marketplace/favorites");
+      return { ok: true, message: "Removed from your wishlist." };
+    }
+    // Only a published product can be saved; a draft is not addressable.
+    const product = await prisma.marketplaceProduct.findFirst({
+      where: { id: productId, status: "PUBLISHED" },
+      select: { id: true },
+    });
+    if (!product) return { ok: false, error: "That product is not available." };
+
+    await prisma.marketplaceFavorite.create({ data: { productId, buyerUserId: viewer.userId } });
+    revalidatePath("/app/marketplace/favorites");
+    return { ok: true, message: "Saved to your wishlist." };
+  } catch {
+    return { ok: false, error: "Could not update your wishlist — the platform database was unreachable." };
+  }
+}
+
+export type FavoriteCard = {
+  id: string;
+  productId: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  coverImage: string | null;
+  categoryName: string | null;
+  sellerName: string;
+  priceLabel: string;
+};
+
+export async function loadFavorites(): Promise<{ enabled: boolean; connected: boolean; items: FavoriteCard[] }> {
+  const viewer = await getMarketplaceViewer();
+  const enabled = viewer.flags[MARKETPLACE_FLAGS.favorites] === true;
+  if (!enabled || !viewer.userId) return { enabled, connected: true, items: [] };
+
+  try {
+    const rows = await prisma.marketplaceFavorite.findMany({
+      where: { buyerUserId: viewer.userId },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        product: {
+          select: {
+            id: true, slug: true, title: true, summary: true, coverImage: true, status: true,
+            category: { select: { name: true } },
+            seller: { select: { storeName: true } },
+            versions: { orderBy: { version: "desc" }, take: 1, select: { priceCents: true, currency: true } },
+          },
+        },
+      },
+    });
+
+    return {
+      enabled,
+      connected: true,
+      items: rows
+        // A product unpublished after being saved stays in the table but is no
+        // longer something we can link a buyer to.
+        .filter((r) => r.product.status === "PUBLISHED")
+        .map((r) => {
+          const v = r.product.versions[0];
+          return {
+            id: r.id,
+            productId: r.product.id,
+            slug: r.product.slug,
+            title: r.product.title,
+            summary: r.product.summary,
+            coverImage: r.product.coverImage,
+            categoryName: r.product.category?.name ?? null,
+            sellerName: r.product.seller.storeName,
+            priceLabel: !v
+              ? "Unavailable"
+              : v.priceCents === 0
+                ? "Free"
+                : new Intl.NumberFormat("en-US", { style: "currency", currency: v.currency }).format(v.priceCents / 100),
+          };
+        }),
+    };
+  } catch {
+    return { enabled, connected: false, items: [] };
+  }
+}
+
+/** Whether this viewer has saved a given product. Used to set the button state. */
+export async function isFavorited(productId: string): Promise<boolean> {
+  const viewer = await getMarketplaceViewer();
+  if (!viewer.userId || viewer.flags[MARKETPLACE_FLAGS.favorites] !== true) return false;
+  try {
+    const row = await prisma.marketplaceFavorite.findUnique({
+      where: { productId_buyerUserId: { productId, buyerUserId: viewer.userId } },
+      select: { id: true },
+    });
+    return Boolean(row);
+  } catch {
+    return false;
+  }
+}
+
+/* ------------------------------------------------------------- SEO assist */
+
+export type SeoSuggestion = {
+  seoTitle: string;
+  metaDescription: string;
+  keywords: string[];
+};
+
+export type SeoSuggestResult =
+  | { ok: true; suggestion: SeoSuggestion; stubbed: boolean }
+  | { ok: false; error: string };
+
+/**
+ * Suggest SEO copy for a listing the seller is drafting.
+ *
+ * Deliberately suggest-then-accept: this returns text for the seller to review
+ * and edit, and never writes to the product. Everything else on a listing is
+ * seller-authored, and a meta description is a claim the seller is accountable
+ * for — so a human has to put it there.
+ */
+export async function suggestProductSeo(input: {
+  title: string;
+  summary?: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
+}): Promise<SeoSuggestResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, {
+    permission: "marketplace.seller.products.create",
+    requireApprovedSeller: true,
+  });
+  if (!gate.ok) return { ok: false, error: "You are not able to use SEO assistance right now." };
+
+  const title = input.title.trim();
+  if (!title) return { ok: false, error: "Enter a product title first." };
+
+  // Simple per-seller throttle: at most 20 suggestions an hour.
+  try {
+    const since = new Date(Date.now() - 60 * 60 * 1000);
+    const recent = await prisma.platformAuditLog.count({
+      where: { actorUserId: viewer.userId, action: "marketplace.seo.suggested", createdAt: { gte: since } },
+    });
+    if (recent >= 20) {
+      return { ok: false, error: "You have reached the hourly limit for SEO suggestions. Try again later." };
+    }
+  } catch {
+    /* throttling is best-effort; an unreachable log must not block the seller */
+  }
+
+  const context = [
+    `Product title: ${title}`,
+    input.summary ? `Short description: ${input.summary}` : null,
+    input.category ? `Category: ${input.category}` : null,
+    input.tags?.length ? `Tags: ${input.tags.join(", ")}` : null,
+    input.description ? `Full description:\n${input.description.slice(0, 2000)}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    const { text, stubbed, model, tokensIn, tokensOut } = await complete({
+      system:
+        "You write marketplace listing SEO copy. Return strict JSON only, no prose: " +
+        '{"seoTitle": string (max 60 chars), "metaDescription": string (max 160 chars), "keywords": string[] (5-8 lowercase search terms)}. ' +
+        "Describe only what the provided product information supports. Never invent features, statistics, guarantees or awards.",
+      prompt: context,
+      maxTokens: 500,
+    });
+
+    const parsed = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as Partial<SeoSuggestion>;
+    const suggestion: SeoSuggestion = {
+      seoTitle: String(parsed.seoTitle ?? "").slice(0, 60),
+      metaDescription: String(parsed.metaDescription ?? "").slice(0, 160),
+      keywords: Array.isArray(parsed.keywords)
+        ? parsed.keywords.map((k) => String(k).trim().toLowerCase()).filter(Boolean).slice(0, 8)
+        : [],
+    };
+    if (!suggestion.seoTitle && !suggestion.metaDescription) {
+      return { ok: false, error: "The assistant did not return usable copy. Edit the fields yourself." };
+    }
+
+    await audit(viewer.userId, "marketplace.seo.suggested", "MarketplaceProduct", undefined, {
+      model, tokensIn, tokensOut, stubbed,
+    });
+    return { ok: true, suggestion, stubbed };
+  } catch {
+    return { ok: false, error: "SEO assistance is unavailable right now. Write the fields yourself and continue." };
   }
 }

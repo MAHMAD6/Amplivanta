@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FileText, BookOpen, CalendarClock, Globe, Users2, ShieldCheck, UserCheck, Network, ArrowLeftRight, UserCog, Lock, Bell, RefreshCw, Search, ClipboardList, Scale, ShieldQuestion, Info } from "lucide-react";
 import { MarketingBreadcrumb } from "@/components/amplivanta/marketing-breadcrumb";
 
-export const metadata: Metadata = { title: "Data Processing Agreement (DPA) — Amplivanta" };
+export const metadata: Metadata = { title: "Data Processing Agreement (DPA)" };
 
 const HIGHLIGHTS = [
   { icon: FileText, title: "GDPR Processor Terms", desc: "Processor obligations under EU GDPR Article 28." },

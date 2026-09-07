@@ -5,7 +5,7 @@ import { AdvisorTabs } from "@/components/amplivanta/advisor-tabs";
 import { AdvisorIcon } from "@/components/amplivanta/advisor-icon";
 import { ACTION_PLAN_STATS, ACTION_PLANS } from "@/lib/advisor-data";
 
-export const metadata: Metadata = { title: "Action Plans — Amplivanta" };
+export const metadata: Metadata = { title: "Action Plans" };
 
 export default function ActionPlansPage() {
   return (

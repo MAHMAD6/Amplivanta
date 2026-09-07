@@ -11,7 +11,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const job = JOBS.find((j) => j.slug === slug);
-  return job ? { title: `${job.title} — Careers — Amplivanta` } : {};
+  return job ? { title: `${job.title} · Careers` } : {};
 }
 
 const VALUES = [

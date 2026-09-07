@@ -9,7 +9,7 @@ import { Webhook as WHIcon, Activity, AlertTriangle, Clock } from "lucide-react"
 import { CreateButton } from "@/components/amplivanta/crud/create-button";
 import { WEBHOOK_FIELDS } from "@/components/amplivanta/crud/module-fields";
 
-export const metadata: Metadata = { title: "Webhooks — Amplivanta" };
+export const metadata: Metadata = { title: "Webhooks" };
 
 export default function WebhooksPage() {
   return (

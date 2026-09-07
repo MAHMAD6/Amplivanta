@@ -6,7 +6,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { EVENTS } from "@/lib/intel-data";
 
-export const metadata: Metadata = { title: "Events & Holidays — Amplivanta" };
+export const metadata: Metadata = { title: "Events & Holidays" };
 
 const CAT_TONE = { Holiday: "amber", Awareness: "blue", Industry: "violet", Company: "pink" } as const;
 

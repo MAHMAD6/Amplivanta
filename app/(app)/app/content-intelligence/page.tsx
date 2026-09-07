@@ -5,7 +5,7 @@ import { IntelSubnav } from "@/components/amplivanta/intel-subnav";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { IDEAS, IDEA_TOP_THEMES, IDEA_UPCOMING } from "@/lib/intel-data";
 
-export const metadata: Metadata = { title: "Content Ideas — Amplivanta" };
+export const metadata: Metadata = { title: "Content Ideas" };
 
 const CHANNEL_TONE = { Blog: "violet", Social: "pink", Email: "blue", Video: "orange", Ad: "green" } as const;
 const GOAL_TONE = { Awareness: "blue", "Lead Gen": "green", Retention: "amber", "Thought Leadership": "violet" } as const;

@@ -4,7 +4,7 @@ import { Percent, CalendarClock, BarChart3, TrendingUp, RefreshCw, ShieldCheck, 
 import { LogoMark } from "@/components/layout/LogoMark";
 import { MarketingBreadcrumb } from "@/components/amplivanta/marketing-breadcrumb";
 
-export const metadata: Metadata = { title: "Affiliate Program — Amplivanta" };
+export const metadata: Metadata = { title: "Affiliate Program" };
 
 const WHY = [
   { icon: TrendingUp, title: "Growth Focused", desc: "Help businesses improve marketing, automate workflows, and drive sustainable growth." },

@@ -5,7 +5,7 @@ import { SocialSubnav } from "@/components/amplivanta/social-subnav";
 import { PlatformIcon } from "@/components/amplivanta/platform-badge";
 import { HASHTAG_SETS } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Hashtags & Mentions — Amplivanta" };
+export const metadata: Metadata = { title: "Hashtags & Mentions" };
 
 export default function HashtagsPage() {
   return (

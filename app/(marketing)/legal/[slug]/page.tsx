@@ -28,9 +28,9 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const rich = LEGAL_DOCS[slug] ?? MARKETPLACE_LEGAL_DOCS[slug];
-  if (rich) return { title: `${rich.title} — Amplivanta` };
+  if (rich) return { title: `${rich.title}` };
   const doc = SIMPLE_DOCS[slug];
-  return doc ? { title: `${doc.title} — Amplivanta` } : {};
+  return doc ? { title: `${doc.title}` } : {};
 }
 
 export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {

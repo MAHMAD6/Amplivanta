@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Check, FileSearch, Mail, UserCheck, ChevronRight, Headphones } from "lucide-react";
 import { MarketingBreadcrumb } from "@/components/amplivanta/marketing-breadcrumb";
 
-export const metadata: Metadata = { title: "Application Received — Amplivanta" };
+export const metadata: Metadata = { title: "Application Received" };
 
 const STEPS = [
   { icon: FileSearch, title: "Review", desc: "Our team reviews your application for program eligibility and fit." },

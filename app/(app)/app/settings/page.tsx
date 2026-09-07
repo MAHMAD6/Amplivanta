@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Building2, Upload } from "lucide-react";
 import { WORKSPACE_PROFILE } from "@/lib/settings-data";
 
-export const metadata: Metadata = { title: "General Settings — Amplivanta" };
+export const metadata: Metadata = { title: "General Settings" };
 
 export default function GeneralSettingsPage() {
   return (

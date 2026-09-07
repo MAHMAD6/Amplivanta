@@ -7,7 +7,7 @@ import { LiveBadge } from "@/components/amplivanta/live-badge";
 import { BILLING, INVOICES, INVOICE_TONE } from "@/lib/settings-data";
 import { loadBilling } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "Billing & Subscription — Amplivanta" };
+export const metadata: Metadata = { title: "Billing & Subscription" };
 export const dynamic = "force-dynamic";
 
 function fmtDate(d: Date) {

@@ -5,7 +5,7 @@ import { StrategySubnav } from "@/components/amplivanta/strategy-subnav";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { STRATEGY_REPORTS, STRATEGY_REPORT_TONE } from "@/lib/strategy-data";
 
-export const metadata: Metadata = { title: "Strategy Reports — Amplivanta" };
+export const metadata: Metadata = { title: "Strategy Reports" };
 
 export default function StrategyReportsPage() {
   return (

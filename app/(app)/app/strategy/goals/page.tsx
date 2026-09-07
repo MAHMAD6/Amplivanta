@@ -8,7 +8,7 @@ import { GOALS, GOAL_STATUS_TONE } from "@/lib/strategy-data";
 import { CreateButton } from "@/components/amplivanta/crud/create-button";
 import { GOAL_FIELDS } from "@/components/amplivanta/crud/module-fields";
 
-export const metadata: Metadata = { title: "Marketing Goals — Amplivanta" };
+export const metadata: Metadata = { title: "Marketing Goals" };
 
 export default function GoalsPage() {
   return (

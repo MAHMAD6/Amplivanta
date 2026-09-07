@@ -5,7 +5,7 @@ import { AnalyticsSubnav } from "@/components/amplivanta/analytics-subnav";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { ATTRIBUTION_MODELS, ATTRIBUTION_CHANNELS } from "@/lib/analytics-data";
 
-export const metadata: Metadata = { title: "Revenue Attribution — Amplivanta" };
+export const metadata: Metadata = { title: "Revenue Attribution" };
 
 export default function AttributionPage() {
   const totalRev = ATTRIBUTION_CHANNELS.reduce((s, c) => s + c.revenue, 0);

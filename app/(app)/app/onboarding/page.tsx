@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { OnboardingClient } from "@/components/amplivanta/onboarding-client";
 
-export const metadata: Metadata = { title: "Onboarding — Amplivanta" };
+export const metadata: Metadata = { title: "Onboarding" };
 
 export default function OnboardingPage() {
   return (

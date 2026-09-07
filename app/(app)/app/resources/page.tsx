@@ -4,7 +4,7 @@ import { Search, ArrowRight, Newspaper, BookOpen, PlayCircle, Presentation, Layo
 import { PageHeader } from "@/components/amplivanta/page-header";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 
-export const metadata: Metadata = { title: "Resources Hub — Amplivanta" };
+export const metadata: Metadata = { title: "Resources Hub" };
 
 const CATEGORIES = [
   { icon: Newspaper, name: "Blog", hint: "Insights, strategies, and industry trends.", href: "/app/resources/blog", tone: "blue" },

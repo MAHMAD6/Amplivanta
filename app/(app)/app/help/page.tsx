@@ -19,7 +19,7 @@ import {
 import { PageHeader } from "@/components/amplivanta/page-header";
 import { RailCard } from "@/components/amplivanta/resource-breadcrumb";
 
-export const metadata: Metadata = { title: "Help / Support — Amplivanta" };
+export const metadata: Metadata = { title: "Help / Support" };
 
 const POPULAR = ["AI Recommendations", "Action Plans", "Insights", "Integrations"];
 

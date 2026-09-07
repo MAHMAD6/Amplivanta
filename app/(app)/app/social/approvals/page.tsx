@@ -7,7 +7,7 @@ import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { APPROVALS, PLATFORM_META } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Approvals — Amplivanta" };
+export const metadata: Metadata = { title: "Approvals" };
 
 const STATE_TONE = { Pending: "amber", Approved: "green", "Changes Requested": "blue", Rejected: "red" } as const;
 

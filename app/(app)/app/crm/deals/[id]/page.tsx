@@ -15,7 +15,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const deal = DEALS.find((d) => d.id === id);
-  return deal ? { title: `${deal.name} — Amplivanta` } : {};
+  return deal ? { title: `${deal.name}` } : {};
 }
 
 export default async function DealDetailPage({ params }: { params: Promise<{ id: string }> }) {

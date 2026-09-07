@@ -3,7 +3,7 @@ import { Save, Send, Eye, Sparkles, Type, Image as ImageIcon, Layout, Square as 
 import { PageHeader } from "@/components/amplivanta/page-header";
 import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
 
-export const metadata: Metadata = { title: "Email Composer — Amplivanta" };
+export const metadata: Metadata = { title: "Email Composer" };
 
 export default function EmailComposerPage() {
   return (

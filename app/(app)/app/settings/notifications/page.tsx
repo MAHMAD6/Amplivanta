@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { NOTIFICATION_CATEGORIES } from "@/lib/settings-data";
 import { Check } from "lucide-react";
 
-export const metadata: Metadata = { title: "Notification Settings — Amplivanta" };
+export const metadata: Metadata = { title: "Notification Settings" };
 
 export default function NotificationSettingsPage() {
   return (

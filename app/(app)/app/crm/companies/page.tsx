@@ -11,7 +11,7 @@ import { COMPANY_FIELDS } from "@/components/amplivanta/crm/crm-fields";
 import { loadCompanies } from "@/lib/server/loaders";
 import { HEALTH_TONE } from "@/lib/part2-data";
 
-export const metadata: Metadata = { title: "Companies — Amplivanta" };
+export const metadata: Metadata = { title: "Companies" };
 export const dynamic = "force-dynamic";
 
 function money(n: number) {

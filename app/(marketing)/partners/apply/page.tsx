@@ -4,7 +4,7 @@ import { Users2, TrendingUp, GraduationCap, DollarSign, Mail } from "lucide-reac
 import { PartnerApplicationForm } from "@/components/amplivanta/partner-application-form";
 import { MarketingBreadcrumb } from "@/components/amplivanta/marketing-breadcrumb";
 
-export const metadata: Metadata = { title: "Partner Application — Amplivanta" };
+export const metadata: Metadata = { title: "Partner Application" };
 
 const WHY = [
   { icon: Users2, title: "Pursue New Opportunities", desc: "Help businesses discover new customer opportunities and drive meaningful outcomes with Amplivanta." },

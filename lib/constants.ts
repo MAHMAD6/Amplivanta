@@ -51,6 +51,7 @@ export const NAV_LINKS: NavLink[] = [
       { label: "Brand Intelligence", href: "/solutions/brand-intelligence" },
     ],
   },
+  { label: "Marketplace", href: "/marketplace" },
   {
     label: "Industries",
     href: "/industries",

@@ -7,7 +7,7 @@ import { INTG_TONE } from "@/lib/integrations-data";
 import { LiveBadge } from "@/components/amplivanta/live-badge";
 import { loadIntegrations } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "Connected Apps — Amplivanta" };
+export const metadata: Metadata = { title: "Connected Apps" };
 export const dynamic = "force-dynamic";
 
 export default async function ConnectedAppsPage() {

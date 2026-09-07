@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const data = COMPANY_PAGES[slug];
   if (!data) return {};
-  return { title: `${data.eyebrow} — Amplivanta` };
+  return { title: `${data.eyebrow}` };
 }
 
 export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -7,7 +7,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { CAMPAIGN_ANALYTICS } from "@/lib/analytics-data";
 import { Target, DollarSign, MousePointer, Users } from "lucide-react";
 
-export const metadata: Metadata = { title: "Campaign Analytics — Amplivanta" };
+export const metadata: Metadata = { title: "Campaign Analytics" };
 
 export default function CampaignAnalyticsPage() {
   const totalRev = CAMPAIGN_ANALYTICS.reduce((s, c) => s + c.revenue, 0);

@@ -17,7 +17,7 @@ import { IntegrationsSubnav } from "@/components/amplivanta/integrations-subnav"
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 
-export const metadata: Metadata = { title: "Import / Export — Amplivanta" };
+export const metadata: Metadata = { title: "Import / Export" };
 
 const IMPORT_TYPES = [
   { title: "Contacts", desc: "CSV or XLSX with email, name, company, tags.", icon: Users },

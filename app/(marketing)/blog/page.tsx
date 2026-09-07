@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { BLOG_POSTS } from "@/lib/blog-posts";
 
-export const metadata: Metadata = { title: "Blog — Amplivanta" };
+export const metadata: Metadata = { title: "Blog" };
 
 const posts = BLOG_POSTS;
 

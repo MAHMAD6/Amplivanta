@@ -5,7 +5,7 @@ import { AdvisorTabs } from "@/components/amplivanta/advisor-tabs";
 import { AskAdvisorClient } from "@/components/amplivanta/ask-advisor-client";
 import { ASK_HISTORY, ASK_SUGGESTED } from "@/lib/advisor-data";
 
-export const metadata: Metadata = { title: "Ask AI Advisor — Amplivanta" };
+export const metadata: Metadata = { title: "Ask AI Advisor" };
 
 export default function AskAdvisorPage() {
   return (

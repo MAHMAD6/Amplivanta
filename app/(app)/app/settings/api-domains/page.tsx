@@ -4,7 +4,7 @@ import { Globe, ShieldCheck, Key, ExternalLink, AlertTriangle, RotateCw, Plus } 
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { DOMAINS } from "@/lib/settings-data";
 
-export const metadata: Metadata = { title: "API & Domains — Amplivanta" };
+export const metadata: Metadata = { title: "API & Domains" };
 
 export default function ApiDomainsPage() {
   return (

@@ -5,7 +5,7 @@ import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { FORMS } from "@/lib/marketing-auto-data";
 
-export const metadata: Metadata = { title: "Form Analytics — Amplivanta" };
+export const metadata: Metadata = { title: "Form Analytics" };
 
 const SOURCES = [
   { name: "Organic Search", pct: 42, submissions: 2280 },

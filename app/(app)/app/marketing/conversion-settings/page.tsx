@@ -7,7 +7,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { LiveBadge } from "@/components/amplivanta/live-badge";
 import { loadConversions } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "Conversion Settings — Amplivanta" };
+export const metadata: Metadata = { title: "Conversion Settings" };
 export const dynamic = "force-dynamic";
 
 const TABS = ["Conversion Events", "Goals", "Revenue Tracking", "Attribution Windows", "Settings"];

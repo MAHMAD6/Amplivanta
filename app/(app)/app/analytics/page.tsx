@@ -8,7 +8,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { TRAFFIC_GEO, ATTRIBUTION_CHANNELS, AI_ANALYTICS_INSIGHTS, CAMPAIGN_ANALYTICS } from "@/lib/analytics-data";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 
-export const metadata: Metadata = { title: "Analytics — Amplivanta" };
+export const metadata: Metadata = { title: "Analytics" };
 
 export default function AnalyticsDashboardPage() {
   const totalRev = ATTRIBUTION_CHANNELS.reduce((s, c) => s + c.revenue, 0);

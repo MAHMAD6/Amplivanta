@@ -8,7 +8,7 @@ import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { PlatformIcon } from "@/components/amplivanta/platform-badge";
 import { POSTS, ACCOUNTS, PLATFORM_META, STATUS_TONE } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Publishing Dashboard — Amplivanta" };
+export const metadata: Metadata = { title: "Publishing Dashboard" };
 
 export default function SocialDashboardPage() {
   const published = POSTS.filter((p) => p.status === "Published");

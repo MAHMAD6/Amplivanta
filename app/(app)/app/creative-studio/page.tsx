@@ -6,7 +6,7 @@ import { CreativeSubnav } from "@/components/amplivanta/creative-subnav";
 import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { PROJECTS, BRAND_KITS, PROJECT_STATUS_TONE } from "@/lib/creative-data";
 
-export const metadata: Metadata = { title: "Creative Studio — Amplivanta" };
+export const metadata: Metadata = { title: "Creative Studio" };
 
 const QUICK_CREATE = [
   { icon: Layers, label: "Social Post", tone: "violet", href: "/app/creative-studio/graphics" },

@@ -5,7 +5,7 @@ import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 
-export const metadata: Metadata = { title: "A/B Testing — Amplivanta" };
+export const metadata: Metadata = { title: "A/B Testing" };
 
 const VARIANT_A = { visitors: 24376, conversions: 1284, rate: 5.26, confidence: 88.0, bounce: 39.4, scroll: 62, revenue: 2.21 };
 const VARIANT_B = { visitors: 24376, conversions: 1325, rate: 6.66, confidence: 94.5, bounce: 35.8, scroll: 68, revenue: 2.78 };

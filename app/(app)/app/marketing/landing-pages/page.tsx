@@ -8,7 +8,7 @@ import { LANDING_PAGES, PAGE_STATUS_TONE } from "@/lib/marketing-auto-data";
 import { CreateButton } from "@/components/amplivanta/crud/create-button";
 import { LANDING_PAGE_FIELDS } from "@/components/amplivanta/crud/module-fields";
 
-export const metadata: Metadata = { title: "Landing Pages — Amplivanta" };
+export const metadata: Metadata = { title: "Landing Pages" };
 
 export default function LandingPagesPage() {
   return (

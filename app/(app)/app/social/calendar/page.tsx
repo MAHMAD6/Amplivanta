@@ -6,7 +6,7 @@ import { PlatformIcon } from "@/components/amplivanta/platform-badge";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { POSTS, STATUS_TONE, PLATFORM_META } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Content Calendar — Amplivanta" };
+export const metadata: Metadata = { title: "Content Calendar" };
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 

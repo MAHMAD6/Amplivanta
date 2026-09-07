@@ -4,7 +4,7 @@ import { UserPlus, DollarSign, CalendarClock, BarChart3, Gift, ShieldCheck, Chec
 import { AffiliateApplicationForm } from "@/components/amplivanta/affiliate-application-form";
 import { MarketingBreadcrumb } from "@/components/amplivanta/marketing-breadcrumb";
 
-export const metadata: Metadata = { title: "Affiliate Application — Amplivanta" };
+export const metadata: Metadata = { title: "Affiliate Application" };
 
 const BENEFITS = [
   { icon: DollarSign, title: "Earn 20% Commission", desc: "Earn 20% commission on eligible paid subscriptions for up to 12 months." },

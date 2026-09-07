@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, MessageCircle, Video, Search } from "lucide-react";
 
-export const metadata: Metadata = { title: "Help Center — Amplivanta" };
+export const metadata: Metadata = { title: "Help Center" };
 
 const topics = [
   { title: "Getting started", icon: BookOpen, count: 24 },

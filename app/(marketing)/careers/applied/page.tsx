@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, Mail } from "lucide-react";
 
-export const metadata: Metadata = { title: "Application Submitted — Amplivanta" };
+export const metadata: Metadata = { title: "Application Submitted" };
 
 export default function AppliedPage() {
   return (

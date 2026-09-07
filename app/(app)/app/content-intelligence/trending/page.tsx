@@ -6,7 +6,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { TRENDS } from "@/lib/intel-data";
 
-export const metadata: Metadata = { title: "Trending Topics — Amplivanta" };
+export const metadata: Metadata = { title: "Trending Topics" };
 
 const SOURCE_TONE = { X: "gray", Reddit: "orange", LinkedIn: "blue", News: "violet", TikTok: "pink" } as const;
 

@@ -5,7 +5,7 @@ import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { EXECUTIONS, EXEC_STATUS_TONE } from "@/lib/marketing-auto-data";
 
-export const metadata: Metadata = { title: "Execution Logs — Amplivanta" };
+export const metadata: Metadata = { title: "Execution Logs" };
 
 export default function ExecutionLogsPage() {
   return (

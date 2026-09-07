@@ -6,7 +6,7 @@ import { ResourceIcon } from "@/components/amplivanta/resource-icon";
 import { GUIDE_TRACKS, GUIDES } from "@/lib/resources-data";
 
 export const metadata: Metadata = {
-  title: "Guides — Amplivanta",
+  title: "Guides",
   description: "Step-by-step guides that take you from setup to shipping growth results.",
 };
 

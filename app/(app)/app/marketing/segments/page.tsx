@@ -8,7 +8,7 @@ import { SEGMENTS } from "@/lib/marketing-auto-data";
 import { CreateButton } from "@/components/amplivanta/crud/create-button";
 import { SEGMENT_FIELDS } from "@/components/amplivanta/crud/module-fields";
 
-export const metadata: Metadata = { title: "Segments & Audiences — Amplivanta" };
+export const metadata: Metadata = { title: "Segments & Audiences" };
 
 export default function SegmentsPage() {
   return (

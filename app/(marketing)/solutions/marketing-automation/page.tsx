@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LayoutGrid, Megaphone, Workflow, Mail, FileText, Layout, Users2, BarChart3, Play, ArrowRight, UserPlus, Send, GitBranch, Zap, CircleCheckBig, ShoppingBag, Package, Briefcase, Boxes, Rocket, Globe, Layers } from "lucide-react";
 
-export const metadata: Metadata = { title: "Marketing Automation — Amplivanta", description: "Automate smarter and grow consistently with Amplivanta Marketing Automation." };
+export const metadata: Metadata = { title: "Marketing Automation", description: "Automate smarter and grow consistently with Amplivanta Marketing Automation." };
 
 const NAV = [["Overview", LayoutGrid], ["Campaigns", Megaphone], ["Workflows", Workflow], ["Email Campaigns", Mail], ["Lead Capture Forms", FileText], ["Landing Pages", Layout], ["Audience", Users2], ["Reports", BarChart3]] as const;
 const KPIS = [["Active Workflows", "Running"], ["Active Campaigns", "In progress"], ["New Leads", "This period"]] as const;

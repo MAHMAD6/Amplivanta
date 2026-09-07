@@ -5,7 +5,7 @@ import { AdvisorTabs } from "@/components/amplivanta/advisor-tabs";
 import { AdvisorIcon } from "@/components/amplivanta/advisor-icon";
 import { HISTORY_ACTIVITY, HISTORY_IMPACT, HISTORY_ROWS, HISTORY_STATS } from "@/lib/advisor-data";
 
-export const metadata: Metadata = { title: "Recommendation History — Amplivanta" };
+export const metadata: Metadata = { title: "Recommendation History" };
 
 export default function RecommendationHistoryPage() {
   return (

@@ -10,7 +10,7 @@ import { ResourceDialog } from "@/components/amplivanta/crud/resource-dialog";
 import { dealFields } from "@/components/amplivanta/crm/crm-fields";
 import { loadDeals, loadStageOptions } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "Deals — Amplivanta" };
+export const metadata: Metadata = { title: "Deals" };
 export const dynamic = "force-dynamic";
 
 const STAGES_ORDER: DealStage[] = ["New", "Qualified", "Proposal", "Negotiation", "Won"];

@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const data = RESOURCE_PAGES[slug];
   if (!data) return {};
-  return { title: `${data.eyebrow} — Amplivanta`, description: data.subtitle };
+  return { title: `${data.eyebrow}`, description: data.subtitle };
 }
 
 const BROWSE = [

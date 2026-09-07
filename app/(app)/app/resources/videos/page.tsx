@@ -12,7 +12,7 @@ import {
 } from "@/lib/resources-data";
 
 export const metadata: Metadata = {
-  title: "Video Library — Amplivanta",
+  title: "Video Library",
   description: "Learn, grow, and get the most out of Amplivanta with step-by-step tutorials and walkthroughs.",
 };
 

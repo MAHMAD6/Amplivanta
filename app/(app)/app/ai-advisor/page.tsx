@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Sparkles, Search, Target, ClipboardCheck, BarChart3, Users2, MousePointerClick, MessageSquare, CircleDollarSign, TrendingUp, Mail, ArrowRight, ChevronRight, Cloud, Zap, Megaphone, Package, Briefcase } from "lucide-react";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 
-export const metadata: Metadata = { title: "AI Advisor — Amplivanta" };
+export const metadata: Metadata = { title: "AI Advisor" };
 
 const VALUES = [
   { icon: Search, tone: "green", title: "Find opportunities", desc: "Surface high-impact growth opportunities across your marketing, sales, and customer data." },

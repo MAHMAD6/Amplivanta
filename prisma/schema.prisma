@@ -53,6 +53,7 @@ model User {
   marketplaceSeller       MarketplaceSeller?       @relation("MarketplaceSellerUser")
   marketplaceOrders       MarketplaceOrder[]       @relation("MarketplaceOrderBuyer")
   marketplaceEntitlements MarketplaceEntitlement[] @relation("MarketplaceEntitlementBuyer")
+  marketplaceFavorites    MarketplaceFavorite[]    @relation("MarketplaceFavoriteBuyer")
 }
 
 model Workspace {
@@ -1884,6 +1885,7 @@ model MarketplaceProduct {
   orderItems MarketplaceOrderItem[]
   reviews    MarketplaceReview[]
   moderation MarketplaceModerationEvent[]
+  favorites  MarketplaceFavorite[]
 
   @@index([status])
   @@index([sellerId])
@@ -2104,6 +2106,20 @@ model MarketplacePayout {
 
   @@index([sellerId])
   @@index([status])
+}
+
+/// Buyer wishlist. A favourite is a private bookmark, never an entitlement,
+/// so it carries no pricing or licence state and is safe to delete freely.
+model MarketplaceFavorite {
+  id          String             @id @default(cuid())
+  buyerUserId String
+  buyer       User               @relation("MarketplaceFavoriteBuyer", fields: [buyerUserId], references: [id], onDelete: Cascade)
+  productId   String
+  product     MarketplaceProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt   DateTime           @default(now())
+
+  @@unique([productId, buyerUserId])
+  @@index([buyerUserId])
 }
 
 model MarketplaceReview {

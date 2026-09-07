@@ -6,7 +6,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { CONVERSION_FUNNEL } from "@/lib/analytics-data";
 import { Target, MousePointer, Users, DollarSign } from "lucide-react";
 
-export const metadata: Metadata = { title: "Conversion Funnel — Amplivanta" };
+export const metadata: Metadata = { title: "Conversion Funnel" };
 
 export default function FunnelPage() {
   const top = CONVERSION_FUNNEL[0].value;

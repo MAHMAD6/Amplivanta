@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { SOLUTION_PAGES } from "@/lib/marketing-modules";
 import { ArrowRight } from "lucide-react";
 
-export const metadata: Metadata = { title: "Solutions — Amplivanta" };
+export const metadata: Metadata = { title: "Solutions" };
 
 export default function SolutionsIndex() {
   return (

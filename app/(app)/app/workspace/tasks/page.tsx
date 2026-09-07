@@ -6,7 +6,7 @@ import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { WS_TASKS } from "@/lib/workspace-data";
 
-export const metadata: Metadata = { title: "Workspace Tasks — Amplivanta" };
+export const metadata: Metadata = { title: "Workspace Tasks" };
 
 const STATUS_TONE = { Todo: "gray", "In Progress": "amber", Done: "green" } as const;
 const COLS = ["Todo", "In Progress", "Done"] as const;

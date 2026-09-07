@@ -7,7 +7,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { LiveBadge } from "@/components/amplivanta/live-badge";
 import { loadDeliverability } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "Email Deliverability — Amplivanta" };
+export const metadata: Metadata = { title: "Email Deliverability" };
 export const dynamic = "force-dynamic";
 
 const AUTH = [

@@ -3,7 +3,7 @@ import { Save, Eye, Sparkles, Type, Image as ImageIcon, Layout, Columns, Minus, 
 import { PageHeader } from "@/components/amplivanta/page-header";
 import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
 
-export const metadata: Metadata = { title: "Landing Page Builder — Amplivanta" };
+export const metadata: Metadata = { title: "Landing Page Builder" };
 
 export default function PageBuilderPage() {
   return (

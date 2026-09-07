@@ -1,6 +1,6 @@
 import { MarketingPage } from "@/components/amplivanta/marketing-page";
 
-export const metadata = { title: "Community — Amplivanta" };
+export const metadata = { title: "Community" };
 
 export default function CommunityPage() {
   return (

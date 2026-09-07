@@ -8,7 +8,7 @@ import { CrmSubnav } from "@/components/amplivanta/crm-subnav";
 import { PIPELINE_STAGES, STAGE_TONE } from "@/lib/crm-data";
 import { loadDeals, loadContacts, loadActivities } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "CRM Dashboard — Amplivanta" };
+export const metadata: Metadata = { title: "CRM Dashboard" };
 
 export default async function CrmDashboardPage() {
   const [{ items: DEALS }, { items: CONTACTS }, { items: ACTIVITIES }] = await Promise.all([

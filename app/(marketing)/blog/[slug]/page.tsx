@@ -18,7 +18,7 @@ export async function generateMetadata({
   const post = BLOG_POST_BY_SLUG.get(slug);
   if (!post) return {};
   return {
-    title: `${post.title} — Amplivanta`,
+    title: `${post.title}`,
     description: post.excerpt,
     openGraph: { title: post.title, description: post.excerpt, type: "article" },
   };

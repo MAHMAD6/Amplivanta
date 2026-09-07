@@ -5,7 +5,7 @@ import { ChartPlaceholder } from "@/components/amplivanta/chart-placeholder";
 import { WorkspaceSubnav } from "@/components/amplivanta/workspace-subnav";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 
-export const metadata: Metadata = { title: "Workspace Analytics — Amplivanta" };
+export const metadata: Metadata = { title: "Workspace Analytics" };
 
 export default function WSAnalyticsPage() {
   return (

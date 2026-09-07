@@ -7,7 +7,7 @@ import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { WS_AUTOMATIONS } from "@/lib/workspace-data";
 
-export const metadata: Metadata = { title: "Workspace Automations — Amplivanta" };
+export const metadata: Metadata = { title: "Workspace Automations" };
 
 export default function WSAutomationsPage() {
   const active = WS_AUTOMATIONS.filter((a) => a.status === "Active");

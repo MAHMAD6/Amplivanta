@@ -8,7 +8,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { loadCampaigns, loadWorkflows } from "@/lib/server/loaders";
 import { CAMPAIGN_STATUS_TONE } from "@/lib/marketing-auto-data";
 
-export const metadata: Metadata = { title: "Marketing Automation — Amplivanta" };
+export const metadata: Metadata = { title: "Marketing Automation" };
 
 export default async function MarketingDashboardPage() {
   const [{ items: CAMPAIGNS }, { items: WORKFLOWS }] = await Promise.all([

@@ -10,8 +10,9 @@ import {
   ImageIcon,
   Loader2,
   Save,
+  Sparkles,
 } from "lucide-react";
-import { createProduct } from "@/app/(app)/app/marketplace/actions";
+import { createProduct, suggestProductSeo } from "@/app/(app)/app/marketplace/actions";
 import { cn } from "@/lib/utils";
 import { MpCard } from "./ui";
 
@@ -82,6 +83,42 @@ export function ProductWizard({
   const [price, setPrice] = useState("0");
   const [coverImage, setCoverImage] = useState("");
   const [coverImageAlt, setCoverImageAlt] = useState("");
+
+  // AI SEO is suggest-then-accept: nothing is written until the seller applies it.
+  const [seoPending, startSeo] = useTransition();
+  const [seoSuggestion, setSeoSuggestion] = useState<{
+    seoTitle: string;
+    metaDescription: string;
+    keywords: string[];
+    stubbed: boolean;
+  } | null>(null);
+  const [seoError, setSeoError] = useState<string | null>(null);
+
+  const requestSeo = () =>
+    startSeo(async () => {
+      setSeoError(null);
+      const form = formRef.current;
+      const fd = form ? new FormData(form) : new FormData();
+      const res = await suggestProductSeo({
+        title,
+        summary,
+        description: String(fd.get("description") ?? ""),
+        category: categories.find((c) => c.id === String(fd.get("categoryId") ?? ""))?.name,
+        tags: String(fd.get("tags") ?? "").split(",").map((t) => t.trim()).filter(Boolean),
+      });
+      if (res.ok) setSeoSuggestion({ ...res.suggestion, stubbed: res.stubbed });
+      else setSeoError(res.error);
+    });
+
+  const applySeo = () => {
+    if (!seoSuggestion) return;
+    if (seoSuggestion.seoTitle) setSeoTitle(seoSuggestion.seoTitle.slice(0, 60));
+    if (seoSuggestion.metaDescription) setMetaDescription(seoSuggestion.metaDescription.slice(0, 160));
+    if (seoSuggestion.keywords.length > 0) {
+      setKeywords(Array.from(new Set([...keywords, ...seoSuggestion.keywords])).slice(0, 12));
+    }
+    setSeoSuggestion(null);
+  };
 
   const effectiveSlug = slug || slugify(title);
   const priceLabel = useMemo(() => {
@@ -314,12 +351,77 @@ export function ProductWizard({
       <div hidden={step !== 4}>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <MpCard className="p-6">
-            <h2 className="flex items-center gap-2 text-[16px] font-extrabold text-deep-navy">
-              <BarChart3 aria-hidden className="h-4 w-4 text-royal-blue" /> SEO &amp; Discoverability
-            </h2>
-            <p className="mt-1 text-[12.5px] text-ink-muted">
-              Help buyers and search engines find this product.
-            </p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="flex items-center gap-2 text-[16px] font-extrabold text-deep-navy">
+                  <BarChart3 aria-hidden className="h-4 w-4 text-royal-blue" /> SEO &amp; Discoverability
+                </h2>
+                <p className="mt-1 text-[12.5px] text-ink-muted">
+                  Help buyers and search engines find this product.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={requestSeo}
+                disabled={seoPending || !title.trim()}
+                title={!title.trim() ? "Enter a product title first." : undefined}
+                className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-violet/30 bg-white px-3.5 text-[12.5px] font-bold text-violet transition hover:bg-violet/5 disabled:opacity-50"
+              >
+                {seoPending ? (
+                  <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles aria-hidden className="h-3.5 w-3.5" />
+                )}
+                Suggest with AI
+              </button>
+            </div>
+
+            {seoError && (
+              <p role="status" className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-[12px] font-semibold text-red-700">
+                {seoError}
+              </p>
+            )}
+
+            {seoSuggestion && (
+              <div className="mt-4 rounded-xl border border-violet/30 bg-violet/5 p-4">
+                <h3 className="text-[12.5px] font-extrabold text-deep-navy">Suggested copy</h3>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-ink-muted">
+                  {seoSuggestion.stubbed
+                    ? "No AI key is configured, so this is a placeholder. Edit it before publishing."
+                    : "Review and edit before applying — you are accountable for what this listing claims."}
+                </p>
+                <dl className="mt-3 space-y-2 text-[12.5px]">
+                  <div>
+                    <dt className="font-bold text-deep-navy">SEO title</dt>
+                    <dd className="text-ink-soft">{seoSuggestion.seoTitle || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-bold text-deep-navy">Meta description</dt>
+                    <dd className="text-ink-soft">{seoSuggestion.metaDescription || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-bold text-deep-navy">Keywords</dt>
+                    <dd className="text-ink-soft">{seoSuggestion.keywords.join(", ") || "—"}</dd>
+                  </div>
+                </dl>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={applySeo}
+                    className="inline-flex h-9 items-center rounded-lg bg-violet px-3.5 text-[12.5px] font-bold text-white transition hover:opacity-90"
+                  >
+                    Apply to fields
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSeoSuggestion(null)}
+                    className="inline-flex h-9 items-center rounded-lg border border-line bg-white px-3.5 text-[12.5px] font-bold text-deep-navy transition hover:bg-bg-soft"
+                  >
+                    Discard
+                  </button>
+                </div>
+              </div>
+            )}
 
             <h3 className="mt-6 flex items-center gap-2 text-[13.5px] font-extrabold text-deep-navy">
               <Globe aria-hidden className="h-4 w-4 text-royal-blue" /> Search Engine Optimization

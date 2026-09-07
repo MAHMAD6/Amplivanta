@@ -5,7 +5,7 @@ import { SEVERITY_TONE } from "@/lib/settings-data";
 import { LiveBadge } from "@/components/amplivanta/live-badge";
 import { loadAuditEvents } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "Audit Log — Amplivanta" };
+export const metadata: Metadata = { title: "Audit Log" };
 export const dynamic = "force-dynamic";
 
 export default async function AuditLogPage() {

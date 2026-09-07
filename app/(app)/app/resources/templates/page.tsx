@@ -24,7 +24,7 @@ import {
 } from "@/lib/resources-data";
 
 export const metadata: Metadata = {
-  title: "Templates — Amplivanta",
+  title: "Templates",
   description: "Professionally designed templates for campaigns, emails, landing pages, and more.",
 };
 

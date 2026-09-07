@@ -16,7 +16,13 @@ import { AddToCartButton, BuyNowButton } from "@/components/marketplace/purchase
 import { ProductGallery, type GalleryImage } from "@/components/marketplace/product-gallery";
 import { ProductTabs } from "@/components/marketplace/product-tabs";
 import { ProductReviewsSection } from "@/components/marketplace/reviews";
-import { loadProductReviews } from "@/app/(app)/app/marketplace/actions";
+import { FavoriteButton } from "@/components/marketplace/favorite-button";
+import { SharePopover } from "@/components/marketplace/share-popover";
+import { PromotePopover } from "@/components/marketplace/promote-popover";
+import { isFavorited, loadProductReviews } from "@/app/(app)/app/marketplace/actions";
+import { publicProductUrl } from "@/lib/server/public-marketplace";
+import { getMarketplaceViewer } from "@/lib/server/marketplace-access";
+import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
 import { MARKETPLACE_LEGAL_DOCS } from "@/lib/marketplace-legal-docs";
 import { prisma } from "@/lib/prisma";
 
@@ -53,7 +59,7 @@ function load(productSlug: string) {
     // Only published products are publicly addressable.
     where: { slug: productSlug, status: "PUBLISHED" },
     select: {
-      id: true, title: true, summary: true, description: true, tags: true, type: true,
+      id: true, slug: true, title: true, summary: true, description: true, tags: true, type: true,
       coverImage: true, coverImageAlt: true, galleryImages: true, galleryImageAlts: true,
       language: true, highlights: true, perfectFor: true, categoryId: true,
       seoTitle: true, metaDescription: true, allowIndexing: true,
@@ -131,6 +137,11 @@ export default async function ProductDetailPage({
   }
 
   const reviews = product ? await loadProductReviews(product.id) : null;
+  const saved = product ? await isFavorited(product.id) : false;
+  const viewer = await getMarketplaceViewer();
+  const favoritesEnabled = viewer.flags[MARKETPLACE_FLAGS.favorites] === true;
+  // Sharing always points at the public listing, never this signed-in route.
+  const shareUrl = product ? publicProductUrl(product.slug) : "";
 
   if (!product || !version) {
     return (
@@ -237,12 +248,15 @@ export default async function ProductDetailPage({
                 </div>
               )}
 
-              <div className="mt-7">
+              <div className="mt-7 flex flex-wrap items-start gap-3">
                 <AddToCartButton
                   productId={product.id}
                   priceCents={version.priceCents}
                   currency={version.currency}
                 />
+                {favoritesEnabled && <FavoriteButton productId={product.id} initialSaved={saved} />}
+                <SharePopover url={shareUrl} title={product.title} />
+                <PromotePopover productId={product.id} />
               </div>
             </div>
           </div>

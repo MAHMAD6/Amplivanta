@@ -11,7 +11,7 @@ import { CreateButton } from "@/components/amplivanta/crud/create-button";
 import { WORKFLOW_FIELDS } from "@/components/amplivanta/crud/module-fields";
 import { loadWorkflows } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "Workflows — Amplivanta" };
+export const metadata: Metadata = { title: "Workflows" };
 export const dynamic = "force-dynamic";
 
 const WF_TONE = { Active: "green", Draft: "gray", Paused: "amber" } as const;

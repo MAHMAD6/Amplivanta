@@ -6,7 +6,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { AUTO_TEMPLATES } from "@/lib/marketing-auto-data";
 
-export const metadata: Metadata = { title: "Automation Templates — Amplivanta" };
+export const metadata: Metadata = { title: "Automation Templates" };
 
 const CATS = ["All", "Onboarding", "E-commerce", "PLG", "Retention", "Events", "SaaS", "Feedback"];
 

@@ -4,7 +4,7 @@ import { MessageSquare, Users, ShieldCheck, Mail, CalendarCheck, LifeBuoy, HelpC
 import { MarketingContactForm } from "@/components/amplivanta/marketing-contact-form";
 import { LogoMark } from "@/components/layout/LogoMark";
 
-export const metadata: Metadata = { title: "Contact — Amplivanta" };
+export const metadata: Metadata = { title: "Contact" };
 
 const POINTS = [
   { icon: MessageSquare, title: "Here to Help", desc: "We're here to support you at every step." },

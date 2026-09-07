@@ -5,7 +5,7 @@ import { SocialSubnav } from "@/components/amplivanta/social-subnav";
 import { Avatar, StatusPill } from "@/components/amplivanta/status-pill";
 import { ACTIVITY_LOG } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Social Activity Log — Amplivanta" };
+export const metadata: Metadata = { title: "Social Activity Log" };
 
 const CAT_TONE = { post: "violet", account: "blue", approval: "amber", settings: "gray" } as const;
 

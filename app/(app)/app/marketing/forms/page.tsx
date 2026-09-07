@@ -10,7 +10,7 @@ import { CreateButton } from "@/components/amplivanta/crud/create-button";
 import { FORM_FIELDS } from "@/components/amplivanta/crud/module-fields";
 import { ClipboardList, TrendingUp, ShieldCheck, Activity } from "lucide-react";
 
-export const metadata: Metadata = { title: "Lead Capture Forms — Amplivanta" };
+export const metadata: Metadata = { title: "Lead Capture Forms" };
 
 export default function FormsPage() {
   return (

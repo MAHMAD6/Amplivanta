@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Rocket, BarChart3, ShieldCheck, Star, CalendarDays, Users2, MonitorPlay, ArrowRight, Mail, CalendarCheck } from "lucide-react";
 import { MarketingDemoForm } from "@/components/amplivanta/marketing-demo-form";
 
-export const metadata: Metadata = { title: "Book a Demo — Amplivanta" };
+export const metadata: Metadata = { title: "Book a Demo" };
 
 const POINTS = [
   { icon: Rocket, title: "Personalized Demo", desc: "See how Amplivanta solves your specific business challenges." },

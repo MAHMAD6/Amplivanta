@@ -6,7 +6,7 @@ import { LEGAL_DOCS } from "@/lib/legal-docs";
 import { MARKETPLACE_LEGAL_DOCS } from "@/lib/marketplace-legal-docs";
 
 export const metadata: Metadata = {
-  title: "Legal — Amplivanta",
+  title: "Legal",
   description: "Amplivanta's platform, marketplace and partner-program legal documents.",
 };
 

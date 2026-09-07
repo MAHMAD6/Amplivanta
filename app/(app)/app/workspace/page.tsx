@@ -7,7 +7,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { WS_CAMPAIGNS, WS_ACTIVITY } from "@/lib/workspace-data";
 
-export const metadata: Metadata = { title: "AI Workspace — Amplivanta" };
+export const metadata: Metadata = { title: "AI Workspace" };
 
 const STATUS_TONE = { Planning: "gray", "In Progress": "amber", Live: "green", Complete: "blue" } as const;
 

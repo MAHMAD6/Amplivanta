@@ -6,7 +6,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { SCORING_RULES } from "@/lib/marketing-auto-data";
 
-export const metadata: Metadata = { title: "Lead Scoring — Amplivanta" };
+export const metadata: Metadata = { title: "Lead Scoring" };
 
 const TIERS = [
   { name: "Hot", range: "80+", count: 128, cvr: 42, tone: "bg-red-500" },

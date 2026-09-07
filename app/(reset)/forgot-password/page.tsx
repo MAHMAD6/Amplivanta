@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Mail, ShieldCheck } from "lucide-react";
 import { ResetShell } from "@/components/amplivanta/reset-shell";
 
 export const metadata: Metadata = {
-  title: "Forgot your password? — Amplivanta",
+  title: "Forgot your password?",
   description: "Enter your email and we'll send you a secure password reset link.",
 };
 

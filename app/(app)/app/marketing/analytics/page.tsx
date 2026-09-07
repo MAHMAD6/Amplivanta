@@ -7,7 +7,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { WORKFLOWS } from "@/lib/marketing-auto-data";
 
-export const metadata: Metadata = { title: "Automation Analytics — Amplivanta" };
+export const metadata: Metadata = { title: "Automation Analytics" };
 
 export default function AutomationAnalyticsPage() {
   return (

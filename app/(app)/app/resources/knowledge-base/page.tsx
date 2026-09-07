@@ -11,7 +11,7 @@ import {
 } from "@/lib/resources-data";
 
 export const metadata: Metadata = {
-  title: "Knowledge Base — Amplivanta",
+  title: "Knowledge Base",
   description: "Find answers, best practices, and step-by-step guides to get the most out of Amplivanta.",
 };
 

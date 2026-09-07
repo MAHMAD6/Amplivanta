@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ShieldCheck, Lock, CheckCircle2, Users2, Cloud, Bell, Database, ClipboardCheck, AlertTriangle, Globe, FileText, ChevronRight, Download } from "lucide-react";
 
-export const metadata: Metadata = { title: "Trust Center — Amplivanta" };
+export const metadata: Metadata = { title: "Trust Center" };
 
 const VALUES = [
   { icon: ShieldCheck, title: "Security by Design", desc: "We build with security in mind across our platform and processes." },

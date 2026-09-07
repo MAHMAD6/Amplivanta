@@ -6,7 +6,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { DOMAINS } from "@/lib/marketing-auto-data";
 
-export const metadata: Metadata = { title: "Domains — Amplivanta" };
+export const metadata: Metadata = { title: "Domains" };
 
 const DOMAIN_TONE = { Verified: "green", "Pending DNS": "amber", "SSL Error": "red", Available: "gray" } as const;
 

@@ -8,7 +8,7 @@ import { EMAILS, EMAIL_STATUS_TONE } from "@/lib/marketing-auto-data";
 import { CreateButton } from "@/components/amplivanta/crud/create-button";
 import { EMAIL_CAMPAIGN_FIELDS } from "@/components/amplivanta/crud/module-fields";
 
-export const metadata: Metadata = { title: "Email Campaigns — Amplivanta" };
+export const metadata: Metadata = { title: "Email Campaigns" };
 
 export default function EmailCampaignsPage() {
   return (

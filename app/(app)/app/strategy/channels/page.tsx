@@ -6,7 +6,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { CHANNELS, CHANNEL_TONE } from "@/lib/strategy-data";
 
-export const metadata: Metadata = { title: "Channel Plan & Budget — Amplivanta" };
+export const metadata: Metadata = { title: "Channel Plan & Budget" };
 
 export default function ChannelPlanPage() {
   const totalBudget = CHANNELS.reduce((s, c) => s + c.plannedBudget, 0);

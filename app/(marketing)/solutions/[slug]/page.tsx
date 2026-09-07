@@ -18,10 +18,10 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const detail = SOLUTION_DETAIL_PAGES[slug];
-  if (detail) return { title: `${detail.name} — Amplivanta`, description: detail.subtitle };
+  if (detail) return { title: `${detail.name}`, description: detail.subtitle };
   const data = SOLUTION_PAGES[slug];
   if (!data) return {};
-  return { title: `${data.eyebrow} — Amplivanta` };
+  return { title: `${data.eyebrow}` };
 }
 
 export default async function SolutionRoute({ params }: { params: Promise<{ slug: string }> }) {

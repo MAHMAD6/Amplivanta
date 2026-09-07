@@ -7,7 +7,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { INTEGRATIONS, INTG_CATEGORIES, INTG_TONE } from "@/lib/integrations-data";
 
-export const metadata: Metadata = { title: "Integrations — Amplivanta" };
+export const metadata: Metadata = { title: "Integrations" };
 
 export default function IntegrationsHomePage() {
   const connected = INTEGRATIONS.filter((i) => i.status === "Connected");

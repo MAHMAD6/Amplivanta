@@ -6,7 +6,7 @@ import { WorkspaceSubnav } from "@/components/amplivanta/workspace-subnav";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { WS_CAMPAIGNS, WS_KPI_TARGETS, WS_STRATEGY } from "@/lib/workspace-data";
 
-export const metadata: Metadata = { title: "Campaign Plan — Amplivanta" };
+export const metadata: Metadata = { title: "Campaign Plan" };
 
 export default function CampaignPlanPage() {
   const c = WS_CAMPAIGNS[0];

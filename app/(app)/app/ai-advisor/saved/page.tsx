@@ -11,7 +11,7 @@ import {
   SAVED_SUMMARY,
 } from "@/lib/advisor-data";
 
-export const metadata: Metadata = { title: "Saved Insights — Amplivanta" };
+export const metadata: Metadata = { title: "Saved Insights" };
 
 const priorityTone: Record<string, string> = {
   High: "bg-rose-500/10 text-rose-600",

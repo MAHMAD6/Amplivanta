@@ -11,6 +11,7 @@ import {
   SOLUTION_PAGES,
 } from "@/lib/marketing-modules";
 import { SOLUTION_DETAIL_PAGES } from "@/lib/solution-pages";
+import { indexablePublicProductSlugs } from "@/lib/server/public-marketplace";
 
 /**
  * The sitemap is generated from the same registries the pages render from, so
@@ -45,12 +46,13 @@ const STATIC_ROUTES = [
   "/affiliates/apply",
   "/affiliates/terms",
   "/legal",
+  "/marketplace",
   "/legal/dpa",
   "/login",
   "/signup",
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
 
   const dynamic = [
@@ -69,6 +71,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/legal/compliance",
     "/legal/partner-terms",
     "/legal/affiliate-terms",
+    // Published listings whose seller allows indexing. A seller who turns
+    // indexing off keeps a working link, just not a crawled one.
+    ...(await indexablePublicProductSlugs()).map((slug) => `/marketplace/products/${slug}`),
   ];
 
   // A slug can legitimately appear in two registries; a sitemap must not repeat it.

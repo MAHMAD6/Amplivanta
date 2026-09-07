@@ -20,7 +20,7 @@ import {
 } from "@/lib/resources-data";
 
 export const metadata: Metadata = {
-  title: "Blog — Amplivanta",
+  title: "Blog",
   description: "Insights, strategies, and best practices to help you grow, engage, and scale smarter.",
 };
 

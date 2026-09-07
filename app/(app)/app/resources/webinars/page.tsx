@@ -13,7 +13,7 @@ import {
 } from "@/lib/resources-data";
 
 export const metadata: Metadata = {
-  title: "Webinars — Amplivanta",
+  title: "Webinars",
   description: "Join live sessions, watch expert replays, and learn practical growth strategies.",
 };
 

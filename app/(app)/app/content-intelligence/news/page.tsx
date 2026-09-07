@@ -7,7 +7,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { NEWS } from "@/lib/intel-data";
 import { Newspaper, TrendingUp, Bell as BellI, Rss } from "lucide-react";
 
-export const metadata: Metadata = { title: "Industry News — Amplivanta" };
+export const metadata: Metadata = { title: "Industry News" };
 
 const IMPACT_TONE = { High: "red", Medium: "amber", Low: "gray" } as const;
 

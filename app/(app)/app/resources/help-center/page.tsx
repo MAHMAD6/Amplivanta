@@ -21,7 +21,7 @@ import {
 } from "@/lib/resources-data";
 
 export const metadata: Metadata = {
-  title: "Help Center — Amplivanta",
+  title: "Help Center",
   description: "Find answers, learn best practices, and get the support you need to make the most of Amplivanta.",
 };
 

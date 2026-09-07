@@ -5,7 +5,7 @@ import { Building2, BarChart3, Crosshair, Clock, GitBranch, Database, Target, Tr
 import { loadCommandCenter } from "@/lib/server/command-center";
 import { LiveBadge } from "@/components/amplivanta/live-badge";
 
-export const metadata: Metadata = { title: "Growth Command Center — Amplivanta" };
+export const metadata: Metadata = { title: "Growth Command Center" };
 export const dynamic = "force-dynamic";
 
 const STEPS = [

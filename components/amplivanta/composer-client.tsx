@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Image as ImageIcon, Video, BarChart2, Smile, Hash, AtSign, Link2, Calendar, Clock, Sparkles, MoreHorizontal } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Image as ImageIcon, Video, BarChart2, Smile, Hash, AtSign, Link2, Calendar, Clock, Sparkles, MoreHorizontal, Loader2, Save, Send } from "lucide-react";
 import { PLATFORM_META, type Platform } from "@/lib/social-data";
 import { PlatformIcon } from "./platform-badge";
+import { createSocialPost } from "@/app/(app)/app/social/actions";
 import { cn } from "@/lib/utils";
 
 const PLATFORMS: Platform[] = ["facebook", "instagram", "linkedin", "x", "tiktok", "youtube"];
@@ -15,6 +17,29 @@ export function ComposerClient() {
   const [preview, setPreview] = useState<Platform>("instagram");
 
   const togglePlatform = (p: Platform) => setSelected((s) => (s.includes(p) ? s.filter((x) => x !== p) : [...s, p]));
+
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  const save = (schedule: boolean) =>
+    start(async () => {
+      const fd = new FormData();
+      fd.set("content", content);
+      if (mediaUrl.trim()) fd.set("mediaUrl", mediaUrl.trim());
+      for (const p of selected) fd.set(`platform_${p}`, "on");
+      if (schedule && scheduledAt) fd.set("scheduledAt", new Date(scheduledAt).toISOString());
+      const res = await createSocialPost(fd);
+      setMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+      if (res.ok) {
+        setContent("");
+        setMediaUrl("");
+        setScheduledAt("");
+        router.refresh();
+      }
+    });
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,_1.4fr)_minmax(0,_1fr)]">
@@ -41,6 +66,8 @@ export function ComposerClient() {
           </div>
         </div>
 
+        {/* Save controls — the composer writes real rows; nothing is published
+            because no social channel is connected yet. */}
         {/* Editor */}
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-2 flex items-center justify-between">
@@ -128,15 +155,68 @@ export function ComposerClient() {
               </button>
             ))}
           </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            <div className="flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-[12.5px]">
-              <Calendar className="h-3.5 w-3.5 text-ink-muted" /> Aug 15, 2026
-            </div>
-            <div className="flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-[12.5px]">
-              <Clock className="h-3.5 w-3.5 text-ink-muted" /> 10:30 AM
-            </div>
-            <div className="rounded-xl border border-line px-3 py-2 text-[12.5px] text-ink-soft">PST (UTC-8)</div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1.5 flex items-center gap-1.5 text-[12px] font-bold text-ink">
+                <Calendar aria-hidden className="h-3.5 w-3.5 text-ink-muted" /> Schedule for
+              </span>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.currentTarget.value)}
+                className="h-11 w-full rounded-xl border border-line px-3 text-[12.5px] focus:border-violet focus:outline-none"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 flex items-center gap-1.5 text-[12px] font-bold text-ink">
+                <ImageIcon aria-hidden className="h-3.5 w-3.5 text-ink-muted" /> Media URL
+              </span>
+              <input
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.currentTarget.value)}
+                placeholder="https://…"
+                className="h-11 w-full rounded-xl border border-line px-3 text-[12.5px] focus:border-violet focus:outline-none"
+              />
+            </label>
           </div>
+          <p className="mt-3 flex items-center gap-1.5 text-[11.5px] text-ink-muted">
+            <Clock aria-hidden className="h-3.5 w-3.5" />
+            Times are in your browser&apos;s timezone. No channel is connected yet, so a scheduled
+            post is held here rather than sent.
+          </p>
+        </div>
+
+        {msg && (
+          <p
+            role="status"
+            className={cn(
+              "rounded-xl px-4 py-3 text-[12.5px] font-semibold",
+              msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
+            )}
+          >
+            {msg.text}
+          </p>
+        )}
+
+        <div className="flex flex-wrap justify-end gap-2.5">
+          <button
+            type="button"
+            onClick={() => save(false)}
+            disabled={pending || !content.trim()}
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-[13px] font-bold text-ink transition hover:bg-bg-soft disabled:opacity-50"
+          >
+            {pending ? <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin" /> : <Save aria-hidden className="h-3.5 w-3.5" />}
+            Save draft
+          </button>
+          <button
+            type="button"
+            onClick={() => save(true)}
+            disabled={pending || !content.trim() || !scheduledAt}
+            title={!scheduledAt ? "Pick a date and time first." : undefined}
+            className="inline-flex h-11 items-center gap-2 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet disabled:opacity-50"
+          >
+            <Send aria-hidden className="h-3.5 w-3.5" /> Schedule
+          </button>
         </div>
       </div>
 

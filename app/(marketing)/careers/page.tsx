@@ -3,7 +3,7 @@ import Link from "next/link";
 import { MapPin, Clock, ArrowRight, Heart, MessageCircle, TrendingUp, Monitor, Star } from "lucide-react";
 import { JOBS } from "@/lib/careers";
 
-export const metadata: Metadata = { title: "Careers — Amplivanta" };
+export const metadata: Metadata = { title: "Careers" };
 
 const VALUES = [
   { icon: Heart, title: "Meaningful Impact" },

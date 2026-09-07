@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/amplivanta/page-header";
 import { SocialSubnav } from "@/components/amplivanta/social-subnav";
 
-export const metadata: Metadata = { title: "Social Settings — Amplivanta" };
+export const metadata: Metadata = { title: "Social Settings" };
 
 export default function SocialSettingsPage() {
   return (

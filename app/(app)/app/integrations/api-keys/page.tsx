@@ -7,7 +7,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { API_KEYS, API_KEY_TONE } from "@/lib/integrations-data";
 import { ApiKeyDialog } from "@/components/amplivanta/settings/api-key-dialog";
 
-export const metadata: Metadata = { title: "API Keys — Amplivanta" };
+export const metadata: Metadata = { title: "API Keys" };
 
 export default function ApiKeysPage() {
   return (

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Target, ClipboardCheck, Search, Users2, GitBranch, Database, Play, ArrowRight, CheckCircle2, Megaphone, Package, TrendingUp, Briefcase, Sparkles, BarChart3, PieChart } from "lucide-react";
 
-export const metadata: Metadata = { title: "Growth Audit — Amplivanta" };
+export const metadata: Metadata = { title: "Growth Audit" };
 
 const AREAS = [
   { icon: Target, tone: "green", title: "Strategy & Positioning", desc: "Evaluate your value proposition, messaging, and market positioning." },

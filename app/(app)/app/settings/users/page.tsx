@@ -3,7 +3,7 @@ import { UserPlus, MoreHorizontal, Check, X, ShieldCheck } from "lucide-react";
 import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { USERS, USER_STATUS_TONE, ROLE_TONE, ROLES, PERMISSION_MATRIX } from "@/lib/settings-data";
 
-export const metadata: Metadata = { title: "Users & Permissions — Amplivanta" };
+export const metadata: Metadata = { title: "Users & Permissions" };
 
 const ROLE_KEYS = ["Owner", "Admin", "Editor", "Reviewer", "Viewer"] as const;
 

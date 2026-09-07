@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/amplivanta/page-header";
 import { AnalyticsSubnav } from "@/components/amplivanta/analytics-subnav";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 
-export const metadata: Metadata = { title: "Report Builder — Amplivanta" };
+export const metadata: Metadata = { title: "Report Builder" };
 
 const WIDGETS = [
   ["KPI Card", Gauge], ["Line Chart", LineIcon], ["Bar Chart", BarChart3], ["Area Chart", AreaChart], ["Donut Chart", PieChart], ["Funnel", FunnelIcon], ["Table", Table2], ["Attribution Chart", Share2], ["Leaderboard", Trophy], ["Scorecard", ClipboardList], ["Text Block", Type], ["Image", ImageIcon],

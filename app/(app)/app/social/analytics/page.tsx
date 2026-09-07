@@ -7,7 +7,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { PlatformIcon } from "@/components/amplivanta/platform-badge";
 import { ACCOUNTS, POSTS, PLATFORM_META } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Social Analytics — Amplivanta" };
+export const metadata: Metadata = { title: "Social Analytics" };
 
 export default function SocialAnalyticsPage() {
   const topPosts = POSTS.filter((p) => p.engagement).sort((a, b) => (b.engagement!.likes) - (a.engagement!.likes)).slice(0, 5);

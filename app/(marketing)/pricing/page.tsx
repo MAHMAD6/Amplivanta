@@ -3,7 +3,7 @@ import { PricingClient } from "@/components/amplivanta/pricing-client";
 import { PRICING_FAQ } from "@/lib/pricing";
 
 export const metadata: Metadata = {
-  title: "Pricing — Amplivanta",
+  title: "Pricing",
   description: "Growth pricing. Powerful results. Everything you need to engineer growth and scale your business.",
 };
 

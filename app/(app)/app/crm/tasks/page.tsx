@@ -15,7 +15,7 @@ import { loadCrmTasks } from "@/lib/server/loaders";
 
 const COLUMN_STATUS: Record<string, string> = { Todo: "open", "In Progress": "in_progress", Done: "done" };
 
-export const metadata: Metadata = { title: "CRM Tasks — Amplivanta" };
+export const metadata: Metadata = { title: "CRM Tasks" };
 export const dynamic = "force-dynamic";
 
 const COLUMNS: TaskStatus[] = ["Todo", "In Progress", "Done"];

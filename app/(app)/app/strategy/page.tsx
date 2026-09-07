@@ -9,7 +9,7 @@ import { GOALS, CHANNELS, PERSONAS, SWOT, GOAL_STATUS_TONE, CHANNEL_TONE } from 
 import { CreateButton } from "@/components/amplivanta/crud/create-button";
 import { STRATEGY_FIELDS } from "@/components/amplivanta/crud/module-fields";
 
-export const metadata: Metadata = { title: "Marketing Strategy — Amplivanta" };
+export const metadata: Metadata = { title: "Marketing Strategy" };
 
 export default function StrategyDashboardPage() {
   const totalBudget = CHANNELS.reduce((s, c) => s + c.plannedBudget, 0);

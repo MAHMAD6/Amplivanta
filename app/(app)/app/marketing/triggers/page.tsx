@@ -7,7 +7,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { LiveBadge } from "@/components/amplivanta/live-badge";
 import { loadTriggers, loadTriggerEvents } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "Trigger / Event Manager — Amplivanta" };
+export const metadata: Metadata = { title: "Trigger / Event Manager" };
 export const dynamic = "force-dynamic";
 
 const SOURCES = [["Web Forms", 38.4, "#6A35F0"], ["Email", 24.7, "#EC4899"], ["Website", 16.9, "#16A56A"], ["CRM", 10.4, "#F59E0B"], ["Webhooks", 6.7, "#F97316"], ["Other", 2.9, "#94A3B8"]] as const;

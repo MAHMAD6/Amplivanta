@@ -6,7 +6,7 @@ import { PlatformIcon } from "@/components/amplivanta/platform-badge";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { ACCOUNTS, PLATFORM_META } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Social Accounts — Amplivanta" };
+export const metadata: Metadata = { title: "Social Accounts" };
 
 const HEALTH_ICON = { Healthy: CheckCircle2, Warning: AlertTriangle, Expired: XCircle };
 const HEALTH_TONE = { Healthy: "green", Warning: "amber", Expired: "red" } as const;

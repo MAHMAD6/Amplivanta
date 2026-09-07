@@ -27,17 +27,24 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    default: `${SITE_NAME}: ${SITE_TAGLINE}`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
   icons: {
-    icon: "/icon.svg",
-    shortcut: "/icon.svg",
-    apple: "/icon.svg",
+    // SVG first for browsers that support it, PNG and .ico as fallbacks —
+    // without the .ico a browser's automatic /favicon.ico request 404s and the
+    // tab falls back to a generic placeholder.
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    title: `${SITE_NAME}: ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     siteName: SITE_NAME,
@@ -45,7 +52,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    title: `${SITE_NAME}: ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
   },
   robots: { index: true, follow: true },

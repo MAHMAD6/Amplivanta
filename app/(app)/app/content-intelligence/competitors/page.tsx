@@ -6,7 +6,7 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { COMPETITORS, COMPETITOR_POSTS, COMPETITOR_OPPORTUNITIES } from "@/lib/intel-data";
 
-export const metadata: Metadata = { title: "Competitor Watch — Amplivanta" };
+export const metadata: Metadata = { title: "Competitor Watch" };
 
 export default function CompetitorsPage() {
   return (

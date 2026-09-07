@@ -5,7 +5,7 @@ import { SocialSubnav } from "@/components/amplivanta/social-subnav";
 import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { TEAM } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Team & Roles — Amplivanta" };
+export const metadata: Metadata = { title: "Team & Roles" };
 
 const ROLE_TONE = { Owner: "violet", Admin: "pink", Editor: "blue", Reviewer: "amber", Viewer: "gray" } as const;
 const ROLES = ["Owner", "Admin", "Editor", "Reviewer", "Viewer"] as const;

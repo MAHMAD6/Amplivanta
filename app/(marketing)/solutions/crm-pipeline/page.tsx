@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Users2, Building2, CircleDollarSign, ListTodo, BarChart3, Play, ArrowRight, Contact, Handshake, Filter, ClipboardList, Activity, FileText, Settings, Mail, Bell, SlidersHorizontal, UserPlus, Megaphone, Heart, Cog, Crown, Database, CheckCircle2, TrendingUp, Sparkles } from "lucide-react";
 
-export const metadata: Metadata = { title: "CRM & Pipeline — Amplivanta", description: "Build stronger relationships and grow revenue with Amplivanta CRM." };
+export const metadata: Metadata = { title: "CRM & Pipeline", description: "Build stronger relationships and grow revenue with Amplivanta CRM." };
 
 const NAV = [["Overview", Contact], ["Contacts", Users2], ["Companies", Building2], ["Deals", Handshake], ["Pipeline", Filter], ["Tasks", ClipboardList], ["Activities", Activity], ["Reports", FileText], ["Settings", Settings]] as const;
 const KPIS = [["New Leads", Users2], ["Open Deals", CircleDollarSign], ["Tasks Due", ClipboardList], ["Follow-ups", Heart]] as const;

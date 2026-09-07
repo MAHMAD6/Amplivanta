@@ -7,7 +7,7 @@ import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { PIPELINE_STAGES, STAGE_TONE } from "@/lib/crm-data";
 
-export const metadata: Metadata = { title: "CRM Reports — Amplivanta" };
+export const metadata: Metadata = { title: "CRM Reports" };
 
 const topOwners = [
   { name: "Alex Johnson", role: "AE", closed: 18, revenue: 342000 },

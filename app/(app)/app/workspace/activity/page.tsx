@@ -5,7 +5,7 @@ import { WorkspaceSubnav } from "@/components/amplivanta/workspace-subnav";
 import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { WS_ACTIVITY } from "@/lib/workspace-data";
 
-export const metadata: Metadata = { title: "Workspace Activity — Amplivanta" };
+export const metadata: Metadata = { title: "Workspace Activity" };
 
 const CAT_TONE = { Create: "blue", Edit: "gray", Approve: "green", Publish: "violet", Budget: "orange", Integration: "teal", AI: "pink" } as const;
 const CATS = ["All", "Create", "Edit", "Approve", "Publish", "Budget", "Integration", "AI"];

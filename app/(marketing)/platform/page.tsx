@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { CAPABILITIES } from "@/lib/constants";
 import { ArrowRight, Sparkles, Search, Mail, Users, Share2, BarChart3, Wand2, Plug, Megaphone } from "lucide-react";
 
-export const metadata: Metadata = { title: "Platform — Amplivanta" };
+export const metadata: Metadata = { title: "Platform" };
 
 const iconMap = { sparkles: Sparkles, search: Search, mail: Mail, users: Users, share: Share2, megaphone: Megaphone, "bar-chart": BarChart3, wand: Wand2, plug: Plug } as const;
 

@@ -6,7 +6,7 @@ import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { KpiCard } from "@/components/amplivanta/kpi-card";
 import { WS_APPROVALS } from "@/lib/workspace-data";
 
-export const metadata: Metadata = { title: "Workspace Approvals — Amplivanta" };
+export const metadata: Metadata = { title: "Workspace Approvals" };
 
 const STATE_TONE = { Pending: "amber", Approved: "green", "Changes Requested": "blue", Rejected: "red" } as const;
 

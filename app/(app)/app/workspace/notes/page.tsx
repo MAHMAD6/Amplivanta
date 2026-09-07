@@ -5,7 +5,7 @@ import { WorkspaceSubnav } from "@/components/amplivanta/workspace-subnav";
 import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { WS_NOTES } from "@/lib/workspace-data";
 
-export const metadata: Metadata = { title: "Workspace Notes — Amplivanta" };
+export const metadata: Metadata = { title: "Workspace Notes" };
 
 const TYPE_TONE = { Meeting: "blue", Research: "violet", Idea: "amber", Strategy: "green", "AI Summary": "pink" } as const;
 const NOTEBOOKS = ["All Notes", "Meetings", "Research", "Ideas", "Strategy", "AI Summaries"];

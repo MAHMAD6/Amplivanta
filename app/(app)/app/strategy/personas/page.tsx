@@ -7,7 +7,7 @@ import { PERSONAS } from "@/lib/strategy-data";
 import { CreateButton } from "@/components/amplivanta/crud/create-button";
 import { PERSONA_FIELDS } from "@/components/amplivanta/crud/module-fields";
 
-export const metadata: Metadata = { title: "Audience & Personas — Amplivanta" };
+export const metadata: Metadata = { title: "Audience & Personas" };
 
 export default function PersonasPage() {
   return (

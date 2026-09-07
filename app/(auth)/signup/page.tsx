@@ -4,7 +4,7 @@ import { Diamond, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { LogoMark } from "@/components/layout/LogoMark";
 import { AuthSignupForm } from "@/components/amplivanta/auth-signup-form";
 
-export const metadata: Metadata = { title: "Create Account — Amplivanta" };
+export const metadata: Metadata = { title: "Create Account" };
 
 const POINTS = [
   { icon: Diamond, title: "Secure & Private", desc: "Designed with protected account access, privacy-minded controls, and clear data settings." },

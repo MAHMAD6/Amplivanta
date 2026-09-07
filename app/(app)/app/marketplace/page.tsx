@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Search, Store } from "lucide-react";
+import { Heart, Search, Store } from "lucide-react";
 import { MpButton, MpCard, MpEmpty, MpHeader, MpNote, MpStat } from "@/components/marketplace/ui";
 import { prisma } from "@/lib/prisma";
 
@@ -27,7 +27,14 @@ export default async function MarketplaceHomePage() {
       <MpHeader
         title="Marketplace"
         description="Discover downloadable marketing products built by Amplivanta sellers."
-        action={<MpButton href="/app/marketplace/products" variant="primary" icon={Search}>Browse products</MpButton>}
+        action={
+          <div className="flex flex-wrap gap-2.5">
+            <MpButton href="/app/marketplace/favorites" icon={Heart}>Wishlist</MpButton>
+            <MpButton href="/app/marketplace/products" variant="primary" icon={Search}>
+              Browse products
+            </MpButton>
+          </div>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

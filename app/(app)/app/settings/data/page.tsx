@@ -3,7 +3,7 @@ import { Download, Upload, Trash2, Database, AlertTriangle, RotateCw } from "luc
 import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
 import { DATA_JOBS, DATA_JOB_TONE } from "@/lib/settings-data";
 
-export const metadata: Metadata = { title: "Data Management — Amplivanta" };
+export const metadata: Metadata = { title: "Data Management" };
 
 export default function DataManagementPage() {
   return (

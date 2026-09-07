@@ -6,7 +6,7 @@ import { PlatformIcon } from "@/components/amplivanta/platform-badge";
 import { StatusPill } from "@/components/amplivanta/status-pill";
 import { TEMPLATES } from "@/lib/social-data";
 
-export const metadata: Metadata = { title: "Content Templates — Amplivanta" };
+export const metadata: Metadata = { title: "Content Templates" };
 
 const CATEGORIES = ["All", "Product", "Case Study", "Tips", "Culture", "UGC", "Engagement"];
 

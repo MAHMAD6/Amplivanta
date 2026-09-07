@@ -5,7 +5,7 @@ import { LogIn, UserPlus, TrendingUp, ShieldCheck, LifeBuoy, Lock, Layers, Headp
 import { LogoMark } from "@/components/layout/LogoMark";
 import { AuthSignInForm } from "@/components/amplivanta/auth-signin-form";
 
-export const metadata: Metadata = { title: "Sign In — Amplivanta" };
+export const metadata: Metadata = { title: "Sign In" };
 
 const NAV = [
   { icon: LogIn, label: "Sign In", href: "/login", active: true },

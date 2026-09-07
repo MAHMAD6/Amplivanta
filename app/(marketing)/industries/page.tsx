@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { INDUSTRY_PAGES } from "@/lib/marketing-modules";
 import { ArrowRight } from "lucide-react";
 
-export const metadata: Metadata = { title: "Industries — Amplivanta" };
+export const metadata: Metadata = { title: "Industries" };
 
 export default function IndustriesIndex() {
   return (

@@ -8,7 +8,7 @@ import { type ActivityType } from "@/lib/crm-data";
 import { LiveBadge } from "@/components/amplivanta/live-badge";
 import { loadActivities } from "@/lib/server/loaders";
 
-export const metadata: Metadata = { title: "CRM Activities — Amplivanta" };
+export const metadata: Metadata = { title: "CRM Activities" };
 export const dynamic = "force-dynamic";
 
 const TYPE_META: Record<ActivityType, { emoji: string; tone: "violet" | "blue" | "green" | "amber" | "pink" | "teal" }> = {
