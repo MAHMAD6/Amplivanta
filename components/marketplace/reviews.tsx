@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Star } from "lucide-react";
 import { submitReview } from "@/app/(app)/app/marketplace/actions";
 import type { ProductReviews } from "@/app/(app)/app/marketplace/actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 import { MpCard } from "./ui";
 
@@ -19,7 +20,6 @@ function Stars({ n }: { n: number }) {
 }
 
 export function ProductReviewsSection({ productId, data }: { productId: string; data: ProductReviews }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -47,9 +47,7 @@ export function ProductReviewsSection({ productId, data }: { productId: string; 
             const form = e.currentTarget;
             const fd = new FormData(form);
             start(async () => {
-              const res = await submitReview(productId, fd);
-              setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-              if (res.ok) {
+              if (toastResult(await submitReview(productId, fd))) {
                 form.reset();
                 router.refresh();
               }
@@ -72,11 +70,6 @@ export function ProductReviewsSection({ productId, data }: { productId: string; 
             <span className="mb-1.5 block text-[12.5px] font-bold text-deep-navy">Your review</span>
             <textarea name="body" rows={3} className="w-full rounded-xl border border-line px-3 py-2.5 text-[13.5px]" />
           </label>
-          {m && (
-            <p role="status" className={cn("mt-3 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold", m.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>
-              {m.text}
-            </p>
-          )}
           <div className="mt-4 flex justify-end">
             <button type="submit" disabled={pending} className="inline-flex h-11 items-center gap-2 rounded-xl bg-royal-blue px-4 text-[13.5px] font-bold text-white hover:bg-royal-soft disabled:opacity-60">
               {pending && <Loader2 className="h-4 w-4 animate-spin" />} Post review

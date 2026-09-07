@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Activity, Download, Loader2, Upload, X } from "lucide-react";
 import { importCsv, runSystemHealthCheck } from "@/app/(admin)/admin/actions";
 import type { AdminRow } from "@/lib/server/admin-queries";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 
 /** Downloads the current result set, honouring the active search and filters. */
@@ -45,7 +46,6 @@ export function SuperExportButton({ pageKey, disabled }: { pageKey: string; disa
  */
 export function SuperImportButton({ pageKey, headers }: { pageKey: string; headers: string[] | null }) {
   const [open, setOpen] = useState(false);
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, start] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -92,7 +92,7 @@ export function SuperImportButton({ pageKey, headers }: { pageKey: string; heade
                 const fd = new FormData(e.currentTarget);
                 start(async () => {
                   const res = await importCsv(pageKey, fd);
-                  setResult(res.ok ? { ok: true, message: res.message } : { ok: false, message: res.error });
+                  toastResult(res);
                   if (res.ok) formRef.current?.reset();
                 });
               }}
@@ -104,11 +104,6 @@ export function SuperImportButton({ pageKey, headers }: { pageKey: string; heade
                 required
                 className="block w-full rounded-xl border border-line bg-white p-3 text-[13px] file:mr-3 file:rounded-lg file:border-0 file:bg-royal-tint file:px-3 file:py-1.5 file:text-[12.5px] file:font-bold file:text-royal-blue"
               />
-              {result && (
-                <p className={cn("mt-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold", result.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")} role="status">
-                  {result.message}
-                </p>
-              )}
               <div className="mt-5 flex justify-end gap-2.5">
                 <button type="button" onClick={() => setOpen(false)} className="h-11 rounded-xl border border-line px-4 text-[13.5px] font-bold text-admin-navy hover:bg-bg-soft">
                   Close
@@ -127,7 +122,6 @@ export function SuperImportButton({ pageKey, headers }: { pageKey: string; heade
 
 /** Runs live diagnostics and writes the results the System Health screen reads. */
 export function SuperHealthCheckButton() {
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, start] = useTransition();
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -136,8 +130,7 @@ export function SuperHealthCheckButton() {
         disabled={pending}
         onClick={() =>
           start(async () => {
-            const res = await runSystemHealthCheck();
-            setResult(res.ok ? { ok: true, message: res.message } : { ok: false, message: res.error });
+            toastResult(await runSystemHealthCheck());
           })
         }
         className="inline-flex h-11 items-center gap-2 rounded-xl bg-royal-blue px-4 text-[13.5px] font-bold text-white transition hover:bg-royal-soft disabled:opacity-60"
@@ -145,11 +138,6 @@ export function SuperHealthCheckButton() {
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
         Run diagnostics
       </button>
-      {result && (
-        <span className={cn("rounded-xl px-3.5 py-2 text-[12.5px] font-semibold", result.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")} role="status">
-          {result.message}
-        </span>
-      )}
     </div>
   );
 }

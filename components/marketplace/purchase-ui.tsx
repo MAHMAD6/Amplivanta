@@ -10,28 +10,14 @@ import {
   removeFromCart,
   type CheckoutLine,
 } from "@/app/(app)/app/marketplace/actions";
+import { toastResult } from "@/lib/action-toast";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const money = (cents: number, currency = "USD") =>
   new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
 
-function Msg({ m }: { m: { ok: boolean; text: string } | null }) {
-  if (!m) return null;
-  return (
-    <p
-      role="status"
-      className={cn(
-        "mt-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-        m.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-      )}
-    >
-      {m.text}
-    </p>
-  );
-}
-
 export function AddToCartButton({ productId, priceCents, currency }: { productId: string; priceCents: number; currency: string }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -43,8 +29,7 @@ export function AddToCartButton({ productId, priceCents, currency }: { productId
         onClick={() =>
           start(async () => {
             const res = await addToCart(productId);
-            setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-            if (res.ok) router.refresh();
+            if (toastResult(res)) router.refresh();
           })
         }
         className="inline-flex h-12 items-center gap-2 rounded-xl bg-royal-blue px-5 text-[14px] font-bold text-white transition hover:bg-royal-soft disabled:opacity-60"
@@ -52,7 +37,6 @@ export function AddToCartButton({ productId, priceCents, currency }: { productId
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
         {priceCents === 0 ? "Get for free" : `Add to cart — ${money(priceCents, currency)}`}
       </button>
-      <Msg m={m} />
     </div>
   );
 }
@@ -65,7 +49,6 @@ export function AddToCartButton({ productId, priceCents, currency }: { productId
  * happens once a payment provider confirms.
  */
 export function BuyNowButton({ productId }: { productId: string }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -81,20 +64,18 @@ export function BuyNowButton({ productId }: { productId: string }) {
               router.push("/app/marketplace/checkout");
               return;
             }
-            setM({ ok: false, text: res.error });
+            toast.error(res.error);
           })
         }
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-violet px-5 text-[14px] font-bold text-white transition hover:opacity-90 disabled:opacity-60"
       >
         {pending && <Loader2 className="h-4 w-4 animate-spin" />} Buy Now
       </button>
-      <Msg m={m} />
     </div>
   );
 }
 
 export function CartLines({ lines, currency, subtotalCents }: { lines: CheckoutLine[]; currency: string; subtotalCents: number }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -116,8 +97,7 @@ export function CartLines({ lines, currency, subtotalCents }: { lines: CheckoutL
                 onClick={() =>
                   start(async () => {
                     const res = await removeFromCart(l.itemId);
-                    setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-                    if (res.ok) router.refresh();
+                    if (toastResult(res)) router.refresh();
                   })
                 }
                 className="rounded-lg p-2 text-ink-muted hover:bg-bg-soft hover:text-red-600"
@@ -133,7 +113,6 @@ export function CartLines({ lines, currency, subtotalCents }: { lines: CheckoutL
         <span className="text-[18px] font-extrabold text-deep-navy">{money(subtotalCents, currency)}</span>
       </div>
       <div className="px-6 pb-6">
-        <Msg m={m} />
       </div>
     </div>
   );
@@ -150,7 +129,6 @@ export function PlaceOrderButton({
   blocked: boolean;
   blockedReason: string | null;
 }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -161,9 +139,7 @@ export function PlaceOrderButton({
         disabled={blocked || pending}
         onClick={() =>
           start(async () => {
-            const res = await placeOrder();
-            setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-            if (res.ok) router.push("/app/marketplace/purchases");
+            if (toastResult(await placeOrder())) router.push("/app/marketplace/purchases");
           })
         }
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-royal-blue text-[14px] font-bold text-white transition hover:bg-royal-soft disabled:cursor-not-allowed disabled:opacity-50"
@@ -176,13 +152,11 @@ export function PlaceOrderButton({
           {blockedReason}
         </p>
       )}
-      <Msg m={m} />
     </div>
   );
 }
 
 export function DownloadButton({ entitlementId, label = "Download" }: { entitlementId: string; label?: string }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
 
   return (
@@ -194,10 +168,10 @@ export function DownloadButton({ entitlementId, label = "Download" }: { entitlem
           start(async () => {
             const res = await issueDownload(entitlementId);
             if (res.ok) {
-              setM({ ok: true, text: "Download link issued." });
+              toast.success("Download link issued.");
               window.location.href = res.url;
             } else {
-              setM({ ok: false, text: res.error });
+              toast.error(res.error);
             }
           })
         }
@@ -206,7 +180,6 @@ export function DownloadButton({ entitlementId, label = "Download" }: { entitlem
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
         {label}
       </button>
-      <Msg m={m} />
     </div>
   );
 }

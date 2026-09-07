@@ -9,6 +9,7 @@ import {
   updateSellerProfile,
   type MpResult,
 } from "@/app/(app)/app/marketplace/actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 import { MpCard } from "./ui";
 
@@ -29,37 +30,21 @@ function Field({ label, required, hint, children }: { label: string; required?: 
   );
 }
 
-function Result({ result }: { result: { ok: boolean; message: string } | null }) {
-  if (!result) return null;
-  return (
-    <p
-      role="status"
-      className={cn(
-        "mt-5 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-        result.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-      )}
-    >
-      {result.message}
-    </p>
-  );
-}
-
 function useAction() {
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, start] = useTransition();
   const run = (fn: () => Promise<MpResult>, onOk?: () => void) =>
     start(async () => {
       const res = await fn();
-      setResult(res.ok ? { ok: true, message: res.message } : { ok: false, message: res.error });
+      toastResult(res);
       if (res.ok) onOk?.();
     });
-  return { result, pending, run };
+  return { pending, run };
 }
 
 const PRODUCT_TYPES = ["Templates", "Images", "Videos", "Graphics", "Documents", "Tools & Kits"];
 
 export function SellerApplicationForm() {
-  const { result, pending, run } = useAction();
+  const { pending, run } = useAction();
 
   return (
     <form
@@ -119,8 +104,6 @@ export function SellerApplicationForm() {
           </div>
         </div>
 
-        <Result result={result} />
-
         <div className="mt-6 flex justify-end">
           <button
             type="submit"
@@ -146,7 +129,7 @@ export function SellerSettingsForm({
   headline: string;
   bio: string;
 }) {
-  const { result, pending, run } = useAction();
+  const { pending, run } = useAction();
 
   return (
     <form
@@ -176,8 +159,6 @@ export function SellerSettingsForm({
           </div>
         </div>
 
-        <Result result={result} />
-
         <div className="mt-6 flex justify-end">
           <button
             type="submit"
@@ -206,7 +187,7 @@ export function WithdrawalRequestDrawer({
   blockedReason: string | null;
 }) {
   const [open, setOpen] = useState(false);
-  const { result, pending, run } = useAction();
+  const { pending, run } = useAction();
 
   return (
     <>
@@ -246,8 +227,6 @@ export function WithdrawalRequestDrawer({
                 payout provider once the request is processed.
               </p>
             )}
-
-            <Result result={result} />
 
             <div className="mt-6 flex gap-2.5">
               <button type="button" onClick={() => setOpen(false)} className="h-12 flex-1 rounded-xl border border-line bg-white text-[13.5px] font-bold text-deep-navy hover:bg-bg-soft">

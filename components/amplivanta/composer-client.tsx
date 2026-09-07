@@ -6,6 +6,7 @@ import { Image as ImageIcon, Video, BarChart2, Smile, Hash, AtSign, Link2, Calen
 import { PLATFORM_META, type Platform } from "@/lib/social-data";
 import { PlatformIcon } from "./platform-badge";
 import { createSocialPost } from "@/app/(app)/app/social/actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 
 const PLATFORMS: Platform[] = ["facebook", "instagram", "linkedin", "x", "tiktok", "youtube"];
@@ -20,7 +21,6 @@ export function ComposerClient() {
 
   const [mediaUrl, setMediaUrl] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -31,9 +31,7 @@ export function ComposerClient() {
       if (mediaUrl.trim()) fd.set("mediaUrl", mediaUrl.trim());
       for (const p of selected) fd.set(`platform_${p}`, "on");
       if (schedule && scheduledAt) fd.set("scheduledAt", new Date(scheduledAt).toISOString());
-      const res = await createSocialPost(fd);
-      setMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-      if (res.ok) {
+      if (toastResult(await createSocialPost(fd))) {
         setContent("");
         setMediaUrl("");
         setScheduledAt("");
@@ -186,17 +184,6 @@ export function ComposerClient() {
           </p>
         </div>
 
-        {msg && (
-          <p
-            role="status"
-            className={cn(
-              "rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-              msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-            )}
-          >
-            {msg.text}
-          </p>
-        )}
 
         <div className="flex flex-wrap justify-end gap-2.5">
           <button

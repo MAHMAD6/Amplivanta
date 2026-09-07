@@ -13,6 +13,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { createProduct, suggestProductSeo } from "@/app/(app)/app/marketplace/actions";
+import { toastResult } from "@/lib/action-toast";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { MpCard } from "./ui";
 
@@ -67,7 +69,6 @@ export function ProductWizard({
   types: { value: string; label: string }[];
 }) {
   const [step, setStep] = useState(1);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
@@ -92,11 +93,9 @@ export function ProductWizard({
     keywords: string[];
     stubbed: boolean;
   } | null>(null);
-  const [seoError, setSeoError] = useState<string | null>(null);
 
   const requestSeo = () =>
     startSeo(async () => {
-      setSeoError(null);
       const form = formRef.current;
       const fd = form ? new FormData(form) : new FormData();
       const res = await suggestProductSeo({
@@ -106,8 +105,16 @@ export function ProductWizard({
         category: categories.find((c) => c.id === String(fd.get("categoryId") ?? ""))?.name,
         tags: String(fd.get("tags") ?? "").split(",").map((t) => t.trim()).filter(Boolean),
       });
-      if (res.ok) setSeoSuggestion({ ...res.suggestion, stubbed: res.stubbed });
-      else setSeoError(res.error);
+      if (res.ok) {
+        setSeoSuggestion({ ...res.suggestion, stubbed: res.stubbed });
+        if (res.stubbed) {
+          toast.warning("Placeholder copy", {
+            description: "No AI key is configured, so this is not written for your product. Edit it before publishing.",
+          });
+        }
+      } else {
+        toast.error(res.error);
+      }
     });
 
   const applySeo = () => {
@@ -133,13 +140,9 @@ export function ProductWizard({
       if (!form) return;
       const fd = new FormData(form);
       fd.set("keywords", keywords.join(","));
-      const res = await createProduct(fd);
-      if (res.ok) {
-        setMsg({ ok: true, text: res.message });
+      if (toastResult(await createProduct(fd))) {
         router.push("/app/marketplace/seller/products");
         router.refresh();
-      } else {
-        setMsg({ ok: false, text: res.error });
       }
     });
 
@@ -376,11 +379,6 @@ export function ProductWizard({
               </button>
             </div>
 
-            {seoError && (
-              <p role="status" className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-[12px] font-semibold text-red-700">
-                {seoError}
-              </p>
-            )}
 
             {seoSuggestion && (
               <div className="mt-4 rounded-xl border border-violet/30 bg-violet/5 p-4">
@@ -624,17 +622,6 @@ export function ProductWizard({
         </MpCard>
       </div>
 
-      {msg && (
-        <p
-          role="status"
-          className={cn(
-            "mt-5 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-            msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-          )}
-        >
-          {msg.text}
-        </p>
-      )}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <button

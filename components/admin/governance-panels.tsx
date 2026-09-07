@@ -16,6 +16,7 @@ import {
   suspendUser,
   upsertRoleDefinition,
 } from "@/app/(admin)/admin/governance-actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 import { SuperCard, SuperEmptyState } from "./primitives";
 
@@ -30,15 +31,6 @@ const btnPrimary =
 const btn =
   "inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[12.5px] font-bold text-admin-navy transition hover:bg-bg-soft disabled:opacity-50";
 
-function Banner({ m }: { m: Msg }) {
-  if (!m) return null;
-  return (
-    <p role="status" className={cn("mb-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold", m.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>
-      {m.text}
-    </p>
-  );
-}
-
 function Unavailable({ what }: { what: string }) {
   return (
     <SuperCard>
@@ -48,31 +40,28 @@ function Unavailable({ what }: { what: string }) {
 }
 
 function useAct() {
-  const [m, setM] = useState<Msg>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
   const run = (fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>, after?: () => void) =>
     start(async () => {
       const res = await fn();
-      setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-      if (res.ok) {
+      if (toastResult(res)) {
         after?.();
         router.refresh();
       }
     });
-  return { m, pending, run };
+  return { pending, run };
 }
 
 /* ------------------------------------------------------- roles + grants */
 
 export function RolesPanel({ roles, connected }: { roles: Role[]; connected: boolean }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   const [open, setOpen] = useState(false);
   if (!connected) return <Unavailable what="roles" />;
 
   return (
     <>
-      <Banner m={m} />
       <div className="mb-4 flex justify-end">
         <button type="button" className={btnPrimary} onClick={() => setOpen((v) => !v)}>
           <Plus className="h-4 w-4" /> New role
@@ -162,12 +151,11 @@ export function AccessAssignmentsPanel({
   assignments: { id: string; user: string | null; role: string | null; scope: string; where: string | null; expires: string | null }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   if (!connected) return <Unavailable what="access assignments" />;
 
   return (
     <>
-      <Banner m={m} />
       <SuperCard className="mb-6 p-5">
         <h2 className="mb-4 text-[15px] font-bold text-admin-navy">Grant access</h2>
         <form
@@ -283,12 +271,11 @@ export function InvitationsPanel({
   invitations: { id: string; email: string; status: string; expires: string | null }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   if (!connected) return <Unavailable what="invitations" />;
 
   return (
     <>
-      <Banner m={m} />
       <SuperCard className="mb-6 p-5">
         <h2 className="mb-4 text-[15px] font-bold text-admin-navy">Invite a user</h2>
         <form
@@ -369,11 +356,10 @@ export function SessionsPanel({
   sessions: { id: string; user: string | null; device: string | null; ip: string | null; lastActive: string | null }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   if (!connected) return <Unavailable what="sessions" />;
   return (
     <>
-      <Banner m={m} />
       {sessions.length === 0 ? (
         <SuperCard>
           <SuperEmptyState icon={Database} title="No active sessions" description="Active sessions and devices appear here." />
@@ -408,11 +394,10 @@ export function SuspensionsPanel({
   suspensions: { id: string; user: string | null; reason: string; status: string; since: string | null }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   if (!connected) return <Unavailable what="suspensions" />;
   return (
     <>
-      <Banner m={m} />
       <SuperCard className="mb-6 p-5">
         <h2 className="mb-4 text-[15px] font-bold text-admin-navy">Suspend an account</h2>
         <form
@@ -481,12 +466,11 @@ export function DataRequestsPanel({
   requests: { id: string; subject: string; type: string; status: string; requested: string | null }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   const [notes, setNotes] = useState("");
   if (!connected) return <Unavailable what="data requests" />;
   return (
     <>
-      <Banner m={m} />
       <SuperCard className="mb-4 p-5">
         <label className="block">
           <span className="mb-1.5 block text-[12.5px] font-bold text-admin-navy">Notes for the next decision</span>
@@ -531,11 +515,10 @@ export function AnnouncementsPanel({
   announcements: { id: string; title: string; audience: string; published: string | null }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   if (!connected) return <Unavailable what="announcements" />;
   return (
     <>
-      <Banner m={m} />
       <SuperCard className="mb-6 p-5">
         <h2 className="mb-4 text-[15px] font-bold text-admin-navy">New announcement</h2>
         <form
@@ -594,12 +577,11 @@ export function TicketsPanel({
   tickets: { id: string; subject: string; requester: string; status: string; priority: string; updated: string | null }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   const [note, setNote] = useState("");
   if (!connected) return <Unavailable what="tickets" />;
   return (
     <>
-      <Banner m={m} />
       <SuperCard className="mb-4 p-5">
         <label className="block">
           <span className="mb-1.5 block text-[12.5px] font-bold text-admin-navy">Internal note for the next update</span>

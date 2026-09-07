@@ -4,27 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw } from "lucide-react";
 import { setFeatureFlag, setModuleStatus, syncPlatformRegistry } from "@/app/(admin)/admin/platform-actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 import { SuperCard, SuperEmptyState } from "./primitives";
 import { Database } from "lucide-react";
 
 type Module = { key: string; name: string; description: string | null; status: string; isCore: boolean; scope: string };
 type Flag = { key: string; name: string; description: string | null; enabled: boolean; implemented?: boolean };
-
-function Msg({ m }: { m: { ok: boolean; text: string } | null }) {
-  if (!m) return null;
-  return (
-    <p
-      role="status"
-      className={cn(
-        "mb-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-        m.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-      )}
-    >
-      {m.text}
-    </p>
-  );
-}
 
 function Toggle({ on, onChange, disabled, label }: { on: boolean; onChange: (v: boolean) => void; disabled?: boolean; label: string }) {
   return (
@@ -45,7 +31,7 @@ function Toggle({ on, onChange, disabled, label }: { on: boolean; onChange: (v: 
   );
 }
 
-function RegistryButton({ onDone }: { onDone: (m: { ok: boolean; text: string }) => void }) {
+function RegistryButton() {
   const [pending, start] = useTransition();
   const router = useRouter();
   return (
@@ -55,7 +41,7 @@ function RegistryButton({ onDone }: { onDone: (m: { ok: boolean; text: string })
       onClick={() =>
         start(async () => {
           const res = await syncPlatformRegistry();
-          onDone(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+          toastResult(res);
           if (res.ok) router.refresh();
         })
       }
@@ -68,7 +54,6 @@ function RegistryButton({ onDone }: { onDone: (m: { ok: boolean; text: string })
 }
 
 export function ModuleControlsPanel({ modules, connected }: { modules: Module[]; connected: boolean }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [reason, setReason] = useState("");
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -88,9 +73,8 @@ export function ModuleControlsPanel({ modules, connected }: { modules: Module[];
   return (
     <>
       <div className="mb-6 flex flex-wrap items-center justify-end gap-2.5">
-        <RegistryButton onDone={setM} />
+        <RegistryButton />
       </div>
-      <Msg m={m} />
 
       <SuperCard className="mb-4 p-5">
         <label className="block">
@@ -138,8 +122,7 @@ export function ModuleControlsPanel({ modules, connected }: { modules: Module[];
                   onChange={(v) =>
                     start(async () => {
                       const res = await setModuleStatus(mod.key, v, reason);
-                      setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-                      if (res.ok) {
+                      if (toastResult(res)) {
                         setReason("");
                         router.refresh();
                       }
@@ -156,7 +139,6 @@ export function ModuleControlsPanel({ modules, connected }: { modules: Module[];
 }
 
 export function FeatureFlagsPanel({ flags, connected }: { flags: Flag[]; connected: boolean }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -175,9 +157,8 @@ export function FeatureFlagsPanel({ flags, connected }: { flags: Flag[]; connect
   return (
     <>
       <div className="mb-6 flex flex-wrap items-center justify-end gap-2.5">
-        <RegistryButton onDone={setM} />
+        <RegistryButton />
       </div>
-      <Msg m={m} />
 
       {flags.length === 0 ? (
         <SuperCard>
@@ -216,8 +197,7 @@ export function FeatureFlagsPanel({ flags, connected }: { flags: Flag[]; connect
                   onChange={(v) =>
                     start(async () => {
                       const res = await setFeatureFlag(f.key, v);
-                      setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-                      if (res.ok) router.refresh();
+                      if (toastResult(res)) router.refresh();
                     })
                   }
                 />

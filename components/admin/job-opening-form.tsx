@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { createJobOpening } from "@/app/(admin)/admin/actions";
 import { cn } from "@/lib/utils";
 import { SuperCard } from "./primitives";
+import { toastResult } from "@/lib/action-toast";
 
 const field =
   "h-12 w-full rounded-xl border border-line bg-white px-3.5 text-[13.5px] text-ink focus:border-royal-blue focus:outline-none focus:ring-2 focus:ring-royal-blue/15";
@@ -20,7 +21,6 @@ function Field({ label, children, hint }: { label: string; children: React.React
 }
 
 export function JobOpeningForm() {
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, start] = useTransition();
 
   return (
@@ -30,9 +30,7 @@ export function JobOpeningForm() {
         const form = e.currentTarget;
         const fd = new FormData(form);
         start(async () => {
-          const res = await createJobOpening(fd);
-          setResult(res.ok ? { ok: true, message: res.message } : { ok: false, message: res.error });
-          if (res.ok) form.reset();
+          if (toastResult(await createJobOpening(fd))) form.reset();
         });
       }}
     >
@@ -81,18 +79,6 @@ export function JobOpeningForm() {
             </Field>
           </div>
         </div>
-
-        {result && (
-          <p
-            className={cn(
-              "mt-5 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-              result.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-            )}
-            role="status"
-          >
-            {result.message}
-          </p>
-        )}
 
         <div className="mt-6 flex justify-end gap-2.5">
           <button type="reset" className="h-12 rounded-xl border border-line bg-white px-5 text-[13.5px] font-bold text-admin-navy hover:bg-bg-soft">

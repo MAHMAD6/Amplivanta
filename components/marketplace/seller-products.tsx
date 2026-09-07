@@ -10,6 +10,7 @@ import {
   setOwnProductStatus,
   submitProductForReview,
 } from "@/app/(app)/app/marketplace/actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 import { MpCard } from "./ui";
 
@@ -57,7 +58,6 @@ export function SellerProductRows({
   products: SellerProduct[];
   categories: SellerCategory[];
 }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const [attachFor, setAttachFor] = useState<string | null>(null);
   const [editFor, setEditFor] = useState<string | null>(null);
@@ -65,9 +65,7 @@ export function SellerProductRows({
 
   const run = (fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>, after?: () => void) =>
     start(async () => {
-      const res = await fn();
-      setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-      if (res.ok) {
+      if (toastResult(await fn())) {
         after?.();
         router.refresh();
       }
@@ -75,18 +73,6 @@ export function SellerProductRows({
 
   return (
     <>
-      {m && (
-        <p
-          role="status"
-          className={cn(
-            "mb-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-            m.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-          )}
-        >
-          {m.text}
-        </p>
-      )}
-
       <MpCard>
         <div className="divide-y divide-line">
           {products.map((p) => {

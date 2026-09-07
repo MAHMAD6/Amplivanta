@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Megaphone, Sparkles, X } from "lucide-react";
 import { createSocialPost, draftProductPromotion } from "@/app/(app)/app/social/actions";
+import { toastResult } from "@/lib/action-toast";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const PLATFORMS = [
@@ -27,7 +29,6 @@ export function PromotePopover({ productId, className }: { productId: string; cl
   const [draft, setDraft] = useState<{ content: string; mediaUrl: string | null } | null>(null);
   const [stubbed, setStubbed] = useState(false);
   const [selected, setSelected] = useState<string[]>(["linkedin"]);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -48,8 +49,14 @@ export function PromotePopover({ productId, className }: { productId: string; cl
     if (res.ok) {
       setDraft({ content: res.draft.content, mediaUrl: res.draft.mediaUrl });
       setStubbed(res.stubbed);
+      if (res.stubbed) {
+        toast.warning("Draft assembled from your listing", {
+          description: "No AI key is configured, so the copy was not written for you. Edit it before saving.",
+        });
+      }
     } else {
-      setMsg({ ok: false, text: res.error });
+      toast.error(res.error);
+      setOpen(false);
     }
   };
 
@@ -64,9 +71,10 @@ export function PromotePopover({ productId, className }: { productId: string; cl
         // One hour out, so a scheduled item is never created in the past.
         fd.set("scheduledAt", new Date(Date.now() + 60 * 60 * 1000).toISOString());
       }
-      const res = await createSocialPost(fd);
-      setMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-      if (res.ok) router.refresh();
+      if (toastResult(await createSocialPost(fd))) {
+        setOpen(false);
+        router.refresh();
+      }
     });
 
   return (
@@ -177,17 +185,6 @@ export function PromotePopover({ productId, className }: { productId: string; cl
             </>
           ) : null}
 
-          {msg && (
-            <p
-              role="status"
-              className={cn(
-                "mt-3 rounded-lg px-2.5 py-2 text-[12px] font-semibold",
-                msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-              )}
-            >
-              {msg.text}
-            </p>
-          )}
         </div>
       )}
     </div>

@@ -11,10 +11,9 @@ import {
   setPartnerProfileStatus,
   upsertPartnerProgram,
 } from "@/app/(admin)/admin/partner-actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 import { SuperCard, SuperEmptyState } from "./primitives";
-
-type Msg = { ok: boolean; text: string } | null;
 
 const btn =
   "inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[12.5px] font-bold text-admin-navy transition hover:bg-bg-soft disabled:opacity-50";
@@ -22,15 +21,6 @@ const btnPrimary =
   "inline-flex h-9 items-center gap-1.5 rounded-lg bg-royal-blue px-3 text-[12.5px] font-bold text-white transition hover:bg-royal-soft disabled:opacity-50";
 const field =
   "h-12 w-full rounded-xl border border-line bg-white px-3.5 text-[13.5px] focus:border-royal-blue focus:outline-none";
-
-function Banner({ m }: { m: Msg }) {
-  if (!m) return null;
-  return (
-    <p role="status" className={cn("mb-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold", m.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>
-      {m.text}
-    </p>
-  );
-}
 
 function Unavailable({ what }: { what: string }) {
   return (
@@ -41,19 +31,17 @@ function Unavailable({ what }: { what: string }) {
 }
 
 function useAct() {
-  const [m, setM] = useState<Msg>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
   const run = (fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>, after?: () => void) =>
     start(async () => {
       const res = await fn();
-      setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-      if (res.ok) {
+      if (toastResult(res)) {
         after?.();
         router.refresh();
       }
     });
-  return { m, pending, run };
+  return { pending, run };
 }
 
 function ReasonBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -78,13 +66,12 @@ export function AffiliateApplicationsPanel({
   rows: { id: string; name: string; email: string; website: string | null; status: string; created: string }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   const [reason, setReason] = useState("");
   if (!connected) return <Unavailable what="affiliate applications" />;
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard><SuperEmptyState icon={Database} title="No affiliate applications" description="Applications appear here once people apply to the affiliate program." /></SuperCard>
@@ -128,13 +115,12 @@ export function AffiliatesPanel({
   rows: { id: string; name: string; email: string; code: string; status: string; rate: string }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   const [reason, setReason] = useState("");
   if (!connected) return <Unavailable what="affiliates" />;
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard><SuperEmptyState icon={Database} title="No affiliates" description="Approved affiliates appear here." /></SuperCard>
@@ -178,13 +164,12 @@ export function AffiliatePayoutsPanel({
   rows: { id: string; affiliate: string | null; amount: string; status: string; requested: string | null }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   const [reason, setReason] = useState("");
   if (!connected) return <Unavailable what="affiliate payouts" />;
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard><SuperEmptyState icon={Database} title="No payout requests" description="Affiliate payout requests appear here." /></SuperCard>
@@ -222,13 +207,12 @@ export function PartnerProgramsPanel({
   rows: { id: string; name: string; slug: string; status: string; partners: number }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   const [open, setOpen] = useState(false);
   if (!connected) return <Unavailable what="partner programs" />;
 
   return (
     <>
-      <Banner m={m} />
       <div className="mb-4 flex justify-end">
         <button type="button" className={btnPrimary} onClick={() => setOpen((v) => !v)}><Plus className="h-3.5 w-3.5" /> New program</button>
       </div>
@@ -295,13 +279,12 @@ export function PartnerApplicationsPanel({
   rows: { id: string; companyName: string; contactEmail: string; status: string; created: string }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   const [reason, setReason] = useState("");
   if (!connected) return <Unavailable what="partner applications" />;
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard><SuperEmptyState icon={Database} title="No partner applications" description="Applications appear here once companies apply." /></SuperCard>
@@ -341,13 +324,12 @@ export function PartnerProfilesPanel({
   rows: { id: string; companyName: string; contactEmail: string; program: string | null; status: string }[];
   connected: boolean;
 }) {
-  const { m, pending, run } = useAct();
+  const { pending, run } = useAct();
   const [reason, setReason] = useState("");
   if (!connected) return <Unavailable what="partners" />;
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard><SuperEmptyState icon={Database} title="No partners" description="Approved partners appear here." /></SuperCard>

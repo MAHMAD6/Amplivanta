@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { saveMarketplaceSetting } from "@/app/(admin)/admin/marketplace-actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 import { SuperCard } from "./primitives";
 
@@ -17,15 +18,13 @@ function providerOf(v: unknown) {
 }
 
 export function MarketplaceSettingsPanel({ settings, connected }: { settings: Settings; connected: boolean }) {
-  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
   const save = (key: string, value: unknown, reason: string) =>
     start(async () => {
       const res = await saveMarketplaceSetting(key, value, reason);
-      setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-      if (res.ok) router.refresh();
+      if (toastResult(res)) router.refresh();
     });
 
   if (!connected) {
@@ -40,17 +39,6 @@ export function MarketplaceSettingsPanel({ settings, connected }: { settings: Se
 
   return (
     <>
-      {m && (
-        <p
-          role="status"
-          className={cn(
-            "mb-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-            m.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-          )}
-        >
-          {m.text}
-        </p>
-      )}
 
       <SuperCard className="mb-6 p-6">
         <h2 className="text-[16px] font-bold text-admin-navy">Providers</h2>

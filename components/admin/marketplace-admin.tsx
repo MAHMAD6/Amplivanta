@@ -12,25 +12,11 @@ import {
   setSellerStatus,
   upsertCategory,
 } from "@/app/(admin)/admin/marketplace-actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 import { SuperCard, SuperEmptyState } from "./primitives";
 
 type Msg = { ok: boolean; text: string } | null;
-
-function Banner({ m }: { m: Msg }) {
-  if (!m) return null;
-  return (
-    <p
-      role="status"
-      className={cn(
-        "mb-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-        m.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-      )}
-    >
-      {m.text}
-    </p>
-  );
-}
 
 const btn =
   "inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-[12.5px] font-bold text-admin-navy transition hover:bg-bg-soft disabled:opacity-50";
@@ -77,7 +63,6 @@ export function SellerApplicationsPanel({
   rows: { id: string; storeName: string; contactEmail: string; website: string | null; status: string; createdAt: string }[];
   connected: boolean;
 }) {
-  const [m, setM] = useState<Msg>(null);
   const [reason, setReason] = useState("");
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -86,8 +71,7 @@ export function SellerApplicationsPanel({
   const act = (id: string, decision: "APPROVED" | "REJECTED") =>
     start(async () => {
       const res = await decideSellerApplication(id, decision, reason);
-      setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-      if (res.ok) {
+      if (toastResult(res)) {
         setReason("");
         router.refresh();
       }
@@ -95,7 +79,6 @@ export function SellerApplicationsPanel({
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard>
@@ -144,7 +127,6 @@ export function SellersPanel({
   rows: { id: string; storeName: string; email: string | null; status: string; products: number }[];
   connected: boolean;
 }) {
-  const [m, setM] = useState<Msg>(null);
   const [reason, setReason] = useState("");
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -153,8 +135,7 @@ export function SellersPanel({
   const act = (id: string, status: "APPROVED" | "SUSPENDED" | "CLOSED") =>
     start(async () => {
       const res = await setSellerStatus(id, status, reason);
-      setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-      if (res.ok) {
+      if (toastResult(res)) {
         setReason("");
         router.refresh();
       }
@@ -162,7 +143,6 @@ export function SellersPanel({
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard>
@@ -223,7 +203,6 @@ export function ModerationPanel({
   connected: boolean;
   emptyLabel: string;
 }) {
-  const [m, setM] = useState<Msg>(null);
   const [reason, setReason] = useState("");
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -231,7 +210,6 @@ export function ModerationPanel({
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard>
@@ -258,8 +236,7 @@ export function ModerationPanel({
                       onClick={() =>
                         start(async () => {
                           const res = await moderateProduct(r.id, next as never, reason);
-                          setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-                          if (res.ok) {
+                          if (toastResult(res)) {
                             setReason("");
                             router.refresh();
                           }
@@ -293,8 +270,7 @@ export function ModerationPanel({
                                 onClick={() =>
                                   start(async () => {
                                     const res = await setAssetScanStatus(a.id, s, reason);
-                                    setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-                                    if (res.ok) {
+                                    if (toastResult(res)) {
                                       setReason("");
                                       router.refresh();
                                     }
@@ -328,7 +304,6 @@ export function OrdersPanel({
   rows: { id: string; buyer: string | null; total: string; status: string; placed: string | null }[];
   connected: boolean;
 }) {
-  const [m, setM] = useState<Msg>(null);
   const [reason, setReason] = useState("");
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -336,7 +311,6 @@ export function OrdersPanel({
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard>
@@ -364,8 +338,7 @@ export function OrdersPanel({
                     onClick={() =>
                       start(async () => {
                         const res = await refundOrder(r.id, reason, true);
-                        setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-                        if (res.ok) {
+                        if (toastResult(res)) {
                           setReason("");
                           router.refresh();
                         }
@@ -401,7 +374,6 @@ export function PayoutsPanel({
   rows: { id: string; seller: string | null; amount: string; status: string; requested: string | null }[];
   connected: boolean;
 }) {
-  const [m, setM] = useState<Msg>(null);
   const [reason, setReason] = useState("");
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -409,7 +381,6 @@ export function PayoutsPanel({
 
   return (
     <>
-      <Banner m={m} />
       <ReasonBox value={reason} onChange={setReason} />
       {rows.length === 0 ? (
         <SuperCard>
@@ -437,8 +408,7 @@ export function PayoutsPanel({
                       onClick={() =>
                         start(async () => {
                           const res = await decidePayout(r.id, next as never, reason);
-                          setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-                          if (res.ok) {
+                          if (toastResult(res)) {
                             setReason("");
                             router.refresh();
                           }
@@ -467,7 +437,6 @@ export function CategoriesPanel({
   categories: { id: string; name: string; slug: string; description: string | null; order: number; isActive: boolean; products: number }[];
   connected: boolean;
 }) {
-  const [m, setM] = useState<Msg>(null);
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -475,7 +444,6 @@ export function CategoriesPanel({
 
   return (
     <>
-      <Banner m={m} />
       <div className="mb-4 flex justify-end">
         <button type="button" className={btnPrimary} onClick={() => setOpen((v) => !v)}>
           <Plus className="h-3.5 w-3.5" /> New category
@@ -491,8 +459,7 @@ export function CategoriesPanel({
               const fd = new FormData(form);
               start(async () => {
                 const res = await upsertCategory(fd);
-                setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
-                if (res.ok) {
+                if (toastResult(res)) {
                   form.reset();
                   setOpen(false);
                   router.refresh();

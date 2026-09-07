@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Heart, Loader2 } from "lucide-react";
 import { toggleFavorite } from "@/app/(app)/app/marketplace/actions";
+import { toastResult } from "@/lib/action-toast";
 import { cn } from "@/lib/utils";
 
 export function FavoriteButton({
@@ -17,7 +18,6 @@ export function FavoriteButton({
 }) {
   // Optimistic so the heart responds immediately; reverted if the write fails.
   const [saved, setSaved] = useState(initialSaved);
-  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
@@ -30,15 +30,10 @@ export function FavoriteButton({
         onClick={() => {
           const next = !saved;
           setSaved(next);
-          setError(null);
           start(async () => {
             const res = await toggleFavorite(productId);
-            if (res.ok) {
-              router.refresh();
-            } else {
-              setSaved(!next);
-              setError(res.error);
-            }
+            if (toastResult(res)) router.refresh();
+            else setSaved(!next);
           });
         }}
         className="inline-flex h-12 items-center gap-2 rounded-xl border border-line bg-white px-4 text-[13.5px] font-bold text-deep-navy transition hover:bg-bg-soft disabled:opacity-60"
@@ -50,11 +45,6 @@ export function FavoriteButton({
         )}
         {saved ? "Saved to wishlist" : "Add to wishlist"}
       </button>
-      {error && (
-        <p role="status" className="mt-2 text-[12px] font-semibold text-red-600">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

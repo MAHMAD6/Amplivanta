@@ -24,7 +24,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       >
         {children}
       </AdminShell>
-      <Toaster position="top-right" closeButton gap={12} />
+      <Toaster position="top-right" richColors closeButton gap={12} />
     </>
   );
 }

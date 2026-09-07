@@ -5,6 +5,7 @@ import { Building2, CalendarDays, Check, ShieldCheck, User as UserIcon } from "l
 import { grantAccessCredit } from "@/app/(admin)/admin/actions";
 import { cn } from "@/lib/utils";
 import { SuperCard } from "./primitives";
+import { toast } from "@/lib/toast";
 
 const GRANT_TABS = [
   { key: "ACCESS_EXTENSION", label: "Access Extension", hint: "Extend user access by adding extra days." },
@@ -134,7 +135,6 @@ export function GrantAccessForm() {
   const [amount, setAmount] = useState("");
   const [effectiveAt, setEffectiveAt] = useState("");
   const [note, setNote] = useState("");
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
   const tab = GRANT_TABS.find((t) => t.key === grantType)!;
@@ -149,12 +149,12 @@ export function GrantAccessForm() {
     startTransition(async () => {
       const res = await grantAccessCredit(fd);
       if (res.ok) {
-        setResult({ ok: true, message: "Grant recorded and written to the audit log." });
+        toast.success("Grant recorded", { description: "Written to the audit log." });
         setDays("");
         setAmount("");
         setNote("");
       } else {
-        setResult({ ok: false, message: res.error });
+        toast.error(res.error);
       }
     });
   }
@@ -332,18 +332,6 @@ export function GrantAccessForm() {
                 );
               })}
           </dl>
-
-          {result && (
-            <p
-              className={cn(
-                "mt-4 rounded-xl px-4 py-3 text-[12.5px] font-semibold",
-                result.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-              )}
-              role="status"
-            >
-              {result.message}
-            </p>
-          )}
 
           <div className="mt-5 flex gap-2.5">
             <button
