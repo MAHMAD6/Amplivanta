@@ -60,3 +60,41 @@ Everything else already existed. New in this work:
 - `/app/pricing-benchmark` (Pricing Benchmark & Positioning — internal,
   authorized roles only)
 - 6 Marketplace legal documents
+
+## Write paths and data sources (September 2026 gap closure)
+
+An audit of "what can actually be done, not just seen" turned up three
+classes of gap. All are now closed.
+
+**Unreachable state machines.** Products could be created but no seller
+action moved them out of `DRAFT`, so the moderation queue could never
+receive anything and the catalogue could never hold a listing. Seller and
+admin transitions now live in `lib/marketplace/product-policy.ts` — one
+pure module, covered by `tests/product-policy.test.ts`, shared by both
+sides so the two can never disagree. A seller can edit a draft, attach a
+deliverable, submit, unpublish, archive and publish a new version; only an
+admin can approve or publish.
+
+**Entities with no write path.** Affiliate applications, affiliates,
+affiliate payouts, partner programs, partner applications and partner
+profiles were all read-only. `app/(admin)/admin/partner-actions.ts` adds
+the decisions, and `components/admin/partner-panels.tsx` renders them.
+Every action re-checks authorization, requires a reason and writes an
+append-only audit event. Asset scan results can now be recorded from the
+moderation queue, so an approval no longer bypasses the scan status the
+schema already tracked.
+
+**Screens that contradicted the live site.** The public-site tables (blog,
+portfolio, services, team, reviews, site settings) plus admin activity,
+billing, assigned support cases and saved reports had no
+`lib/server/admin-queries.ts` spec, so the console showed "not connected to
+a production data source yet" while the rows existed and the marketing site
+rendered them. Specs added and verified against the production schema.
+
+Feature flags now declare whether any code reads them. The console marks
+the six unread flags as "Not built yet" and disables the toggle, so
+flipping a switch is never mistaken for enabling a feature.
+
+Screens that still show the "not connected" state do so truthfully: no
+model backs them yet. That state is the honest answer, not a placeholder
+to be filled with invented rows.
