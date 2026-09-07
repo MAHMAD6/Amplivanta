@@ -138,3 +138,36 @@ the site, and `/favicon.ico` returned 404 so browsers fell back to a generic
 placeholder. The icon set is regenerated from the real brand mark in
 `components/layout/LogoMark.tsx` as SVG, 32/192/512 PNG, a 180px apple-touch
 icon and a multi-size `.ico`.
+
+## Action feedback and responsive behaviour
+
+**Every action result is a toast.** Write flows each carried their own inline
+banner, so a result could land below the fold, inside a popover the reader had
+already closed, or in a panel they had scrolled past. `lib/action-toast.ts`
+reports the standard action result through sonner, which was already a
+dependency and already mounted in the app and admin shells; the marketing and
+auth shells now mount it too, because the public product page has write flows
+of its own. Warnings are distinct from errors: AI copy produced without a
+configured key, and a promotion draft assembled from the listing rather than
+written, both warn instead of reporting plain success.
+
+**Responsive.** A sweep found the public marketing pages already sound and two
+classes of breakage on surfaces behind sign-in:
+
+- 34 data tables rendered with no horizontal scroll container, so on a phone
+  they widened the page and pushed everything else sideways. Each is now inside
+  an `overflow-x-auto` box, with a minimum width where it has four or more
+  columns so columns stay readable while scrolling rather than being crushed.
+- Six screens build tables from CSS grid with fixed pixel tracks totalling
+  640–690px. Those rows carry a matching minimum width and their card scrolls,
+  preserving column alignment instead of collapsing it.
+- The Share and Promote popovers carried fixed 268px and 340px widths; anchored
+  to the right edge of a padded container on a 375px screen the Promote panel
+  ran past the viewport. Both are capped to the available width.
+- The wizard's product-URL field paired a long path prefix with its input,
+  which cannot fit on a phone, so the pair stacks below the small breakpoint.
+
+`grid-cols-2` and `grid-cols-3` without a breakpoint prefix appear in 48 places
+and were deliberately left alone: at phone width a two-up row of short stat
+tiles reads correctly, and changing them blind would regress layouts that are
+working.
