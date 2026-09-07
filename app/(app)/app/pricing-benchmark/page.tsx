@@ -83,7 +83,7 @@ export default async function PricingBenchmarkPage() {
         Internal — Authorized Roles Only
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
         <MpCard className="h-fit p-6">
           <h2 className="mb-5 text-[16px] font-bold text-deep-navy">Benchmark Controls</h2>
           <Control label="Benchmark Set" value="Not configured" />

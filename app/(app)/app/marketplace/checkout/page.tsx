@@ -39,7 +39,7 @@ export default async function CheckoutPage() {
           />
         </MpCard>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <MpCard>
             <div className="border-b border-line px-6 py-4 text-[15px] font-bold text-deep-navy">Order summary</div>
             <div className="divide-y divide-line">

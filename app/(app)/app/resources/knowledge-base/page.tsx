@@ -35,10 +35,10 @@ export default function KnowledgeBasePage() {
         </button>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
           {/* Search hero */}
-          <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet/[0.12] via-royal-tint to-violet/[0.06] p-8 shadow-card">
+          <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet/[0.12] via-royal-tint to-violet/[0.06] p-5 shadow-card sm:p-8">
             <div className="max-w-xl">
               <h2 className="font-display text-[26px] font-extrabold text-ink">How can we help you?</h2>
               <div className="mt-5 flex items-center gap-2 rounded-2xl border border-line bg-white px-4 py-3 shadow-card">

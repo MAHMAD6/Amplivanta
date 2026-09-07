@@ -45,7 +45,7 @@ export default function ResourcesBlogPage() {
         </button>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div>
           {/* Featured */}
           <article className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2A1A6E] via-[#3B2494] to-[#5B2FE0] p-8 text-white shadow-card-lg lg:p-10">

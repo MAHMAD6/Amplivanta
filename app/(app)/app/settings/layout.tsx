@@ -5,7 +5,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   return (
     <div className="mx-auto max-w-[1500px]">
       <PageHeader title="Settings" subtitle="Workspace profile, users, billing, security, notifications, data, API — one place." />
-      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[240px_1fr]">
         <SettingsNav />
         <div className="min-w-0">{children}</div>
       </div>

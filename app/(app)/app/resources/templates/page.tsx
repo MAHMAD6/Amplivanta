@@ -46,7 +46,7 @@ export default function TemplatesPage() {
         </button>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div>
           {/* Promo band */}
           <section className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-violet/20 bg-gradient-to-r from-violet/[0.08] to-royal-tint p-6">

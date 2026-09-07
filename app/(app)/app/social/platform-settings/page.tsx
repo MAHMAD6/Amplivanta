@@ -13,7 +13,7 @@ export default function SocialPlatformSettingsPage() {
       <PageHeader title="Platform Settings" subtitle="Global governance and defaults for the entire workspace." />
       <SocialSubnav />
 
-      <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[220px_1fr]">
         <aside className="rounded-2xl border border-line bg-white p-2 shadow-card lg:sticky lg:top-20 lg:h-fit">
           <nav className="space-y-0.5">
             {TABS.map((t, i) => (

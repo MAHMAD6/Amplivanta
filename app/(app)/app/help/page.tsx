@@ -53,7 +53,7 @@ export default function HelpSupportPage() {
       <div className="text-[12px] font-semibold uppercase tracking-wide text-violet">AI Advisor</div>
       <PageHeader title="Help / Support" subtitle="Find answers, get support, and make the most of Amplivanta." />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div>
           {/* Search */}
           <section className="rounded-2xl border border-line bg-white p-5 shadow-card">
