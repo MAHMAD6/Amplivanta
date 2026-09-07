@@ -98,3 +98,43 @@ flipping a switch is never mistaken for enabling a feature.
 Screens that still show the "not connected" state do so truthfully: no
 model backs them yet. That state is the honest answer, not a placeholder
 to be filled with invented rows.
+
+## Wishlist, sharing, AI assist and Social Publishing
+
+**A public product route came first.** Products lived only behind sign-in, so
+a shared link sent a recipient to a login redirect rather than the listing.
+`/marketplace` and `/marketplace/products/[slug]` are crawlable, canonical, and
+honour each seller's indexing preference; Open Graph and Twitter cards are
+drawn from the listing so a shared link previews properly. Marketplace sits in
+the top navigation after Solutions, and indexable listings join the sitemap.
+
+**Wishlist** is one new table. A favourite grants nothing — it holds no price
+and reserves no stock — so the page says so, and a product unpublished after
+being saved is filtered out rather than linked into a dead end.
+
+**AI SEO assist is suggest-then-accept.** The assistant returns copy into a
+review panel; the seller applies it. Everything else on a listing is
+seller-authored, and a meta description is a claim the seller is accountable
+for, so a human puts it there. Throttled per seller, audited, and instructed
+to describe only what the listing supports.
+
+**Social Publishing** rendered a fixture array — invented posts with invented
+engagement figures. The posts library now reads real workspace rows and the
+composer writes them. No social channel is connected, so a post is drafted or
+scheduled and never marked published; the page states that rather than
+implying reach. Promoting a Marketplace product builds a draft from the
+listing's image, copy and public link.
+
+Feature flags: `favorites` and `sellerPromotion` now report as implemented.
+Four flags remain unread by any code and are still marked "Not built yet".
+
+## Browser tab presentation
+
+Page titles each carried their own `— Amplivanta` while the root metadata
+template appended `| Amplivanta`, so every tab read the brand twice. Titles now
+carry only the page name; the homepage opts out of the template with an
+absolute title. The tab icon was a dark green mark matching nothing else on
+the site, and `/favicon.ico` returned 404 so browsers fell back to a generic
+placeholder. The icon set is regenerated from the real brand mark in
+`components/layout/LogoMark.tsx` as SVG, 32/192/512 PNG, a 180px apple-touch
+icon and a multi-size `.ico`.
