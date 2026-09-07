@@ -171,3 +171,25 @@ classes of breakage on surfaces behind sign-in:
 and were deliberately left alone: at phone width a two-up row of short stat
 tiles reads correctly, and changing them blind would regress layouts that are
 working.
+
+### Verifying the table fixes
+
+Checking this in a browser proved unreliable: while the preview pane is
+hidden the page is not laid out, so `getBoundingClientRect` returns zeros and
+`scrollWidth === clientWidth` — every page looks perfect. Only readings taken
+with real content present (`document.body.innerText.length` above a threshold)
+and screenshots whose frame matched the emulated viewport were trusted.
+
+The dependable check is structural: walk the JSX by indentation and confirm
+each `<table>` or wide row has a scroll container among its own ancestors. A
+whole-file grep cannot do this — a scroller elsewhere in the file will vouch
+for a table it does not contain, which is how the first pass reported
+Import/Export as clean while its Job History table was still clipped.
+
+Three cards used `overflow-hidden`, which clips rather than scrolls, so
+columns past the screen edge were unreachable rather than merely awkward.
+Those now scroll.
+
+Pages whose loaders read the database cannot be checked on a machine without
+one: they render the error boundary locally. They were verified structurally
+only.
