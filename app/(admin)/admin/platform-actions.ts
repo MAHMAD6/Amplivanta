@@ -165,7 +165,14 @@ export async function loadPlatformControls() {
         isCore: m.isCore,
         scope: m.scopeLevel,
       })),
-      flags: flags.map((f) => ({ key: f.key, name: f.name, description: f.description, enabled: f.enabled })),
+      flags: flags.map((f) => ({
+        key: f.key,
+        name: f.name,
+        description: f.description,
+        enabled: f.enabled,
+        // A flag no code reads must not look like a working switch.
+        implemented: MARKETPLACE_FLAG_REGISTRY.find((r) => r.key === f.key)?.implemented ?? true,
+      })),
     };
   } catch {
     return { connected: false, modules: [], flags: [] };

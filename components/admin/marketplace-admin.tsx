@@ -7,6 +7,7 @@ import {
   decidePayout,
   decideSellerApplication,
   moderateProduct,
+  setAssetScanStatus,
   refundOrder,
   setSellerStatus,
   upsertCategory,
@@ -211,7 +212,14 @@ export function ModerationPanel({
   connected,
   emptyLabel,
 }: {
-  rows: { id: string; title: string; seller: string | null; status: string; type: string }[];
+  rows: {
+    id: string;
+    title: string;
+    seller: string | null;
+    status: string;
+    type: string;
+    assets: { id: string; fileName: string; scanStatus: string }[];
+  }[];
   connected: boolean;
   emptyLabel: string;
 }) {
@@ -262,6 +270,46 @@ export function ModerationPanel({
                     </button>
                   ))}
                 </div>
+
+                {r.assets.length > 0 && (
+                  <div className="w-full rounded-xl border border-line bg-bg-soft px-4 py-3">
+                    <p className="mb-2 text-[11.5px] font-bold uppercase tracking-wide text-ink-muted">
+                      Deliverables — record a scan result before approving
+                    </p>
+                    <div className="space-y-2">
+                      {r.assets.map((a) => (
+                        <div key={a.id} className="flex flex-wrap items-center justify-between gap-3">
+                          <span className="text-[12.5px] font-semibold text-admin-navy">
+                            {a.fileName}
+                            <span className="ml-2 font-normal text-ink-muted">{a.scanStatus.toLowerCase()}</span>
+                          </span>
+                          <div className="flex gap-2">
+                            {(["CLEAN", "INFECTED", "FAILED"] as const).map((s) => (
+                              <button
+                                key={s}
+                                type="button"
+                                className={btn}
+                                disabled={pending || a.scanStatus === s}
+                                onClick={() =>
+                                  start(async () => {
+                                    const res = await setAssetScanStatus(a.id, s, reason);
+                                    setM(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+                                    if (res.ok) {
+                                      setReason("");
+                                      router.refresh();
+                                    }
+                                  })
+                                }
+                              >
+                                mark {s.toLowerCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -19,7 +19,7 @@ These stay separate modules — do not collapse them.
 | Marketplace UI primitives | `components/marketplace/ui.tsx` |
 | Seller application / product / settings / withdrawal forms | `components/marketplace/forms.tsx` |
 | Server actions (all authorized + audited) | `app/(app)/app/marketplace/actions.ts` |
-| Super Admin Marketplace Management (8 screens) | `lib/super/registry.ts`, `lib/server/super-queries.ts` |
+| Super Admin Marketplace Management (8 screens) | `lib/admin/registry.ts`, `lib/server/admin-queries.ts` |
 | Six Marketplace legal documents | `lib/marketplace-legal-docs.ts` → `/legal/<slug>` |
 
 Super Admin totals moved from 194 to **202 destinations** (114 built, 88 deep-linked).

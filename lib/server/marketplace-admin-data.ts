@@ -56,7 +56,15 @@ export async function loadProducts(moderationOnly: boolean) {
       where: moderationOnly ? { status: { in: ["SUBMITTED", "UNDER_REVIEW", "CHANGES_REQUESTED"] } } : {},
       orderBy: { updatedAt: "desc" },
       take: 200,
-      include: { seller: { select: { storeName: true } } },
+      include: {
+        seller: { select: { storeName: true } },
+        // Latest version only: moderation acts on what a buyer would receive.
+        versions: {
+          orderBy: { version: "desc" },
+          take: 1,
+          include: { assets: { select: { id: true, fileName: true, scanStatus: true } } },
+        },
+      },
     });
     return {
       connected: true,
@@ -66,6 +74,11 @@ export async function loadProducts(moderationOnly: boolean) {
         seller: r.seller?.storeName ?? null,
         status: r.status as string,
         type: r.type as string,
+        assets: (r.versions[0]?.assets ?? []).map((a) => ({
+          id: a.id,
+          fileName: a.fileName,
+          scanStatus: a.scanStatus as string,
+        })),
       })),
     };
   } catch {

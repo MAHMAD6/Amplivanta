@@ -63,6 +63,15 @@ import {
   SuperInfoNote,
   SuperTable,
 } from "@/components/admin/primitives";
+import {
+  AffiliateApplicationsPanel,
+  AffiliatePayoutsPanel,
+  AffiliatesPanel,
+  PartnerApplicationsPanel,
+  PartnerProfilesPanel,
+  PartnerProgramsPanel,
+} from "@/components/admin/partner-panels";
+import { loadAffiliateAdminData, loadPartnerAdminData } from "@/app/(admin)/admin/partner-actions";
 import { detailParent, findAdminPage, ADMIN_PAGE_BY_KEY, type AdminPage } from "@/lib/admin/registry";
 import { importableHeaders } from "@/app/(admin)/admin/actions";
 import { hasLoader, loadAdminPage, loadAdminRecord, type AdminResult } from "@/lib/server/admin-queries";
@@ -430,6 +439,50 @@ export default async function SuperCatchAllPage({
     return (
       <>
         <PayoutsPanel rows={rows} connected={connected} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+
+  if (
+    page.canonical === "affiliate-management-applications" ||
+    page.canonical === "affiliate-management-affiliates" ||
+    page.canonical === "affiliate-management-payouts"
+  ) {
+    const data = await loadAffiliateAdminData();
+    return (
+      <>
+        {page.canonical === "affiliate-management-applications" && (
+          <AffiliateApplicationsPanel rows={data.applications} connected={data.connected} />
+        )}
+        {page.canonical === "affiliate-management-affiliates" && (
+          <AffiliatesPanel rows={data.affiliates} connected={data.connected} />
+        )}
+        {page.canonical === "affiliate-management-payouts" && (
+          <AffiliatePayoutsPanel rows={data.payouts} connected={data.connected} />
+        )}
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+
+  if (
+    page.canonical === "partner-marketplace-programs" ||
+    page.canonical === "partner-marketplace-applications-and-approvals" ||
+    page.canonical === "partner-marketplace-partner-profiles"
+  ) {
+    const data = await loadPartnerAdminData();
+    return (
+      <>
+        {page.canonical === "partner-marketplace-programs" && (
+          <PartnerProgramsPanel rows={data.programs} connected={data.connected} />
+        )}
+        {page.canonical === "partner-marketplace-applications-and-approvals" && (
+          <PartnerApplicationsPanel rows={data.applications} connected={data.connected} />
+        )}
+        {page.canonical === "partner-marketplace-partner-profiles" && (
+          <PartnerProfilesPanel rows={data.profiles} connected={data.connected} />
+        )}
         <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
       </>
     );

@@ -8,16 +8,16 @@ Source package: `Amplivanta_Super_Admin_Developer_Handoff` (index.html, app.js,
 | Piece | Location |
 | --- | --- |
 | Route/IA registry (generated from `route-manifest.json`) | `lib/admin/registry.ts` |
-| Navy shell — sidebar, sections, badges, collapse, header, footer | `components/admin/super-shell.tsx` |
+| Navy shell — sidebar, sections, badges, collapse, header, footer | `components/admin/admin-shell.tsx` |
 | Page primitives — cards, table, empty states, stat tiles, info note | `components/admin/primitives.tsx` |
 | Search / filter / pagination (URL-driven) | `components/admin/filters.tsx` |
 | Super Admin Dashboard (approved visual reference) | `components/admin/dashboard.tsx` |
-| Grant Access / Credit flow | `components/admin/grant-access-form.tsx`, `app/(super)/admin/actions.ts` |
-| Data loaders (real Prisma queries) | `lib/server/super-queries.ts` |
-| Single renderer for every destination | `app/(super)/admin/[[...slug]]/page.tsx` |
+| Grant Access / Credit flow | `components/admin/grant-access-form.tsx`, `app/(admin)/admin/actions.ts` |
+| Data loaders (real Prisma queries) | `lib/server/admin-queries.ts` |
+| Single renderer for every destination | `app/(admin)/admin/[[...slug]]/page.tsx` |
 | Platform governance models | `prisma/schema.prisma` (Super Admin section) |
 
-194 destinations total: **106 built under `/super`**, **88 deep-linked** to screens that
+194 destinations total: **built under `/admin`**, **88 deep-linked** to screens that
 already exist in the product.
 
 ## Decisions
@@ -30,7 +30,7 @@ already exist in the product.
    EXPERIENCE routes already exist under `/app` and the public site. The Super Admin nav
    preserves the approved IA but links to those screens (marked with an ↗ icon) rather
    than duplicating them. Content Management is **not** deep-linked — it ships with
-   approved designs, so it is built under `/super`.
+   approved designs, so it is built under `/admin`.
 3. **One renderer, many page families.** Per the handoff's own note, destinations are
    rendered from the registry by kind (`dashboard`, `list`, `detail`, `settings`,
    `board`) instead of 106 near-identical files.
@@ -38,8 +38,8 @@ already exist in the product.
    no connected source renders "not connected to a production data source yet"; a
    database that cannot be reached renders "Data source unavailable" — deliberately
    distinct from "no records", so an outage never reads as an empty platform. The old
-   `lib/super-data.ts` mock metrics were deleted.
-5. **Server-side authorization (rule 7).** `/super` is gated by middleware plus the
+   `lib/super-data.ts (deleted)` mock metrics were deleted.
+5. **Server-side authorization (rule 7).** `/admin` is gated by middleware plus the
    layout's `SUPER_ADMIN` check, and `grantAccessCredit` re-checks the role in the server
    action. A reason is mandatory and every grant writes a `PlatformAuditLog` row (rule 11).
 
@@ -95,7 +95,7 @@ per-screen column definitions it carries.
 ## Consolidation and gap closure (2026-09-06)
 
 The `/super` console and the legacy `/admin` CMS are now **one surface at `/admin`**.
-`/super` and `/super/:path*` redirect there. `/admin/marketplace/*` and
+`/super` and `/admin/:path*` redirect there. `/admin/marketplace/*` and
 `/admin/system/*` are real routes now, which is what the marketplace handoff
 specified natively. `/admin` requires SUPER_ADMIN, ADMIN or OWNER.
 

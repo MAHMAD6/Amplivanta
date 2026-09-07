@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Package } from "lucide-react";
 import { MpButton, MpCard, MpEmpty, MpHeader, MpNote } from "@/components/marketplace/ui";
 import { AddToCartButton } from "@/components/marketplace/purchase-ui";
+import { ProductReviewsSection } from "@/components/marketplace/reviews";
+import { loadProductReviews } from "@/app/(app)/app/marketplace/actions";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = { title: "Product" };
@@ -36,6 +38,7 @@ export default async function ProductDetailPage({
   if (reachable && !product) notFound();
 
   const version = product?.versions[0];
+  const reviews = product ? await loadProductReviews(product.id) : null;
 
   return (
     <>
@@ -96,6 +99,8 @@ export default async function ProductDetailPage({
           />
         </MpCard>
       )}
+
+      {product && reviews && <ProductReviewsSection productId={product.id} data={reviews} />}
 
       <MpNote title="Versions and licences">
         Every purchase records the exact product version and licence version bought. Later seller

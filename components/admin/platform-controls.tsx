@@ -9,7 +9,7 @@ import { SuperCard, SuperEmptyState } from "./primitives";
 import { Database } from "lucide-react";
 
 type Module = { key: string; name: string; description: string | null; status: string; isCore: boolean; scope: string };
-type Flag = { key: string; name: string; description: string | null; enabled: boolean };
+type Flag = { key: string; name: string; description: string | null; enabled: boolean; implemented?: boolean };
 
 function Msg({ m }: { m: { ok: boolean; text: string } | null }) {
   if (!m) return null;
@@ -193,14 +193,26 @@ export function FeatureFlagsPanel({ flags, connected }: { flags: Flag[]; connect
             {flags.map((f) => (
               <div key={f.key} className="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
                 <div className="min-w-0">
-                  <div className="text-[14px] font-bold text-admin-navy">{f.name}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[14px] font-bold text-admin-navy">{f.name}</span>
+                    {f.implemented === false && (
+                      <span className="rounded-md bg-bg-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-muted">
+                        Not built yet
+                      </span>
+                    )}
+                  </div>
                   {f.description && <p className="mt-0.5 text-[12.5px] text-ink-soft">{f.description}</p>}
                   <code className="mt-1 block text-[11.5px] text-ink-muted">{f.key}</code>
+                  {f.implemented === false && (
+                    <p className="mt-1 text-[11.5px] text-ink-muted">
+                      No code reads this flag yet, so turning it on changes nothing.
+                    </p>
+                  )}
                 </div>
                 <Toggle
                   label={`Toggle ${f.name}`}
                   on={f.enabled}
-                  disabled={pending}
+                  disabled={pending || f.implemented === false}
                   onChange={(v) =>
                     start(async () => {
                       const res = await setFeatureFlag(f.key, v);

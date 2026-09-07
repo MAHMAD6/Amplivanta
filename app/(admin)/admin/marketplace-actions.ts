@@ -12,6 +12,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { MarketplacePermission } from "@/lib/marketplace/config";
 import { getEffectiveAccess, hasPermission } from "@/lib/server/rbac";
+import { canAdminTransition } from "@/lib/marketplace/product-policy";
 
 export type AdminActionResult = { ok: true; message: string } | { ok: false; error: string };
 
@@ -158,16 +159,6 @@ export async function setSellerStatus(
 
 /* -------------------------------------------------------------- moderation */
 
-/** Legal transitions from the approved product state machine. */
-const PRODUCT_TRANSITIONS: Record<string, MarketplaceProductStatus[]> = {
-  SUBMITTED: ["UNDER_REVIEW", "CHANGES_REQUESTED", "REJECTED"],
-  UNDER_REVIEW: ["APPROVED", "CHANGES_REQUESTED", "REJECTED"],
-  CHANGES_REQUESTED: ["SUBMITTED", "DRAFT"],
-  APPROVED: ["PUBLISHED", "REJECTED"],
-  PUBLISHED: ["UNPUBLISHED", "SUSPENDED", "ARCHIVED"],
-  UNPUBLISHED: ["PUBLISHED", "ARCHIVED"],
-  SUSPENDED: ["PUBLISHED", "ARCHIVED"],
-} as unknown as Record<string, MarketplaceProductStatus[]>;
 
 export async function moderateProduct(
   productId: string,
@@ -182,10 +173,8 @@ export async function moderateProduct(
     const product = await prisma.marketplaceProduct.findUnique({ where: { id: productId } });
     if (!product) return { ok: false, error: "Product not found." };
 
-    const allowed = PRODUCT_TRANSITIONS[product.status] ?? [];
-    if (!allowed.includes(toStatus)) {
-      return { ok: false, error: `A ${product.status.toLowerCase()} product cannot move to ${toStatus.toLowerCase()}.` };
-    }
+    const check = canAdminTransition(product.status, toStatus as never);
+    if (!check.ok) return { ok: false, error: check.error };
 
     await prisma.$transaction(async (tx) => {
       await tx.marketplaceProduct.update({

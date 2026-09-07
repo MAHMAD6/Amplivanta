@@ -966,6 +966,165 @@ const SPECS: Record<string, TableSpec> = {
       ];
     },
   },
+
+  /* ------------------------------------------------- public site content */
+  /*
+   * The marketing site's own tables. These screens were rendering the
+   * "not connected" state while the rows existed, so the console disagreed
+   * with the live site.
+   */
+  "site-content-blog": {
+    model: "blogPost",
+    orderBy: { createdAt: "desc" },
+    search: ["title", "author"],
+    map: (r) => [
+      r.title as string,
+      r.isPublished ? "Published" : "Draft",
+      (r.author as string) ?? null,
+      fmtDate(r.updatedAt as Date),
+      "Edit",
+    ],
+  },
+
+  "site-content-portfolio": {
+    model: "portfolio",
+    orderBy: { createdAt: "desc" },
+    search: ["title", "client"],
+    map: (r) => [
+      r.title as string,
+      r.isPublished ? "Published" : "Draft",
+      (r.client as string) ?? null,
+      fmtDate(r.updatedAt as Date),
+      "Edit",
+    ],
+  },
+
+  "site-content-services": {
+    model: "service",
+    orderBy: { order: "asc" },
+    search: ["title", "slug"],
+    map: (r) => [
+      r.title as string,
+      r.isActive ? "Active" : "Hidden",
+      (r.slug as string) ?? null,
+      fmtDate(r.updatedAt as Date),
+      "Edit",
+    ],
+  },
+
+  "site-content-team": {
+    model: "teamMember",
+    orderBy: { order: "asc" },
+    search: ["name", "role"],
+    map: (r) => [
+      r.name as string,
+      r.isActive ? "Active" : "Hidden",
+      (r.role as string) ?? null,
+      fmtDate(r.updatedAt as Date),
+      "Edit",
+    ],
+  },
+
+  "site-content-reviews": {
+    model: "review",
+    orderBy: { createdAt: "desc" },
+    search: ["name", "company"],
+    map: (r) => [
+      `${r.name as string} — ${r.company as string}`,
+      r.isApproved ? "Approved" : "Pending",
+      (r.role as string) ?? null,
+      fmtDate(r.updatedAt as Date),
+      "Review",
+    ],
+  },
+
+  "site-content-site-settings": {
+    model: "siteSetting",
+    orderBy: { key: "asc" },
+    search: ["key"],
+    map: (r) => [
+      r.key as string,
+      "Set",
+      String(r.value ?? "").slice(0, 80) || null,
+      fmtDate(r.updatedAt as Date),
+      "Edit",
+    ],
+  },
+
+  /* ---------------------------------------------------- admin activity */
+  /* Same immutable log as Global Audit Logs, narrowed to administrative acts. */
+  "user-management-admin-activity": {
+    model: "platformAuditLog",
+    orderBy: { createdAt: "desc" },
+    search: ["action", "resourceType"],
+    where: { NOT: { actorUserId: null } },
+    include: { actor: true },
+    map: (r) => {
+      const a = r.actor as Row | null;
+      return [
+        (a?.email as string) ?? (a?.name as string) ?? "—",
+        r.action as string,
+        [r.resourceType, r.resourceId].filter(Boolean).join(" · ") || null,
+        label(r.scopeLevel as string),
+        (r.ipAddress as string) ?? null,
+        fmtDate(r.createdAt as Date),
+      ];
+    },
+  },
+
+  /* -------------------------------------------------- billing overview */
+  "subscriptions-and-billing-billing-and-subscription": {
+    model: "subscription",
+    orderBy: { createdAt: "desc" },
+    include: { plan: true, workspace: true },
+    map: (r) => {
+      const p = r.plan as Row | null;
+      const w = r.workspace as Row | null;
+      return [
+        (p?.name as string) ?? "Subscription",
+        label(r.status as string),
+        (w?.name as string) ?? null,
+        fmtDate(r.updatedAt as Date),
+        "View",
+      ];
+    },
+  },
+
+  /* -------------------------------------------------------- admin cases */
+  "support-and-tickets-support-admin-cases": {
+    model: "supportTicket",
+    orderBy: { updatedAt: "desc" },
+    search: ["subject", "requesterEmail"],
+    where: { NOT: { assignedToUserId: null } },
+    filters: { status: eq("status"), priority: eq("priority") },
+    include: { assignedTo: true },
+    map: (r) => [
+      r.subject as string,
+      r.requesterEmail as string,
+      r.priority as string,
+      label(r.status as string),
+      fmtDate(r.updatedAt as Date),
+      "Open",
+    ],
+  },
+
+  /* ------------------------------------------------------ saved reports */
+  "reports-and-analytics-report-builder": {
+    model: "report",
+    orderBy: { createdAt: "desc" },
+    search: ["name", "type"],
+    include: { workspace: true },
+    map: (r) => {
+      const w = r.workspace as Row | null;
+      return [
+        r.name as string,
+        (r.type as string) ?? null,
+        (w?.name as string) ?? null,
+        fmtDate(r.createdAt as Date),
+        "Open",
+      ];
+    },
+  },
 };
 
 /* ----------------------------------------------------------------- runtime */

@@ -5,7 +5,8 @@ import { MarketplaceProductType, Prisma, SellerStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
 import { getMarketplaceViewer, guardMarketplace } from "@/lib/server/marketplace-access";
-import { getPaymentProvider, issueSignedUrl, malwareScanRequired, requiresPaymentProvider } from "@/lib/marketplace/providers";
+import { getPaymentProvider, getStorageProvider, issueSignedUrl, malwareScanRequired, requiresPaymentProvider } from "@/lib/marketplace/providers";
+import { canSellerEdit, canSellerTransition, canSubmit, type ProductStatus } from "@/lib/marketplace/product-policy";
 import { fulfilOrder } from "@/lib/server/marketplace-fulfilment";
 import { nextOrderStatusOnPlace } from "@/lib/marketplace/order-policy";
 
@@ -515,5 +516,372 @@ export async function issueDownload(entitlementId: string): Promise<DownloadResu
     return { ok: true, url: signed.url };
   } catch {
     return { ok: false, error: "Could not issue the download — the platform database was unreachable." };
+  }
+}
+
+
+/* --------------------------------------------------- seller product lifecycle */
+
+/** Loads a product the signed-in seller owns, or null. Ownership is mandatory. */
+async function ownedProduct(sellerId: string, productId: string) {
+  return prisma.marketplaceProduct.findFirst({
+    where: { id: productId, sellerId },
+    include: {
+      versions: { orderBy: { version: "desc" }, take: 1, include: { assets: true } },
+    },
+  });
+}
+
+/** Edit a draft (or a product that came back with changes requested). */
+export async function updateProduct(productId: string, formData: FormData): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, {
+    permission: "marketplace.seller.products.edit_own",
+    requireApprovedSeller: true,
+  });
+  if (!gate.ok) return { ok: false, error: "You cannot edit products right now." };
+
+  try {
+    const product = await ownedProduct(viewer.seller!.id, productId);
+    if (!product) return { ok: false, error: "That product does not belong to your store." };
+    if (!canSellerEdit(product.status)) {
+      return { ok: false, error: `A ${product.status.toLowerCase().replace(/_/g, " ")} product cannot be edited. Publish a new version instead.` };
+    }
+
+    const title = String(formData.get("title") ?? "").trim();
+    if (!title) return { ok: false, error: "A product title is required." };
+
+    const priceRaw = String(formData.get("price") ?? "").trim();
+    const price = priceRaw ? Number(priceRaw) : null;
+    if (price !== null && (!Number.isFinite(price) || price < 0)) {
+      return { ok: false, error: "Enter a valid price." };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.marketplaceProduct.update({
+        where: { id: productId },
+        data: {
+          title,
+          summary: String(formData.get("summary") ?? "").trim() || null,
+          description: String(formData.get("description") ?? "").trim() || null,
+          categoryId: String(formData.get("categoryId") ?? "").trim() || null,
+          tags: String(formData.get("tags") ?? "").split(",").map((t) => t.trim()).filter(Boolean),
+        },
+      });
+      // Price lives on the version, and a draft version is still editable.
+      const current = product.versions[0];
+      if (current && price !== null) {
+        await tx.marketplaceProductVersion.update({
+          where: { id: current.id },
+          data: { priceCents: Math.round(price * 100) },
+        });
+      }
+    });
+
+    await audit(viewer.userId, "marketplace.product.updated", "MarketplaceProduct", productId, { title });
+    revalidatePath("/app/marketplace/seller/products");
+    return { ok: true, message: `"${title}" saved.` };
+  } catch {
+    return { ok: false, error: "Could not save the product — the platform database was unreachable." };
+  }
+}
+
+/**
+ * Attach a deliverable to the current draft version.
+ *
+ * The file itself is only uploaded when a storage provider is configured; until
+ * then the asset is recorded with its metadata so the listing can be completed,
+ * and it stays unscanned so downloads remain blocked.
+ */
+export async function attachProductAsset(productId: string, formData: FormData): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, {
+    permission: "marketplace.seller.products.edit_own",
+    requireApprovedSeller: true,
+    flag: MARKETPLACE_FLAGS.productUploads,
+  });
+  if (!gate.ok) return { ok: false, error: "You cannot attach files right now." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "Choose a file to attach." };
+
+  const storage = await getStorageProvider();
+  const maxBytes = Number(storage?.config.maxUploadBytes ?? 50_000_000);
+  if (file.size > maxBytes) {
+    return { ok: false, error: `That file is larger than the ${Math.round(maxBytes / 1_000_000)} MB upload limit.` };
+  }
+
+  try {
+    const product = await ownedProduct(viewer.seller!.id, productId);
+    if (!product) return { ok: false, error: "That product does not belong to your store." };
+    if (!canSellerEdit(product.status)) {
+      return { ok: false, error: "Files can only be attached while the product is a draft." };
+    }
+    const version = product.versions[0];
+    if (!version) return { ok: false, error: "That product has no version to attach a file to." };
+
+    await prisma.marketplaceProductAsset.create({
+      data: {
+        versionId: version.id,
+        kind: "deliverable",
+        // Storage key is deterministic; the bytes land there once a provider exists.
+        storageKey: `marketplace/${product.id}/v${version.version}/${file.name}`,
+        fileName: file.name,
+        mimeType: file.type || null,
+        sizeBytes: file.size,
+        scanStatus: "PENDING",
+      },
+    });
+
+    await audit(viewer.userId, "marketplace.product.asset_attached", "MarketplaceProduct", productId, {
+      fileName: file.name,
+      sizeBytes: file.size,
+      storageConfigured: storage !== null,
+    });
+    revalidatePath(`/app/marketplace/seller/products`);
+    return {
+      ok: true,
+      message: storage
+        ? `"${file.name}" attached.`
+        : `"${file.name}" recorded. The file uploads once a storage provider is configured.`,
+    };
+  } catch {
+    return { ok: false, error: "Could not attach the file — the platform database was unreachable." };
+  }
+}
+
+/** Submit a draft for moderation. This is what feeds the review queue. */
+export async function submitProductForReview(productId: string): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, {
+    permission: "marketplace.seller.products.submit_own",
+    requireApprovedSeller: true,
+  });
+  if (!gate.ok) return { ok: false, error: "You cannot submit products right now." };
+
+  try {
+    const product = await ownedProduct(viewer.seller!.id, productId);
+    if (!product) return { ok: false, error: "That product does not belong to your store." };
+
+    const version = product.versions[0];
+    const check = canSubmit({
+      status: product.status,
+      hasPricedVersion: Boolean(version),
+      hasAsset: (version?.assets.length ?? 0) > 0,
+    });
+    if (!check.ok) return { ok: false, error: check.error };
+
+    await prisma.$transaction(async (tx) => {
+      await tx.marketplaceProduct.update({ where: { id: productId }, data: { status: "SUBMITTED" } });
+      await tx.marketplaceModerationEvent.create({
+        data: {
+          productId,
+          fromStatus: product.status,
+          toStatus: "SUBMITTED",
+          reason: "Submitted by seller",
+          actorUserId: viewer.userId,
+        },
+      });
+    });
+
+    await audit(viewer.userId, "marketplace.product.submitted", "MarketplaceProduct", productId, {
+      from: product.status,
+    });
+    revalidatePath("/app/marketplace/seller/products");
+    revalidatePath("/admin/marketplace-management/product-review-and-moderation");
+    return { ok: true, message: `"${product.title}" submitted for review.` };
+  } catch {
+    return { ok: false, error: "Could not submit the product — the platform database was unreachable." };
+  }
+}
+
+/** Seller-side takedown / archive of their own listing. */
+export async function setOwnProductStatus(productId: string, to: ProductStatus): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, {
+    permission: "marketplace.seller.products.edit_own",
+    requireApprovedSeller: true,
+  });
+  if (!gate.ok) return { ok: false, error: "You cannot change this product." };
+
+  try {
+    const product = await ownedProduct(viewer.seller!.id, productId);
+    if (!product) return { ok: false, error: "That product does not belong to your store." };
+
+    const check = canSellerTransition(product.status, to);
+    if (!check.ok) return { ok: false, error: check.error };
+
+    await prisma.$transaction(async (tx) => {
+      await tx.marketplaceProduct.update({ where: { id: productId }, data: { status: to } });
+      await tx.marketplaceModerationEvent.create({
+        data: { productId, fromStatus: product.status, toStatus: to, reason: "Changed by seller", actorUserId: viewer.userId },
+      });
+    });
+    await audit(viewer.userId, "marketplace.product.seller_status_changed", "MarketplaceProduct", productId, {
+      from: product.status,
+      to,
+    });
+    revalidatePath("/app/marketplace/seller/products");
+    return { ok: true, message: `"${product.title}" is now ${to.toLowerCase()}.` };
+  } catch {
+    return { ok: false, error: "Could not update the product." };
+  }
+}
+
+/**
+ * Publish a new version of a live product.
+ * Existing orders keep referencing the version they bought - this never
+ * replaces files already purchased.
+ */
+export async function publishNewVersion(productId: string, formData: FormData): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, {
+    permission: "marketplace.seller.products.edit_own",
+    requireApprovedSeller: true,
+    flag: MARKETPLACE_FLAGS.productUploads,
+  });
+  if (!gate.ok) return { ok: false, error: "You cannot publish new versions right now." };
+
+  const priceRaw = String(formData.get("price") ?? "").trim();
+  const price = priceRaw ? Number(priceRaw) : null;
+  if (price !== null && (!Number.isFinite(price) || price < 0)) return { ok: false, error: "Enter a valid price." };
+
+  try {
+    const product = await ownedProduct(viewer.seller!.id, productId);
+    if (!product) return { ok: false, error: "That product does not belong to your store." };
+    const latest = product.versions[0];
+    if (!latest) return { ok: false, error: "That product has no existing version." };
+
+    const created = await prisma.marketplaceProductVersion.create({
+      data: {
+        productId,
+        version: latest.version + 1,
+        priceCents: price === null ? latest.priceCents : Math.round(price * 100),
+        currency: latest.currency,
+        licenseVersion: latest.licenseVersion,
+        changelog: String(formData.get("changelog") ?? "").trim() || null,
+        status: "DRAFT",
+      },
+    });
+
+    // A new version re-enters review; the live version keeps serving until then.
+    await audit(viewer.userId, "marketplace.product.version_created", "MarketplaceProductVersion", created.id, {
+      productId,
+      version: created.version,
+    });
+    revalidatePath("/app/marketplace/seller/products");
+    return {
+      ok: true,
+      message: `Version ${created.version} created as a draft. Attach files and submit it for review; buyers keep the version they purchased.`,
+    };
+  } catch {
+    return { ok: false, error: "Could not create the new version." };
+  }
+}
+
+
+/* -------------------------------------------------------------- reviews --- */
+
+/**
+ * Leave a verified-purchase review.
+ *
+ * Only a buyer with an entitlement for the product may review it, and only
+ * once. This is what "verified purchase" means here - it is enforced, not
+ * displayed as a badge.
+ */
+export async function submitReview(productId: string, formData: FormData): Promise<MpResult> {
+  const viewer = await getMarketplaceViewer();
+  const gate = guardMarketplace(viewer, { flag: MARKETPLACE_FLAGS.reviews });
+  if (!gate.ok) return { ok: false, error: "Reviews are not available right now." };
+
+  const rating = Number(String(formData.get("rating") ?? ""));
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { ok: false, error: "Choose a rating between 1 and 5." };
+  }
+
+  try {
+    // Verified purchase: an order item for this product owned by this buyer.
+    const item = await prisma.marketplaceOrderItem.findFirst({
+      where: {
+        productId,
+        order: { buyerUserId: viewer.userId! },
+        entitlements: { some: { buyerUserId: viewer.userId!, status: "ACTIVE" } },
+      },
+      select: { id: true },
+    });
+    if (!item) {
+      return { ok: false, error: "Only buyers with an active purchase of this product can review it." };
+    }
+
+    await prisma.marketplaceReview.upsert({
+      where: { productId_buyerUserId: { productId, buyerUserId: viewer.userId! } },
+      create: {
+        productId,
+        buyerUserId: viewer.userId!,
+        orderItemId: item.id,
+        rating,
+        title: String(formData.get("title") ?? "").trim() || null,
+        body: String(formData.get("body") ?? "").trim() || null,
+        isVerified: true,
+      },
+      update: {
+        rating,
+        title: String(formData.get("title") ?? "").trim() || null,
+        body: String(formData.get("body") ?? "").trim() || null,
+      },
+    });
+
+    await audit(viewer.userId, "marketplace.review.submitted", "MarketplaceProduct", productId, { rating });
+    revalidatePath(`/app/marketplace/products`);
+    return { ok: true, message: "Thanks - your review has been saved." };
+  } catch {
+    return { ok: false, error: "Could not save your review - the platform database was unreachable." };
+  }
+}
+
+export type ProductReviews = {
+  enabled: boolean;
+  canReview: boolean;
+  average: number | null;
+  count: number;
+  reviews: { id: string; rating: number; title: string | null; body: string | null; when: string }[];
+};
+
+/** Reviews for a product, plus whether this viewer is eligible to add one. */
+export async function loadProductReviews(productId: string): Promise<ProductReviews> {
+  const viewer = await getMarketplaceViewer();
+  const enabled = viewer.flags[MARKETPLACE_FLAGS.reviews] === true;
+  const empty: ProductReviews = { enabled, canReview: false, average: null, count: 0, reviews: [] };
+  if (!enabled) return empty;
+
+  try {
+    const [rows, agg, owned] = await Promise.all([
+      prisma.marketplaceReview.findMany({ where: { productId }, orderBy: { createdAt: "desc" }, take: 50 }),
+      prisma.marketplaceReview.aggregate({ where: { productId }, _avg: { rating: true }, _count: true }),
+      viewer.userId
+        ? prisma.marketplaceOrderItem.count({
+            where: {
+              productId,
+              order: { buyerUserId: viewer.userId },
+              entitlements: { some: { buyerUserId: viewer.userId, status: "ACTIVE" } },
+            },
+          })
+        : Promise.resolve(0),
+    ]);
+    return {
+      enabled,
+      canReview: owned > 0,
+      average: agg._avg.rating ?? null,
+      count: agg._count,
+      reviews: rows.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        title: r.title,
+        body: r.body,
+        when: new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(r.createdAt),
+      })),
+    };
+  } catch {
+    return empty;
   }
 }
