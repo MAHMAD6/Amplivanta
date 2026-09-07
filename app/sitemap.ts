@@ -1,26 +1,78 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/constants";
-import { getServices, getPortfolio, getPosts } from "@/lib/data";
+import { BLOG_POSTS } from "@/lib/blog-posts";
+import { LEGAL_DOCS } from "@/lib/legal-docs";
+import { MARKETPLACE_LEGAL_DOCS } from "@/lib/marketplace-legal-docs";
+import {
+  COMPANY_PAGES,
+  INDUSTRY_PAGES,
+  MODULE_PAGES,
+  RESOURCE_PAGES,
+  SOLUTION_PAGES,
+} from "@/lib/marketing-modules";
+import { SOLUTION_DETAIL_PAGES } from "@/lib/solution-pages";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticRoutes = ["", "/about", "/services", "/portfolio", "/reviews", "/blog", "/contact"].map(
-    (path) => ({
-      url: `${SITE_URL}${path}`,
-      lastModified: new Date(),
-    })
-  );
+/**
+ * The sitemap is generated from the same registries the pages render from, so
+ * it can only advertise routes that exist. It previously listed the original
+ * agency-site IA (/about, /services/*, /portfolio/*), none of which survived
+ * the platform rebuild — every one of those URLs was a 404 handed to crawlers.
+ *
+ * Authenticated surfaces (/app, /admin) are deliberately excluded.
+ */
 
-  const [services, portfolio, posts] = await Promise.all([
-    getServices(),
-    getPortfolio(),
-    getPosts(),
-  ]);
+const STATIC_ROUTES = [
+  "",
+  "/pricing",
+  "/platform",
+  "/solutions",
+  "/solutions/marketing-automation",
+  "/solutions/crm-pipeline",
+  "/industries",
+  "/resources",
+  "/company",
+  "/blog",
+  "/careers",
+  "/contact",
+  "/demo",
+  "/help",
+  "/security",
+  "/community",
+  "/partners",
+  "/partners/apply",
+  "/partners/terms",
+  "/affiliates",
+  "/affiliates/apply",
+  "/affiliates/terms",
+  "/legal",
+  "/legal/dpa",
+  "/login",
+  "/signup",
+];
 
-  const dynamicRoutes = [
-    ...services.map((s) => ({ url: `${SITE_URL}/services/${s.slug}`, lastModified: new Date() })),
-    ...portfolio.map((p) => ({ url: `${SITE_URL}/portfolio/${p.slug}`, lastModified: new Date() })),
-    ...posts.map((p) => ({ url: `${SITE_URL}/blog/${p.slug}`, lastModified: new Date() })),
+export default function sitemap(): MetadataRoute.Sitemap {
+  const lastModified = new Date();
+
+  const dynamic = [
+    ...BLOG_POSTS.map((p) => `/blog/${p.slug}`),
+    ...Object.keys(SOLUTION_DETAIL_PAGES).map((slug) => `/solutions/${slug}`),
+    ...Object.keys(SOLUTION_PAGES).map((slug) => `/solutions/${slug}`),
+    ...Object.keys(MODULE_PAGES).map((slug) => `/platform/${slug}`),
+    ...Object.keys(INDUSTRY_PAGES).map((slug) => `/industries/${slug}`),
+    ...Object.keys(COMPANY_PAGES).map((slug) => `/company/${slug}`),
+    ...Object.keys(RESOURCE_PAGES)
+      .filter((slug) => slug !== "index")
+      .map((slug) => `/resources/${slug}`),
+    ...Object.keys(LEGAL_DOCS).map((slug) => `/legal/${slug}`),
+    ...Object.keys(MARKETPLACE_LEGAL_DOCS).map((slug) => `/legal/${slug}`),
+    "/legal/cookies",
+    "/legal/compliance",
+    "/legal/partner-terms",
+    "/legal/affiliate-terms",
   ];
 
-  return [...staticRoutes, ...dynamicRoutes];
+  // A slug can legitimately appear in two registries; a sitemap must not repeat it.
+  const paths = Array.from(new Set([...STATIC_ROUTES, ...dynamic]));
+
+  return paths.map((path) => ({ url: `${SITE_URL}${path}`, lastModified }));
 }

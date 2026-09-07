@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { BLOG_POSTS } from "@/lib/blog-posts";
 
 export const metadata: Metadata = { title: "Blog — Amplivanta" };
 
-const posts = [
-  { slug: "growth-loops-vs-funnels", title: "Growth loops vs funnels: which one actually compounds?", excerpt: "Funnels leak. Loops compound. Here's how to design and instrument the difference.", author: "Alex Johnson", date: "Aug 10, 2026", tag: "Strategy" },
-  { slug: "ai-in-lifecycle-marketing", title: "The realistic guide to AI in lifecycle marketing (2026 edition)", excerpt: "What actually works — and where AI still gets teams into trouble.", author: "Priya Ramesh", date: "Aug 7, 2026", tag: "AI" },
-  { slug: "attribution-that-holds-up", title: "Attribution that holds up in the boardroom", excerpt: "A model finance signs off on, without pretending single-touch works.", author: "Sarah Chen", date: "Aug 3, 2026", tag: "Analytics" },
-  { slug: "pql-scoring-for-plg", title: "PQL scoring for PLG: 12 signals that actually predict conversion", excerpt: "The signals worth tracking — and the ones you should stop weighting.", author: "Marcus Lee", date: "Jul 28, 2026", tag: "PLG" },
-  { slug: "workflow-anti-patterns", title: "8 workflow anti-patterns to avoid", excerpt: "The automations that quietly cost you more than they earn.", author: "Emily Davis", date: "Jul 22, 2026", tag: "Automation" },
-  { slug: "landing-page-ab-testing", title: "Landing page A/B testing: a rigorous checklist", excerpt: "Stop shipping tests you can't read. Here's the discipline that works.", author: "Daniel Williams", date: "Jul 15, 2026", tag: "CRO" },
-];
+const posts = BLOG_POSTS;
 
 export default function BlogIndex() {
   return (
