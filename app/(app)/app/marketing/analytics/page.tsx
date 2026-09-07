@@ -69,26 +69,28 @@ export default function AutomationAnalyticsPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">Top Workflows</div>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-line text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="pb-2">Workflow</th>
-                <th className="pb-2 text-right">Enroll</th>
-                <th className="pb-2 text-right">CVR</th>
-                <th className="pb-2 text-right">$ Rev</th>
-              </tr>
-            </thead>
-            <tbody>
-              {WORKFLOWS.slice(0, 5).map((w) => (
-                <tr key={w.id} className="border-b border-line last:border-0">
-                  <td className="py-2.5 text-[12.5px] font-semibold text-ink">{w.name}</td>
-                  <td className="py-2.5 text-right text-[12px]">{w.enrolled.toLocaleString()}</td>
-                  <td className="py-2.5 text-right text-[12px] font-bold text-emerald-600">{w.conversionRate}%</td>
-                  <td className="py-2.5 text-right text-[12px] font-bold">${(w.revenue / 1000).toFixed(0)}K</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-line text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                  <th className="pb-2">Workflow</th>
+                  <th className="pb-2 text-right">Enroll</th>
+                  <th className="pb-2 text-right">CVR</th>
+                  <th className="pb-2 text-right">$ Rev</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {WORKFLOWS.slice(0, 5).map((w) => (
+                  <tr key={w.id} className="border-b border-line last:border-0">
+                    <td className="py-2.5 text-[12.5px] font-semibold text-ink">{w.name}</td>
+                    <td className="py-2.5 text-right text-[12px]">{w.enrolled.toLocaleString()}</td>
+                    <td className="py-2.5 text-right text-[12px] font-bold text-emerald-600">{w.conversionRate}%</td>
+                    <td className="py-2.5 text-right text-[12px] font-bold">${(w.revenue / 1000).toFixed(0)}K</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">

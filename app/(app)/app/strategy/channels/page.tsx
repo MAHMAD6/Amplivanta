@@ -57,34 +57,36 @@ export default function ChannelPlanPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Channel</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3 text-right">Planned</th>
-              <th className="px-4 py-3 text-right">Actual</th>
-              <th className="px-4 py-3 text-right">Exp. Leads</th>
-              <th className="px-4 py-3 text-right">Actual Leads</th>
-              <th className="px-4 py-3 text-right">ROAS (act)</th>
-              <th className="px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {CHANNELS.map((c) => (
-              <tr key={c.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 text-[13px] font-semibold text-ink">{c.name}</td>
-                <td className="px-4 py-3"><StatusPill tone={c.category === "Paid" ? "pink" : c.category === "Owned" ? "violet" : "green"}>{c.category}</StatusPill></td>
-                <td className="px-4 py-3 text-right text-[12.5px]">${(c.plannedBudget / 1000).toFixed(0)}K</td>
-                <td className="px-4 py-3 text-right text-[12.5px]">${(c.actualSpend / 1000).toFixed(0)}K</td>
-                <td className="px-4 py-3 text-right text-[12.5px]">{c.expectedLeads}</td>
-                <td className="px-4 py-3 text-right text-[12.5px] font-bold">{c.actualLeads}</td>
-                <td className={`px-4 py-3 text-right text-[12.5px] font-bold ${c.roasActual >= c.roasTarget ? "text-emerald-600" : "text-red-600"}`}>{c.roasActual}×</td>
-                <td className="px-4 py-3"><StatusPill tone={CHANNEL_TONE[c.status]}>{c.status}</StatusPill></td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Channel</th>
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3 text-right">Planned</th>
+                <th className="px-4 py-3 text-right">Actual</th>
+                <th className="px-4 py-3 text-right">Exp. Leads</th>
+                <th className="px-4 py-3 text-right">Actual Leads</th>
+                <th className="px-4 py-3 text-right">ROAS (act)</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {CHANNELS.map((c) => (
+                <tr key={c.id} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3 text-[13px] font-semibold text-ink">{c.name}</td>
+                  <td className="px-4 py-3"><StatusPill tone={c.category === "Paid" ? "pink" : c.category === "Owned" ? "violet" : "green"}>{c.category}</StatusPill></td>
+                  <td className="px-4 py-3 text-right text-[12.5px]">${(c.plannedBudget / 1000).toFixed(0)}K</td>
+                  <td className="px-4 py-3 text-right text-[12.5px]">${(c.actualSpend / 1000).toFixed(0)}K</td>
+                  <td className="px-4 py-3 text-right text-[12.5px]">{c.expectedLeads}</td>
+                  <td className="px-4 py-3 text-right text-[12.5px] font-bold">{c.actualLeads}</td>
+                  <td className={`px-4 py-3 text-right text-[12.5px] font-bold ${c.roasActual >= c.roasTarget ? "text-emerald-600" : "text-red-600"}`}>{c.roasActual}×</td>
+                  <td className="px-4 py-3"><StatusPill tone={CHANNEL_TONE[c.status]}>{c.status}</StatusPill></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

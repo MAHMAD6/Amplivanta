@@ -77,32 +77,34 @@ export default function CrmReportsPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">Top Owners (Revenue)</div>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-line text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="pb-2">Owner</th>
-                <th className="pb-2 text-right">Deals Won</th>
-                <th className="pb-2 text-right">Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topOwners.map((o) => (
-                <tr key={o.name} className="border-b border-line last:border-0">
-                  <td className="py-2.5">
-                    <div className="flex items-center gap-2">
-                      <Avatar name={o.name} size={26} />
-                      <div>
-                        <div className="text-[13px] font-semibold text-ink">{o.name}</div>
-                        <div className="text-[10.5px] text-ink-muted">{o.role}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-2.5 text-right text-[13px] font-bold text-ink">{o.closed}</td>
-                  <td className="py-2.5 text-right text-[13px] font-bold text-emerald-600">${o.revenue.toLocaleString()}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-line text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                  <th className="pb-2">Owner</th>
+                  <th className="pb-2 text-right">Deals Won</th>
+                  <th className="pb-2 text-right">Revenue</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {topOwners.map((o) => (
+                  <tr key={o.name} className="border-b border-line last:border-0">
+                    <td className="py-2.5">
+                      <div className="flex items-center gap-2">
+                        <Avatar name={o.name} size={26} />
+                        <div>
+                          <div className="text-[13px] font-semibold text-ink">{o.name}</div>
+                          <div className="text-[10.5px] text-ink-muted">{o.role}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-2.5 text-right text-[13px] font-bold text-ink">{o.closed}</td>
+                    <td className="py-2.5 text-right text-[13px] font-bold text-emerald-600">${o.revenue.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">

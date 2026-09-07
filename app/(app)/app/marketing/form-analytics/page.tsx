@@ -80,28 +80,30 @@ export default function FormAnalyticsPage() {
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
         <div className="border-b border-line p-4"><div className="text-[14px] font-bold text-ink">By Form</div></div>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Form</th>
-              <th className="px-4 py-3 text-right">Views</th>
-              <th className="px-4 py-3 text-right">Submissions</th>
-              <th className="px-4 py-3 text-right">Conv. Rate</th>
-              <th className="px-4 py-3 text-right">Qualified</th>
-            </tr>
-          </thead>
-          <tbody>
-            {FORMS.filter((f) => f.status === "Live").map((f) => (
-              <tr key={f.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 text-[13px] font-semibold text-ink">{f.name}</td>
-                <td className="px-4 py-3 text-right text-[12.5px]">{Math.round(f.submissions / (f.conversionRate / 100)).toLocaleString()}</td>
-                <td className="px-4 py-3 text-right text-[12.5px] font-bold">{f.submissions.toLocaleString()}</td>
-                <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">{f.conversionRate}%</td>
-                <td className="px-4 py-3 text-right text-[12.5px]">{Math.round(f.submissions * 0.4).toLocaleString()}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Form</th>
+                <th className="px-4 py-3 text-right">Views</th>
+                <th className="px-4 py-3 text-right">Submissions</th>
+                <th className="px-4 py-3 text-right">Conv. Rate</th>
+                <th className="px-4 py-3 text-right">Qualified</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {FORMS.filter((f) => f.status === "Live").map((f) => (
+                <tr key={f.id} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3 text-[13px] font-semibold text-ink">{f.name}</td>
+                  <td className="px-4 py-3 text-right text-[12.5px]">{Math.round(f.submissions / (f.conversionRate / 100)).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right text-[12.5px] font-bold">{f.submissions.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">{f.conversionRate}%</td>
+                  <td className="px-4 py-3 text-right text-[12.5px]">{Math.round(f.submissions * 0.4).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

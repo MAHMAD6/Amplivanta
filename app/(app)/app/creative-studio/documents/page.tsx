@@ -69,47 +69,49 @@ export default function DocumentsPage() {
 
       {/* Docs table */}
       <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Document</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Owner</th>
-              <th className="px-4 py-3">Size</th>
-              <th className="px-4 py-3">Updated</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="w-16 px-2 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {DOCUMENTS.map((d) => (
-              <tr key={d.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet/10 text-violet"><FileText className="h-4 w-4" /></div>
-                    <div className="text-[13px] font-semibold text-ink">{d.name}</div>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-[12px] text-ink-soft">{d.type}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Avatar name={d.owner} size={22} />
-                    <span className="text-[12px] text-ink-soft">{d.owner.split(" ")[0]}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-[12px] text-ink-muted">{d.size}</td>
-                <td className="px-4 py-3 text-[12px] text-ink-muted">{d.updatedAt}</td>
-                <td className="px-4 py-3"><StatusPill tone={PROJECT_STATUS_TONE[d.status]}>{d.status}</StatusPill></td>
-                <td className="px-2 py-3 text-right">
-                  <div className="flex justify-end gap-1">
-                    <button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><Download className="h-3.5 w-3.5" /></button>
-                    <button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><MoreHorizontal className="h-3.5 w-3.5" /></button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Document</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Owner</th>
+                <th className="px-4 py-3">Size</th>
+                <th className="px-4 py-3">Updated</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="w-16 px-2 py-3" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {DOCUMENTS.map((d) => (
+                <tr key={d.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet/10 text-violet"><FileText className="h-4 w-4" /></div>
+                      <div className="text-[13px] font-semibold text-ink">{d.name}</div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-ink-soft">{d.type}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Avatar name={d.owner} size={22} />
+                      <span className="text-[12px] text-ink-soft">{d.owner.split(" ")[0]}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-ink-muted">{d.size}</td>
+                  <td className="px-4 py-3 text-[12px] text-ink-muted">{d.updatedAt}</td>
+                  <td className="px-4 py-3"><StatusPill tone={PROJECT_STATUS_TONE[d.status]}>{d.status}</StatusPill></td>
+                  <td className="px-2 py-3 text-right">
+                    <div className="flex justify-end gap-1">
+                      <button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><Download className="h-3.5 w-3.5" /></button>
+                      <button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><MoreHorizontal className="h-3.5 w-3.5" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -92,7 +92,7 @@ export function PromotePopover({ productId, className }: { productId: string; cl
         <div
           role="dialog"
           aria-label="Promote with Amplivanta"
-          className="absolute right-0 top-full z-30 mt-2 w-[340px] rounded-2xl border border-line bg-white p-4 shadow-card-lg"
+          className="absolute right-0 top-full z-30 mt-2 w-[min(340px,calc(100vw-2rem))] rounded-2xl border border-line bg-white p-4 shadow-card-lg"
         >
           <div className="flex items-center justify-between">
             <h3 className="text-[13.5px] font-extrabold text-deep-navy">Promote with Amplivanta</h3>

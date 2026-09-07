@@ -43,38 +43,40 @@ export default function AttributionPage() {
       </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Channel</th>
-              <th className="px-4 py-3 text-right">Revenue</th>
-              <th className="px-4 py-3 text-right">Spend</th>
-              <th className="px-4 py-3 text-right">ROAS</th>
-              <th className="px-4 py-3 text-right">Assisted</th>
-              <th className="px-4 py-3">Share of Revenue</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ATTRIBUTION_CHANNELS.map((c) => {
-              const share = Math.round((c.revenue / totalRev) * 100);
-              return (
-                <tr key={c.channel} className="border-b border-line last:border-0">
-                  <td className="px-4 py-3 text-[13px] font-semibold text-ink">{c.channel}</td>
-                  <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">${(c.revenue / 1000).toFixed(0)}K</td>
-                  <td className="px-4 py-3 text-right text-[12.5px]">${(c.spend / 1000).toFixed(0)}K</td>
-                  <td className="px-4 py-3 text-right text-[12.5px] font-bold text-violet">{c.roas > 0 ? `${c.roas}×` : "—"}</td>
-                  <td className="px-4 py-3 text-right text-[12.5px]">{c.assisted.toLocaleString()}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-32 overflow-hidden rounded-full bg-bg-soft"><div className="h-full rounded-full bg-grad-brand" style={{ width: `${share}%` }} /></div>
-                      <span className="text-[11.5px] font-bold text-ink">{share}%</span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Channel</th>
+                <th className="px-4 py-3 text-right">Revenue</th>
+                <th className="px-4 py-3 text-right">Spend</th>
+                <th className="px-4 py-3 text-right">ROAS</th>
+                <th className="px-4 py-3 text-right">Assisted</th>
+                <th className="px-4 py-3">Share of Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ATTRIBUTION_CHANNELS.map((c) => {
+                const share = Math.round((c.revenue / totalRev) * 100);
+                return (
+                  <tr key={c.channel} className="border-b border-line last:border-0">
+                    <td className="px-4 py-3 text-[13px] font-semibold text-ink">{c.channel}</td>
+                    <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">${(c.revenue / 1000).toFixed(0)}K</td>
+                    <td className="px-4 py-3 text-right text-[12.5px]">${(c.spend / 1000).toFixed(0)}K</td>
+                    <td className="px-4 py-3 text-right text-[12.5px] font-bold text-violet">{c.roas > 0 ? `${c.roas}×` : "—"}</td>
+                    <td className="px-4 py-3 text-right text-[12.5px]">{c.assisted.toLocaleString()}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-32 overflow-hidden rounded-full bg-bg-soft"><div className="h-full rounded-full bg-grad-brand" style={{ width: `${share}%` }} /></div>
+                        <span className="text-[11.5px] font-bold text-ink">{share}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

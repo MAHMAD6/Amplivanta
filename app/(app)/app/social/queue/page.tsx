@@ -34,43 +34,45 @@ export default function QueuePage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Order</th>
-              <th className="px-4 py-3">Post</th>
-              <th className="px-4 py-3">Platform</th>
-              <th className="px-4 py-3">Scheduled</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Attempts</th>
-              <th className="w-10 px-2 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {QUEUE.map((q, i) => (
-              <tr key={q.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
-                <td className="px-4 py-3 text-[13px] font-bold text-ink">{i + 1}</td>
-                <td className="px-4 py-3 text-[13px] text-ink">{q.content}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <PlatformIcon platform={q.platform} size={20} />
-                    <span className="text-[12px]">{PLATFORM_META[q.platform].label}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-[12px] text-ink-muted">{q.scheduledFor}</td>
-                <td className="px-4 py-3"><StatusPill tone={STATUS_TONE_LOCAL[q.status]}>{q.status}</StatusPill></td>
-                <td className="px-4 py-3 text-[12px] text-ink-soft">{q.attempts} / 3</td>
-                <td className="px-2 py-3 text-right">
-                  <div className="flex justify-end gap-1">
-                    {q.status === "Failed" && <button className="rounded-lg bg-amber-500 p-1.5 text-white"><RotateCw className="h-3 w-3" /></button>}
-                    <button className="rounded-lg p-1.5 text-ink-muted hover:bg-bg-soft"><ArrowUpDown className="h-3 w-3" /></button>
-                    <button className="rounded-lg p-1.5 text-ink-muted hover:bg-bg-soft"><MoreHorizontal className="h-3 w-3" /></button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Order</th>
+                <th className="px-4 py-3">Post</th>
+                <th className="px-4 py-3">Platform</th>
+                <th className="px-4 py-3">Scheduled</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Attempts</th>
+                <th className="w-10 px-2 py-3" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {QUEUE.map((q, i) => (
+                <tr key={q.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
+                  <td className="px-4 py-3 text-[13px] font-bold text-ink">{i + 1}</td>
+                  <td className="px-4 py-3 text-[13px] text-ink">{q.content}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <PlatformIcon platform={q.platform} size={20} />
+                      <span className="text-[12px]">{PLATFORM_META[q.platform].label}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-ink-muted">{q.scheduledFor}</td>
+                  <td className="px-4 py-3"><StatusPill tone={STATUS_TONE_LOCAL[q.status]}>{q.status}</StatusPill></td>
+                  <td className="px-4 py-3 text-[12px] text-ink-soft">{q.attempts} / 3</td>
+                  <td className="px-2 py-3 text-right">
+                    <div className="flex justify-end gap-1">
+                      {q.status === "Failed" && <button className="rounded-lg bg-amber-500 p-1.5 text-white"><RotateCw className="h-3 w-3" /></button>}
+                      <button className="rounded-lg p-1.5 text-ink-muted hover:bg-bg-soft"><ArrowUpDown className="h-3 w-3" /></button>
+                      <button className="rounded-lg p-1.5 text-ink-muted hover:bg-bg-soft"><MoreHorizontal className="h-3 w-3" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

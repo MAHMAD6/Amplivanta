@@ -35,7 +35,7 @@ export default function KnowledgeBasePage() {
         </button>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] min-w-[640px]">
         <div>
           {/* Search hero */}
           <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet/[0.12] via-royal-tint to-violet/[0.06] p-8 shadow-card">
@@ -94,8 +94,8 @@ export default function KnowledgeBasePage() {
               View All Articles <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-            <div className="grid grid-cols-[1fr_150px_120px_40px] gap-3 border-b border-line bg-bg-soft px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-ink-muted">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-white shadow-card">
+            <div className="grid grid-cols-[1fr_150px_120px_40px] min-w-[640px] gap-3 border-b border-line bg-bg-soft px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-ink-muted">
               <span>Article</span>
               <span>Category</span>
               <span>Last Updated</span>
@@ -104,7 +104,7 @@ export default function KnowledgeBasePage() {
             {KB_RECENT_ARTICLES.map((a) => (
               <div
                 key={a.title}
-                className="grid grid-cols-[1fr_150px_120px_40px] items-center gap-3 border-b border-line px-5 py-3.5 last:border-0 hover:bg-bg-soft"
+                className="grid grid-cols-[1fr_150px_120px_40px] min-w-[640px] items-center gap-3 border-b border-line px-5 py-3.5 last:border-0 hover:bg-bg-soft"
               >
                 <div>
                   <div className="text-[13px] font-semibold text-ink">{a.title}</div>

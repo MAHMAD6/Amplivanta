@@ -90,41 +90,43 @@ export default async function BillingPage() {
 
       <div className="rounded-2xl border border-line bg-white shadow-card">
         <div className="border-b border-line p-4"><div className="text-[14px] font-bold text-ink">Invoices</div></div>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/40 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Invoice</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3 text-right">Amount</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="w-10 px-2 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {liveInvoices
-              ? billing.invoices.map((i) => {
-                  const label = i.status.charAt(0).toUpperCase() + i.status.slice(1);
-                  return (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/40 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Invoice</th>
+                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="w-10 px-2 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {liveInvoices
+                ? billing.invoices.map((i) => {
+                    const label = i.status.charAt(0).toUpperCase() + i.status.slice(1);
+                    return (
+                      <tr key={i.id} className="border-b border-line last:border-0">
+                        <td className="px-4 py-3 font-mono text-[12.5px] font-semibold text-ink">{i.id.slice(0, 10)}</td>
+                        <td className="px-4 py-3 text-[12px] text-ink-soft">{fmtDate(i.createdAt)}</td>
+                        <td className="px-4 py-3 text-right text-[13px] font-bold text-ink">${i.amount.toLocaleString()}</td>
+                        <td className="px-4 py-3"><StatusPill tone={INVOICE_TONE[label as keyof typeof INVOICE_TONE] ?? "gray"}>{label}</StatusPill></td>
+                        <td className="px-2 py-3 text-right"><button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><Download className="h-3.5 w-3.5" /></button></td>
+                      </tr>
+                    );
+                  })
+                : INVOICES.map((i) => (
                     <tr key={i.id} className="border-b border-line last:border-0">
-                      <td className="px-4 py-3 font-mono text-[12.5px] font-semibold text-ink">{i.id.slice(0, 10)}</td>
-                      <td className="px-4 py-3 text-[12px] text-ink-soft">{fmtDate(i.createdAt)}</td>
+                      <td className="px-4 py-3 font-mono text-[12.5px] font-semibold text-ink">{i.id}</td>
+                      <td className="px-4 py-3 text-[12px] text-ink-soft">{i.date}</td>
                       <td className="px-4 py-3 text-right text-[13px] font-bold text-ink">${i.amount.toLocaleString()}</td>
-                      <td className="px-4 py-3"><StatusPill tone={INVOICE_TONE[label as keyof typeof INVOICE_TONE] ?? "gray"}>{label}</StatusPill></td>
+                      <td className="px-4 py-3"><StatusPill tone={INVOICE_TONE[i.status as keyof typeof INVOICE_TONE]}>{i.status}</StatusPill></td>
                       <td className="px-2 py-3 text-right"><button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><Download className="h-3.5 w-3.5" /></button></td>
                     </tr>
-                  );
-                })
-              : INVOICES.map((i) => (
-                  <tr key={i.id} className="border-b border-line last:border-0">
-                    <td className="px-4 py-3 font-mono text-[12.5px] font-semibold text-ink">{i.id}</td>
-                    <td className="px-4 py-3 text-[12px] text-ink-soft">{i.date}</td>
-                    <td className="px-4 py-3 text-right text-[13px] font-bold text-ink">${i.amount.toLocaleString()}</td>
-                    <td className="px-4 py-3"><StatusPill tone={INVOICE_TONE[i.status as keyof typeof INVOICE_TONE]}>{i.status}</StatusPill></td>
-                    <td className="px-2 py-3 text-right"><button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><Download className="h-3.5 w-3.5" /></button></td>
-                  </tr>
-                ))}
-          </tbody>
-        </table>
+                  ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

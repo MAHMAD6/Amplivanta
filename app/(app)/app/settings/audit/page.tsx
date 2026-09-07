@@ -27,30 +27,32 @@ export default async function AuditLogPage() {
 
       <div className="rounded-2xl border border-line bg-white shadow-card">
         <div className="border-b border-line p-4"><div className="text-[14px] font-bold text-ink">Recent Events</div></div>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/40 text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Actor</th>
-              <th className="px-4 py-3">Action</th>
-              <th className="px-4 py-3">Severity</th>
-              <th className="px-4 py-3">IP</th>
-              <th className="px-4 py-3">When</th>
-            </tr>
-          </thead>
-          <tbody>
-            {auditEvents.map((e, i) => (
-              <tr key={i} className="border-b border-line last:border-0">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2"><Avatar name={e.actor} size={22} /><span className="text-[12.5px] font-semibold text-ink">{e.actor}</span></div>
-                </td>
-                <td className="px-4 py-3 text-[12.5px] text-ink"><span className="text-ink-soft">{e.action}</span> <span className="font-semibold">{e.target}</span></td>
-                <td className="px-4 py-3"><StatusPill tone={SEVERITY_TONE[e.severity as keyof typeof SEVERITY_TONE]}>{e.severity}</StatusPill></td>
-                <td className="px-4 py-3 font-mono text-[11px] text-ink-muted">{e.ip}</td>
-                <td className="px-4 py-3 text-[11.5px] text-ink-muted">{e.when}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/40 text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Actor</th>
+                <th className="px-4 py-3">Action</th>
+                <th className="px-4 py-3">Severity</th>
+                <th className="px-4 py-3">IP</th>
+                <th className="px-4 py-3">When</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {auditEvents.map((e, i) => (
+                <tr key={i} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2"><Avatar name={e.actor} size={22} /><span className="text-[12.5px] font-semibold text-ink">{e.actor}</span></div>
+                  </td>
+                  <td className="px-4 py-3 text-[12.5px] text-ink"><span className="text-ink-soft">{e.action}</span> <span className="font-semibold">{e.target}</span></td>
+                  <td className="px-4 py-3"><StatusPill tone={SEVERITY_TONE[e.severity as keyof typeof SEVERITY_TONE]}>{e.severity}</StatusPill></td>
+                  <td className="px-4 py-3 font-mono text-[11px] text-ink-muted">{e.ip}</td>
+                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{e.when}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-violet/25 bg-gradient-to-br from-violet/[0.04] to-orange-brand/[0.04] p-4 text-[12px] text-ink-soft">

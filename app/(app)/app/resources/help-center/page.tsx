@@ -30,7 +30,7 @@ export default function HelpCenterPage() {
     <div className="mx-auto max-w-[1500px]">
       <ResourceBreadcrumb current="Help Center" />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] min-w-[672px]">
         <div>
           {/* Hero */}
           <section className="relative overflow-hidden rounded-3xl bg-white p-2">
@@ -103,11 +103,11 @@ export default function HelpCenterPage() {
               View All Articles <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-white shadow-card">
             {HELP_POPULAR_ARTICLES.map((a) => (
               <div
                 key={a.title}
-                className="grid grid-cols-[24px_1fr_140px_110px_90px] items-center gap-3 border-b border-line px-5 py-3.5 last:border-0 hover:bg-bg-soft"
+                className="grid grid-cols-[24px_1fr_140px_110px_90px] min-w-[672px] items-center gap-3 border-b border-line px-5 py-3.5 last:border-0 hover:bg-bg-soft"
               >
                 <FileText className="h-4 w-4 text-ink-muted" />
                 <div>

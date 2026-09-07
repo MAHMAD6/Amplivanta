@@ -71,37 +71,41 @@ export default async function TriggersPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-line bg-white shadow-card">
               <div className="flex items-center justify-between border-b border-line px-4 py-3"><span className="text-[13px] font-bold text-ink">Trigger Library / Rules</span><a className="text-[11px] font-semibold text-violet">View all</a></div>
-              <table className="w-full text-[12px]">
-                <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Trigger</th><th className="px-2 py-2 font-semibold">Status</th><th className="px-2 py-2 font-semibold">Priority</th><th className="px-2 py-2 font-semibold">Source</th><th className="px-2 py-2 font-semibold">Last</th><th className="px-2 py-2" /></tr></thead>
-                <tbody>
-                  {triggers.map((t) => (
-                    <tr key={t.id} className="border-b border-line/60 hover:bg-bg-soft/50">
-                      <td className="px-4 py-2 font-medium text-ink">{t.name}</td>
-                      <td className="px-2 py-2"><StatusPill tone={t.status === "Active" ? "green" : "gray"}>{t.status}</StatusPill></td>
-                      <td className="px-2 py-2"><StatusPill tone={t.priority === "High" ? "orange" : t.priority === "Medium" ? "amber" : "blue"}>{t.priority}</StatusPill></td>
-                      <td className="px-2 py-2 text-ink-soft">{t.source}</td>
-                      <td className="px-2 py-2 text-ink-muted">{t.lastFired}</td>
-                      <td className="px-2 py-2"><div className="flex gap-1 text-ink-muted"><Play className="h-3 w-3" /><Pencil className="h-3 w-3" /><MoreHorizontal className="h-3 w-3" /></div></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[12px]">
+                  <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Trigger</th><th className="px-2 py-2 font-semibold">Status</th><th className="px-2 py-2 font-semibold">Priority</th><th className="px-2 py-2 font-semibold">Source</th><th className="px-2 py-2 font-semibold">Last</th><th className="px-2 py-2" /></tr></thead>
+                  <tbody>
+                    {triggers.map((t) => (
+                      <tr key={t.id} className="border-b border-line/60 hover:bg-bg-soft/50">
+                        <td className="px-4 py-2 font-medium text-ink">{t.name}</td>
+                        <td className="px-2 py-2"><StatusPill tone={t.status === "Active" ? "green" : "gray"}>{t.status}</StatusPill></td>
+                        <td className="px-2 py-2"><StatusPill tone={t.priority === "High" ? "orange" : t.priority === "Medium" ? "amber" : "blue"}>{t.priority}</StatusPill></td>
+                        <td className="px-2 py-2 text-ink-soft">{t.source}</td>
+                        <td className="px-2 py-2 text-ink-muted">{t.lastFired}</td>
+                        <td className="px-2 py-2"><div className="flex gap-1 text-ink-muted"><Play className="h-3 w-3" /><Pencil className="h-3 w-3" /><MoreHorizontal className="h-3 w-3" /></div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
             <div className="rounded-2xl border border-line bg-white shadow-card">
               <div className="flex items-center justify-between border-b border-line px-4 py-3"><span className="text-[13px] font-bold text-ink">Event Stream / Recent Events</span>{eventsLive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}</div>
-              <table className="w-full text-[12px]">
-                <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Time</th><th className="px-2 py-2 font-semibold">Event</th><th className="px-2 py-2 font-semibold">Workflow</th><th className="px-2 py-2 font-semibold">Result</th></tr></thead>
-                <tbody>
-                  {events.map((e) => (
-                    <tr key={e.id} className="border-b border-line/60 hover:bg-bg-soft/50">
-                      <td className="px-4 py-2 text-ink-muted">{e.when}</td>
-                      <td className="px-2 py-2 font-medium text-ink">{e.event}</td>
-                      <td className="px-2 py-2 text-ink-soft">{e.workflow}</td>
-                      <td className="px-2 py-2"><span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{e.result}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[12px]">
+                  <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Time</th><th className="px-2 py-2 font-semibold">Event</th><th className="px-2 py-2 font-semibold">Workflow</th><th className="px-2 py-2 font-semibold">Result</th></tr></thead>
+                  <tbody>
+                    {events.map((e) => (
+                      <tr key={e.id} className="border-b border-line/60 hover:bg-bg-soft/50">
+                        <td className="px-4 py-2 text-ink-muted">{e.when}</td>
+                        <td className="px-2 py-2 font-medium text-ink">{e.event}</td>
+                        <td className="px-2 py-2 text-ink-soft">{e.workflow}</td>
+                        <td className="px-2 py-2"><span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{e.result}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 

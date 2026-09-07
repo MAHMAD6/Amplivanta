@@ -12,35 +12,37 @@ export default function NotificationSettingsPage() {
           <div className="text-[14px] font-bold text-ink">Notification Preferences</div>
           <div className="text-[11.5px] text-ink-muted">Toggle channels per category. Critical alerts (security, billing failures) always fire regardless of settings.</div>
         </div>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/40 text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3 text-center">In-app</th>
-              <th className="px-4 py-3 text-center">Email</th>
-              <th className="px-4 py-3 text-center">SMS</th>
-              <th className="px-4 py-3">Frequency</th>
-            </tr>
-          </thead>
-          <tbody>
-            {NOTIFICATION_CATEGORIES.map((c) => (
-              <tr key={c.key} className="border-b border-line last:border-0">
-                <td className="px-4 py-3">
-                  <div className="text-[13px] font-semibold text-ink">{c.label}</div>
-                  <div className="text-[11px] text-ink-muted">{c.desc}</div>
-                </td>
-                <td className="px-4 py-3 text-center"><Toggle on={c.inApp} /></td>
-                <td className="px-4 py-3 text-center"><Toggle on={c.email} /></td>
-                <td className="px-4 py-3 text-center"><Toggle on={c.sms} /></td>
-                <td className="px-4 py-3">
-                  <select className="rounded-lg border border-line bg-white px-2 py-1 text-[11.5px]">
-                    <option>Real-time</option><option>Digest — daily</option><option>Digest — weekly</option>
-                  </select>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/40 text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3 text-center">In-app</th>
+                <th className="px-4 py-3 text-center">Email</th>
+                <th className="px-4 py-3 text-center">SMS</th>
+                <th className="px-4 py-3">Frequency</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {NOTIFICATION_CATEGORIES.map((c) => (
+                <tr key={c.key} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3">
+                    <div className="text-[13px] font-semibold text-ink">{c.label}</div>
+                    <div className="text-[11px] text-ink-muted">{c.desc}</div>
+                  </td>
+                  <td className="px-4 py-3 text-center"><Toggle on={c.inApp} /></td>
+                  <td className="px-4 py-3 text-center"><Toggle on={c.email} /></td>
+                  <td className="px-4 py-3 text-center"><Toggle on={c.sms} /></td>
+                  <td className="px-4 py-3">
+                    <select className="rounded-lg border border-line bg-white px-2 py-1 text-[11.5px]">
+                      <option>Real-time</option><option>Digest — daily</option><option>Digest — weekly</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-line bg-white p-5 shadow-card">

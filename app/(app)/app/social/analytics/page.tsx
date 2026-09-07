@@ -70,30 +70,32 @@ export default function SocialAnalyticsPage() {
 
       <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">
         <div className="mb-3 text-[14px] font-bold text-ink">Top Performing Posts</div>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="pb-2">Post</th>
-              <th className="pb-2">Platform</th>
-              <th className="pb-2 text-right">Reach</th>
-              <th className="pb-2 text-right">Likes</th>
-              <th className="pb-2 text-right">Comments</th>
-              <th className="pb-2 text-right">Shares</th>
-            </tr>
-          </thead>
-          <tbody>
-            {topPosts.map((p) => (
-              <tr key={p.id} className="border-b border-line last:border-0">
-                <td className="py-3 text-[13px] font-semibold text-ink">{p.content}</td>
-                <td className="py-3"><PlatformIcon platform={p.platform} size={22} /></td>
-                <td className="py-3 text-right text-[12.5px]">{p.engagement!.reach.toLocaleString()}</td>
-                <td className="py-3 text-right text-[12.5px] font-bold text-emerald-600">{p.engagement!.likes.toLocaleString()}</td>
-                <td className="py-3 text-right text-[12.5px]">{p.engagement!.comments}</td>
-                <td className="py-3 text-right text-[12.5px]">{p.engagement!.shares}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="pb-2">Post</th>
+                <th className="pb-2">Platform</th>
+                <th className="pb-2 text-right">Reach</th>
+                <th className="pb-2 text-right">Likes</th>
+                <th className="pb-2 text-right">Comments</th>
+                <th className="pb-2 text-right">Shares</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {topPosts.map((p) => (
+                <tr key={p.id} className="border-b border-line last:border-0">
+                  <td className="py-3 text-[13px] font-semibold text-ink">{p.content}</td>
+                  <td className="py-3"><PlatformIcon platform={p.platform} size={22} /></td>
+                  <td className="py-3 text-right text-[12.5px]">{p.engagement!.reach.toLocaleString()}</td>
+                  <td className="py-3 text-right text-[12.5px] font-bold text-emerald-600">{p.engagement!.likes.toLocaleString()}</td>
+                  <td className="py-3 text-right text-[12.5px]">{p.engagement!.comments}</td>
+                  <td className="py-3 text-right text-[12.5px]">{p.engagement!.shares}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

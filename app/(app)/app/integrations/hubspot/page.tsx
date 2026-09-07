@@ -49,26 +49,28 @@ export default function HubspotSetupPage() {
             <div className="text-[14px] font-bold text-ink">Field Mapping</div>
             <button className="text-[11.5px] font-semibold text-violet">+ Add mapping</button>
           </div>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="pb-2">Amplivanta</th>
-                <th className="pb-2"></th>
-                <th className="pb-2">HubSpot</th>
-                <th className="pb-2">Type</th>
-              </tr>
-            </thead>
-            <tbody>
-              {HUBSPOT_FIELD_MAP.map((m) => (
-                <tr key={m.source} className="border-b border-line last:border-0">
-                  <td className="py-2.5 font-mono text-[11.5px] text-ink">{m.source}</td>
-                  <td className="py-2.5 text-center text-[14px] text-violet">{m.direction}</td>
-                  <td className="py-2.5 font-mono text-[11.5px] text-ink">{m.target}</td>
-                  <td className="py-2.5"><StatusPill tone="gray">{m.type}</StatusPill></td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
+                  <th className="pb-2">Amplivanta</th>
+                  <th className="pb-2"></th>
+                  <th className="pb-2">HubSpot</th>
+                  <th className="pb-2">Type</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {HUBSPOT_FIELD_MAP.map((m) => (
+                  <tr key={m.source} className="border-b border-line last:border-0">
+                    <td className="py-2.5 font-mono text-[11.5px] text-ink">{m.source}</td>
+                    <td className="py-2.5 text-center text-[14px] text-violet">{m.direction}</td>
+                    <td className="py-2.5 font-mono text-[11.5px] text-ink">{m.target}</td>
+                    <td className="py-2.5"><StatusPill tone="gray">{m.type}</StatusPill></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="space-y-4">

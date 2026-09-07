@@ -69,26 +69,28 @@ export default function TrafficAnalyticsPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 text-[14px] font-bold text-ink">Top Landing Pages</div>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="pb-2">Path</th>
-                <th className="pb-2 text-right">Sessions</th>
-                <th className="pb-2 text-right">Bounce</th>
-                <th className="pb-2 text-right">Avg Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {TRAFFIC_TOP_PAGES.map((p) => (
-                <tr key={p.path} className="border-b border-line last:border-0">
-                  <td className="py-2.5 font-mono text-[11.5px] text-ink">{p.path}</td>
-                  <td className="py-2.5 text-right text-[12px] font-bold">{p.sessions.toLocaleString()}</td>
-                  <td className="py-2.5 text-right text-[12px]">{p.bounce}%</td>
-                  <td className="py-2.5 text-right text-[12px]">{p.avgTime}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
+                  <th className="pb-2">Path</th>
+                  <th className="pb-2 text-right">Sessions</th>
+                  <th className="pb-2 text-right">Bounce</th>
+                  <th className="pb-2 text-right">Avg Time</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {TRAFFIC_TOP_PAGES.map((p) => (
+                  <tr key={p.path} className="border-b border-line last:border-0">
+                    <td className="py-2.5 font-mono text-[11.5px] text-ink">{p.path}</td>
+                    <td className="py-2.5 text-right text-[12px] font-bold">{p.sessions.toLocaleString()}</td>
+                    <td className="py-2.5 text-right text-[12px]">{p.bounce}%</td>
+                    <td className="py-2.5 text-right text-[12px]">{p.avgTime}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">

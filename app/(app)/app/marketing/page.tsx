@@ -100,29 +100,31 @@ export default async function MarketingDashboardPage() {
             <div className="text-[14px] font-bold text-ink">Top Workflows</div>
             <Link href="/app/marketing/workflows" className="text-[12px] font-semibold text-violet">View all →</Link>
           </div>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="pb-2">Workflow</th>
-                <th className="pb-2 text-right">Enrolled</th>
-                <th className="pb-2 text-right">CVR</th>
-                <th className="pb-2 text-right">Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeWfs.map((w) => (
-                <tr key={w.id} className="border-b border-line last:border-0">
-                  <td className="py-2.5">
-                    <div className="text-[12.5px] font-semibold text-ink">{w.name}</div>
-                    <div className="text-[10.5px] text-ink-muted">Trigger: {w.trigger}</div>
-                  </td>
-                  <td className="py-2.5 text-right text-[12px]">{w.enrolled.toLocaleString()}</td>
-                  <td className="py-2.5 text-right text-[12px] font-bold text-emerald-600">{w.conversionRate}%</td>
-                  <td className="py-2.5 text-right text-[12px] font-bold text-ink">${(w.revenue / 1000).toFixed(0)}K</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
+                  <th className="pb-2">Workflow</th>
+                  <th className="pb-2 text-right">Enrolled</th>
+                  <th className="pb-2 text-right">CVR</th>
+                  <th className="pb-2 text-right">Revenue</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {activeWfs.map((w) => (
+                  <tr key={w.id} className="border-b border-line last:border-0">
+                    <td className="py-2.5">
+                      <div className="text-[12.5px] font-semibold text-ink">{w.name}</div>
+                      <div className="text-[10.5px] text-ink-muted">Trigger: {w.trigger}</div>
+                    </td>
+                    <td className="py-2.5 text-right text-[12px]">{w.enrolled.toLocaleString()}</td>
+                    <td className="py-2.5 text-right text-[12px] font-bold text-emerald-600">{w.conversionRate}%</td>
+                    <td className="py-2.5 text-right text-[12px] font-bold text-ink">${(w.revenue / 1000).toFixed(0)}K</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

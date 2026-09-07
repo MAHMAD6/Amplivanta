@@ -29,7 +29,7 @@ export default function GuidesPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] min-w-[640px]">
         <div>
           {/* Tracks */}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -55,11 +55,11 @@ export default function GuidesPage() {
 
           {/* All guides */}
           <h2 className="mt-8 font-display text-[20px] font-extrabold text-ink">All Guides</h2>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-white shadow-card">
             {GUIDES.map((g) => (
               <div
                 key={g.title}
-                className="grid grid-cols-[1fr_180px_110px_90px] items-center gap-3 border-b border-line px-5 py-3.5 last:border-0 hover:bg-bg-soft"
+                className="grid grid-cols-[1fr_180px_110px_90px] min-w-[640px] items-center gap-3 border-b border-line px-5 py-3.5 last:border-0 hover:bg-bg-soft"
               >
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500" />

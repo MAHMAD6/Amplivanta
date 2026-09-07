@@ -127,7 +127,7 @@ export default function ImportExportPage() {
           <h2 className="text-[14px] font-bold text-ink">Job History</h2>
           <button className="text-[12px] font-semibold text-violet">View all</button>
         </div>
-        <div className="grid grid-cols-[1fr_90px_110px_140px_180px_110px] gap-3 border-b border-line bg-bg-soft px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-ink-muted">
+        <div className="grid grid-cols-[1fr_90px_110px_140px_180px_110px] min-w-[690px] gap-3 border-b border-line bg-bg-soft px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-ink-muted">
           <span>File</span>
           <span>Type</span>
           <span>Rows</span>
@@ -136,7 +136,7 @@ export default function ImportExportPage() {
           <span>Status</span>
         </div>
         {JOBS.map((j) => (
-          <div key={j.name} className="grid grid-cols-[1fr_90px_110px_140px_180px_110px] items-center gap-3 border-b border-line px-5 py-3.5 last:border-0 hover:bg-bg-soft">
+          <div key={j.name} className="grid grid-cols-[1fr_90px_110px_140px_180px_110px] min-w-[690px] items-center gap-3 border-b border-line px-5 py-3.5 last:border-0 hover:bg-bg-soft">
             <div className="flex items-center gap-2.5">
               <FileSpreadsheet className="h-4 w-4 text-ink-muted" />
               <span className="truncate text-[12.5px] font-semibold text-ink">{j.name}</span>

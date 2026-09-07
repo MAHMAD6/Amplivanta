@@ -97,46 +97,48 @@ export default function SocialDashboardPage() {
             <div className="text-[14px] font-bold text-ink">Platform Overview</div>
             <Link href="/app/social/analytics" className="text-[12px] font-semibold text-violet">View Analytics →</Link>
           </div>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-line text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="pb-2"></th>
-                <th className="pb-2 text-right">Followers</th>
-                <th className="pb-2 text-right">Engage.</th>
-                <th className="pb-2 text-right">Impress.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ACCOUNTS.map((a) => (
-                <tr key={a.id} className="border-b border-line last:border-0">
-                  <td className="py-2">
-                    <div className="flex items-center gap-2">
-                      <PlatformIcon platform={a.platform} size={22} />
-                      <span className="text-[12px] font-semibold text-ink">{PLATFORM_META[a.platform].label}</span>
-                    </div>
-                  </td>
-                  <td className="py-2 text-right">
-                    <div className="text-[12.5px] font-bold text-ink">{a.followers.toLocaleString()}</div>
-                    <div className="text-[10px] font-semibold text-emerald-600">↑{a.followersDelta}%</div>
-                  </td>
-                  <td className="py-2 text-right">
-                    <div className="text-[12.5px] font-bold text-ink">{a.engagement}%</div>
-                    <div className="text-[10px] font-semibold text-emerald-600">↑{a.engagementDelta}%</div>
-                  </td>
-                  <td className="py-2 text-right">
-                    <div className="text-[12.5px] font-bold text-ink">{(a.impressions / 1000).toFixed(1)}K</div>
-                    <div className="text-[10px] font-semibold text-emerald-600">↑{a.impressionsDelta}%</div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-line text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+                  <th className="pb-2"></th>
+                  <th className="pb-2 text-right">Followers</th>
+                  <th className="pb-2 text-right">Engage.</th>
+                  <th className="pb-2 text-right">Impress.</th>
                 </tr>
-              ))}
-              <tr className="bg-bg-soft/50 font-bold">
-                <td className="py-2 text-[12px] text-ink">Total</td>
-                <td className="py-2 text-right text-[12.5px]">74,604</td>
-                <td className="py-2 text-right text-[12.5px]">3.7%</td>
-                <td className="py-2 text-right text-[12.5px]">172.0K</td>
-              </tr>
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {ACCOUNTS.map((a) => (
+                  <tr key={a.id} className="border-b border-line last:border-0">
+                    <td className="py-2">
+                      <div className="flex items-center gap-2">
+                        <PlatformIcon platform={a.platform} size={22} />
+                        <span className="text-[12px] font-semibold text-ink">{PLATFORM_META[a.platform].label}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 text-right">
+                      <div className="text-[12.5px] font-bold text-ink">{a.followers.toLocaleString()}</div>
+                      <div className="text-[10px] font-semibold text-emerald-600">↑{a.followersDelta}%</div>
+                    </td>
+                    <td className="py-2 text-right">
+                      <div className="text-[12.5px] font-bold text-ink">{a.engagement}%</div>
+                      <div className="text-[10px] font-semibold text-emerald-600">↑{a.engagementDelta}%</div>
+                    </td>
+                    <td className="py-2 text-right">
+                      <div className="text-[12.5px] font-bold text-ink">{(a.impressions / 1000).toFixed(1)}K</div>
+                      <div className="text-[10px] font-semibold text-emerald-600">↑{a.impressionsDelta}%</div>
+                    </td>
+                  </tr>
+                ))}
+                <tr className="bg-bg-soft/50 font-bold">
+                  <td className="py-2 text-[12px] text-ink">Total</td>
+                  <td className="py-2 text-right text-[12.5px]">74,604</td>
+                  <td className="py-2 text-right text-[12.5px]">3.7%</td>
+                  <td className="py-2 text-right text-[12.5px]">172.0K</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

@@ -451,8 +451,8 @@ export function ProductWizard({
                 />
               </Field>
               <Field label="Product URL (slug)" hint="Lowercase letters, numbers and hyphens only.">
-                <span className="flex">
-                  <span className="flex h-12 items-center rounded-l-xl border border-r-0 border-line bg-bg-soft px-3 text-[12.5px] text-ink-muted">
+                <span className="flex flex-col sm:flex-row">
+                  <span className="flex h-12 shrink-0 items-center rounded-t-xl border border-line bg-bg-soft px-3 text-[12.5px] text-ink-muted sm:rounded-l-xl sm:rounded-tr-none sm:border-r-0">
                     /app/marketplace/products/
                   </span>
                   <input
@@ -460,7 +460,7 @@ export function ProductWizard({
                     value={slug}
                     onChange={(e) => setSlug(slugify(e.currentTarget.value))}
                     placeholder={slugify(title) || "your-product-name"}
-                    className={cn(field, "rounded-l-none")}
+                    className={cn(field, "rounded-t-none sm:rounded-l-none sm:rounded-tr-xl")}
                   />
                 </span>
               </Field>

@@ -112,14 +112,16 @@ export default function ABTestingPage() {
         </div>
         <div className="rounded-2xl border border-line bg-white shadow-card">
           <div className="border-b border-line px-4 py-3 text-[13px] font-bold text-ink">Audience Segment Performance</div>
-          <table className="w-full text-[12px]">
-            <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Segment</th><th className="px-2 py-2 font-semibold">Visitors</th><th className="px-2 py-2 font-semibold">Conv. A</th><th className="px-2 py-2 font-semibold">Conv. B</th><th className="px-2 py-2 font-semibold">Lift</th></tr></thead>
-            <tbody>
-              {SEGMENTS.map(([s, v, a, b, lift]) => (
-                <tr key={s} className="border-b border-line/60"><td className="px-4 py-2 font-medium text-ink">{s}</td><td className="px-2 py-2 text-ink-soft">{v.toLocaleString()}</td><td className="px-2 py-2 text-ink-soft">{a}%</td><td className="px-2 py-2 text-ink-soft">{b}%</td><td className="px-2 py-2 font-semibold text-emerald-600">+{lift}%</td></tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12px]">
+              <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Segment</th><th className="px-2 py-2 font-semibold">Visitors</th><th className="px-2 py-2 font-semibold">Conv. A</th><th className="px-2 py-2 font-semibold">Conv. B</th><th className="px-2 py-2 font-semibold">Lift</th></tr></thead>
+              <tbody>
+                {SEGMENTS.map(([s, v, a, b, lift]) => (
+                  <tr key={s} className="border-b border-line/60"><td className="px-4 py-2 font-medium text-ink">{s}</td><td className="px-2 py-2 text-ink-soft">{v.toLocaleString()}</td><td className="px-2 py-2 text-ink-soft">{a}%</td><td className="px-2 py-2 text-ink-soft">{b}%</td><td className="px-2 py-2 font-semibold text-emerald-600">+{lift}%</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
           <div className="mb-3 flex items-center justify-between text-[13px] font-bold text-ink"><span>AI Recommendations</span><StatusPill tone="violet">New</StatusPill></div>
@@ -134,21 +136,23 @@ export default function ABTestingPage() {
       {/* Recent experiments */}
       <div className="mt-4 rounded-2xl border border-line bg-white shadow-card">
         <div className="border-b border-line px-4 py-3 text-[13px] font-bold text-ink">Recent Experiments</div>
-        <table className="w-full text-[12.5px]">
-          <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Test Name</th><th className="px-3 py-2 font-semibold">Status</th><th className="px-3 py-2 font-semibold">Confidence</th><th className="px-3 py-2 font-semibold">Winner</th><th className="px-3 py-2 font-semibold">Start Date</th><th className="px-3 py-2 font-semibold">Next Action</th></tr></thead>
-          <tbody>
-            {EXPERIMENTS.map(([name, status, conf, winner, date, action]) => (
-              <tr key={name} className="border-b border-line/60 hover:bg-bg-soft/50">
-                <td className="px-4 py-2.5 font-medium text-ink">{name}</td>
-                <td className="px-3 py-2.5"><StatusPill tone={status === "Running" ? "green" : status === "Winner Selected" ? "violet" : "blue"}>{status}</StatusPill></td>
-                <td className="px-3 py-2.5 text-ink-soft">{conf}</td>
-                <td className="px-3 py-2.5 text-ink-soft">{winner}</td>
-                <td className="px-3 py-2.5 text-ink-muted">{date}</td>
-                <td className="px-3 py-2.5"><button className="rounded-lg border border-line px-2.5 py-1 text-[11.5px] font-semibold text-violet hover:border-violet/40">{action}</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Test Name</th><th className="px-3 py-2 font-semibold">Status</th><th className="px-3 py-2 font-semibold">Confidence</th><th className="px-3 py-2 font-semibold">Winner</th><th className="px-3 py-2 font-semibold">Start Date</th><th className="px-3 py-2 font-semibold">Next Action</th></tr></thead>
+            <tbody>
+              {EXPERIMENTS.map(([name, status, conf, winner, date, action]) => (
+                <tr key={name} className="border-b border-line/60 hover:bg-bg-soft/50">
+                  <td className="px-4 py-2.5 font-medium text-ink">{name}</td>
+                  <td className="px-3 py-2.5"><StatusPill tone={status === "Running" ? "green" : status === "Winner Selected" ? "violet" : "blue"}>{status}</StatusPill></td>
+                  <td className="px-3 py-2.5 text-ink-soft">{conf}</td>
+                  <td className="px-3 py-2.5 text-ink-soft">{winner}</td>
+                  <td className="px-3 py-2.5 text-ink-muted">{date}</td>
+                  <td className="px-3 py-2.5"><button className="rounded-lg border border-line px-2.5 py-1 text-[11.5px] font-semibold text-violet hover:border-violet/40">{action}</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

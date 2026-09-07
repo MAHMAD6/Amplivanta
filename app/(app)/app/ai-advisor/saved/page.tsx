@@ -30,7 +30,7 @@ export default function SavedInsightsPage() {
 
       <AdvisorTabs />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] min-w-[640px]">
         <div>
           {/* Stats */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -60,8 +60,8 @@ export default function SavedInsightsPage() {
           </div>
 
           {/* Table */}
-          <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-            <div className="grid grid-cols-[1fr_130px_150px_120px_90px_40px] gap-3 border-b border-line bg-bg-soft px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-ink-muted">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-white shadow-card">
+            <div className="grid grid-cols-[1fr_130px_150px_120px_90px_40px] min-w-[640px] gap-3 border-b border-line bg-bg-soft px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-ink-muted">
               <span>Insight</span>
               <span>Source / Category</span>
               <span>Owner / Team</span>
@@ -70,7 +70,7 @@ export default function SavedInsightsPage() {
               <span />
             </div>
             {SAVED_ROWS.map((r) => (
-              <div key={r.title} className="grid grid-cols-[1fr_130px_150px_120px_90px_40px] items-center gap-3 border-b border-line px-5 py-4 last:border-0 hover:bg-bg-soft">
+              <div key={r.title} className="grid grid-cols-[1fr_130px_150px_120px_90px_40px] min-w-[640px] items-center gap-3 border-b border-line px-5 py-4 last:border-0 hover:bg-bg-soft">
                 <div className="flex items-start gap-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet/10 text-violet">
                     <AdvisorIcon name={r.icon} className="h-4 w-4" />

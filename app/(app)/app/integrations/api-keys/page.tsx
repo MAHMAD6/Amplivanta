@@ -33,48 +33,50 @@ export default function ApiKeysPage() {
 
       <div className="rounded-2xl border border-line bg-white shadow-card">
         <div className="border-b border-line p-4"><div className="text-[14px] font-bold text-ink">Keys</div></div>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Label</th>
-              <th className="px-4 py-3">Prefix</th>
-              <th className="px-4 py-3">Scopes</th>
-              <th className="px-4 py-3">Created</th>
-              <th className="px-4 py-3">Last Used</th>
-              <th className="px-4 py-3 text-right">Usage (7d)</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="w-16 px-2 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {API_KEYS.map((k) => (
-              <tr key={k.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 text-[13px] font-semibold text-ink">{k.label}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-mono text-[11.5px] text-ink">{k.prefix}</span>
-                    <button className="text-ink-muted"><Copy className="h-3 w-3" /></button>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
-                    {k.scopes.map((s) => <span key={s} className="rounded bg-violet/10 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-violet">{s}</span>)}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-[11.5px] text-ink-muted">{k.createdAt}</td>
-                <td className="px-4 py-3 text-[11.5px] text-ink-muted">{k.lastUsed}</td>
-                <td className="px-4 py-3 text-right text-[12.5px] font-bold text-ink">{k.usage7d.toLocaleString()}</td>
-                <td className="px-4 py-3"><StatusPill tone={API_KEY_TONE[k.status]}>{k.status}</StatusPill></td>
-                <td className="px-2 py-3 text-right">
-                  <div className="flex justify-end gap-1">
-                    {k.status === "Active" && <button className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[10.5px] font-bold text-red-600">Revoke</button>}
-                    <button className="rounded-lg p-1 text-ink-muted"><MoreHorizontal className="h-3.5 w-3.5" /></button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Label</th>
+                <th className="px-4 py-3">Prefix</th>
+                <th className="px-4 py-3">Scopes</th>
+                <th className="px-4 py-3">Created</th>
+                <th className="px-4 py-3">Last Used</th>
+                <th className="px-4 py-3 text-right">Usage (7d)</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="w-16 px-2 py-3" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {API_KEYS.map((k) => (
+                <tr key={k.id} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3 text-[13px] font-semibold text-ink">{k.label}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[11.5px] text-ink">{k.prefix}</span>
+                      <button className="text-ink-muted"><Copy className="h-3 w-3" /></button>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {k.scopes.map((s) => <span key={s} className="rounded bg-violet/10 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-violet">{s}</span>)}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{k.createdAt}</td>
+                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{k.lastUsed}</td>
+                  <td className="px-4 py-3 text-right text-[12.5px] font-bold text-ink">{k.usage7d.toLocaleString()}</td>
+                  <td className="px-4 py-3"><StatusPill tone={API_KEY_TONE[k.status]}>{k.status}</StatusPill></td>
+                  <td className="px-2 py-3 text-right">
+                    <div className="flex justify-end gap-1">
+                      {k.status === "Active" && <button className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[10.5px] font-bold text-red-600">Revoke</button>}
+                      <button className="rounded-lg p-1 text-ink-muted"><MoreHorizontal className="h-3.5 w-3.5" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="mt-6 rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">

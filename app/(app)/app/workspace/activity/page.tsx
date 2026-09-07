@@ -43,30 +43,32 @@ export default function WSActivityPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="px-4 py-3">Actor</th>
-                <th className="px-4 py-3">Action</th>
-                <th className="px-4 py-3">Module</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {WS_ACTIVITY.map((a) => (
-                <tr key={a.id} className="border-b border-line last:border-0">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2"><Avatar name={a.actor} size={22} /><span className="text-[12.5px] font-semibold text-ink">{a.actor}</span></div>
-                  </td>
-                  <td className="px-4 py-3 text-[12.5px] text-ink"><span className="text-ink-soft">{a.verb}</span> <span className="font-semibold">{a.object}</span></td>
-                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{a.module}</td>
-                  <td className="px-4 py-3"><StatusPill tone={CAT_TONE[a.category]}>{a.category}</StatusPill></td>
-                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{a.when}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                  <th className="px-4 py-3">Actor</th>
+                  <th className="px-4 py-3">Action</th>
+                  <th className="px-4 py-3">Module</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3">When</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {WS_ACTIVITY.map((a) => (
+                  <tr key={a.id} className="border-b border-line last:border-0">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2"><Avatar name={a.actor} size={22} /><span className="text-[12.5px] font-semibold text-ink">{a.actor}</span></div>
+                    </td>
+                    <td className="px-4 py-3 text-[12.5px] text-ink"><span className="text-ink-soft">{a.verb}</span> <span className="font-semibold">{a.object}</span></td>
+                    <td className="px-4 py-3 text-[11.5px] text-ink-muted">{a.module}</td>
+                    <td className="px-4 py-3"><StatusPill tone={CAT_TONE[a.category]}>{a.category}</StatusPill></td>
+                    <td className="px-4 py-3 text-[11.5px] text-ink-muted">{a.when}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <aside className="space-y-4">

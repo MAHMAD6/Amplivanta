@@ -38,36 +38,38 @@ export default function SegmentsPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Segment</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3 text-right">Size</th>
-              <th className="px-4 py-3 text-right">Growth</th>
-              <th className="px-4 py-3 text-right">Automations</th>
-              <th className="px-4 py-3">Rules</th>
-              <th className="px-4 py-3">Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {SEGMENTS.map((s) => (
-              <tr key={s.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 text-[13px] font-semibold text-ink">{s.name}</td>
-                <td className="px-4 py-3"><StatusPill tone={s.type === "Dynamic" ? "violet" : "gray"}>{s.type}</StatusPill></td>
-                <td className="px-4 py-3 text-right text-[13px] font-bold text-ink">{s.size.toLocaleString()}</td>
-                <td className="px-4 py-3 text-right">
-                  <span className={`text-[12px] font-bold ${s.growth > 0 ? "text-emerald-600" : s.growth < 0 ? "text-red-600" : "text-ink-muted"}`}>
-                    {s.growth > 0 ? "↑" : s.growth < 0 ? "↓" : "·"} {Math.abs(s.growth)}%
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right text-[12.5px]">{s.automations}</td>
-                <td className="px-4 py-3 font-mono text-[10.5px] text-ink-muted">{s.rules}</td>
-                <td className="px-4 py-3 text-[11.5px] text-ink-muted">{s.updatedAt}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Segment</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3 text-right">Size</th>
+                <th className="px-4 py-3 text-right">Growth</th>
+                <th className="px-4 py-3 text-right">Automations</th>
+                <th className="px-4 py-3">Rules</th>
+                <th className="px-4 py-3">Updated</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {SEGMENTS.map((s) => (
+                <tr key={s.id} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3 text-[13px] font-semibold text-ink">{s.name}</td>
+                  <td className="px-4 py-3"><StatusPill tone={s.type === "Dynamic" ? "violet" : "gray"}>{s.type}</StatusPill></td>
+                  <td className="px-4 py-3 text-right text-[13px] font-bold text-ink">{s.size.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right">
+                    <span className={`text-[12px] font-bold ${s.growth > 0 ? "text-emerald-600" : s.growth < 0 ? "text-red-600" : "text-ink-muted"}`}>
+                      {s.growth > 0 ? "↑" : s.growth < 0 ? "↓" : "·"} {Math.abs(s.growth)}%
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right text-[12.5px]">{s.automations}</td>
+                  <td className="px-4 py-3 font-mono text-[10.5px] text-ink-muted">{s.rules}</td>
+                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{s.updatedAt}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -69,37 +69,39 @@ export default function ContentHubPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Content</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Channel</th>
-              <th className="px-4 py-3">Owner</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Performance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {WS_CONTENT.map((c) => (
-              <tr key={c.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br ${c.thumb}`} />
-                    <div className="text-[13px] font-semibold text-ink">{c.title}</div>
-                  </div>
-                </td>
-                <td className="px-4 py-3"><StatusPill tone="violet">{c.type}</StatusPill></td>
-                <td className="px-4 py-3 text-[12px] text-ink-soft">{c.channel}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2"><Avatar name={c.owner} size={22} /><span className="text-[12px] text-ink-soft">{c.owner.split(" ")[0]}</span></div>
-                </td>
-                <td className="px-4 py-3"><StatusPill tone={STATUS_TONE[c.status]}>{c.status}</StatusPill></td>
-                <td className="px-4 py-3 text-right text-[12px] font-bold text-emerald-600">{c.performance || "—"}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Content</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Channel</th>
+                <th className="px-4 py-3">Owner</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Performance</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {WS_CONTENT.map((c) => (
+                <tr key={c.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br ${c.thumb}`} />
+                      <div className="text-[13px] font-semibold text-ink">{c.title}</div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3"><StatusPill tone="violet">{c.type}</StatusPill></td>
+                  <td className="px-4 py-3 text-[12px] text-ink-soft">{c.channel}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2"><Avatar name={c.owner} size={22} /><span className="text-[12px] text-ink-soft">{c.owner.split(" ")[0]}</span></div>
+                  </td>
+                  <td className="px-4 py-3"><StatusPill tone={STATUS_TONE[c.status]}>{c.status}</StatusPill></td>
+                  <td className="px-4 py-3 text-right text-[12px] font-bold text-emerald-600">{c.performance || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

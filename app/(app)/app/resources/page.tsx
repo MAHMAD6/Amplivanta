@@ -94,20 +94,22 @@ export default function ResourcesHubPage() {
           {/* Latest */}
           <section className="rounded-2xl border border-line bg-white shadow-card">
             <div className="flex items-center justify-between border-b border-line px-4 py-3"><h2 className="text-[15px] font-bold text-ink">Latest Resources</h2><a className="text-[12px] font-semibold text-violet">View all</a></div>
-            <table className="w-full text-[13px]">
-              <thead><tr className="border-b border-line text-left text-[11px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2.5 font-semibold">Resource Title</th><th className="px-3 py-2.5 font-semibold">Type</th><th className="px-3 py-2.5 font-semibold">Category</th><th className="px-3 py-2.5 font-semibold">Date</th><th className="px-3 py-2.5 font-semibold">Action</th></tr></thead>
-              <tbody>
-                {LATEST.map(([title, type, cat, date]) => (
-                  <tr key={title} className="border-b border-line/60 hover:bg-bg-soft/50">
-                    <td className="px-4 py-2.5 font-medium text-ink">{title}</td>
-                    <td className="px-3 py-2.5"><StatusPill tone={TYPE_TONE[type]}>{type}</StatusPill></td>
-                    <td className="px-3 py-2.5 text-ink-soft">{cat}</td>
-                    <td className="px-3 py-2.5 text-ink-muted">{date}</td>
-                    <td className="px-3 py-2.5"><ExternalLink className="h-4 w-4 text-ink-muted" /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead><tr className="border-b border-line text-left text-[11px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2.5 font-semibold">Resource Title</th><th className="px-3 py-2.5 font-semibold">Type</th><th className="px-3 py-2.5 font-semibold">Category</th><th className="px-3 py-2.5 font-semibold">Date</th><th className="px-3 py-2.5 font-semibold">Action</th></tr></thead>
+                <tbody>
+                  {LATEST.map(([title, type, cat, date]) => (
+                    <tr key={title} className="border-b border-line/60 hover:bg-bg-soft/50">
+                      <td className="px-4 py-2.5 font-medium text-ink">{title}</td>
+                      <td className="px-3 py-2.5"><StatusPill tone={TYPE_TONE[type]}>{type}</StatusPill></td>
+                      <td className="px-3 py-2.5 text-ink-soft">{cat}</td>
+                      <td className="px-3 py-2.5 text-ink-muted">{date}</td>
+                      <td className="px-3 py-2.5"><ExternalLink className="h-4 w-4 text-ink-muted" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className="px-4 py-3 text-[12px] text-ink-muted">Showing 1 to 5 of 5 resources</div>
           </section>
         </div>

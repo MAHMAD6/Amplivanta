@@ -63,26 +63,28 @@ export default function AnalyticsDashboardPage() {
             <div className="text-[14px] font-bold text-ink">Top Campaigns</div>
             <Link href="/app/analytics/campaigns" className="text-[12px] font-semibold text-violet">Details →</Link>
           </div>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="pb-2">Campaign</th>
-                <th className="pb-2 text-right">Conv.</th>
-                <th className="pb-2 text-right">Revenue</th>
-                <th className="pb-2 text-right">ROAS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {CAMPAIGN_ANALYTICS.slice(0, 5).map((c) => (
-                <tr key={c.name} className="border-b border-line last:border-0">
-                  <td className="py-2.5 text-[12.5px] font-semibold text-ink">{c.name}</td>
-                  <td className="py-2.5 text-right text-[12px]">{c.conversions}</td>
-                  <td className="py-2.5 text-right text-[12px] font-bold">${(c.revenue / 1000).toFixed(0)}K</td>
-                  <td className="py-2.5 text-right text-[12px] font-bold text-emerald-600">{c.roas}×</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
+                  <th className="pb-2">Campaign</th>
+                  <th className="pb-2 text-right">Conv.</th>
+                  <th className="pb-2 text-right">Revenue</th>
+                  <th className="pb-2 text-right">ROAS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {CAMPAIGN_ANALYTICS.slice(0, 5).map((c) => (
+                  <tr key={c.name} className="border-b border-line last:border-0">
+                    <td className="py-2.5 text-[12.5px] font-semibold text-ink">{c.name}</td>
+                    <td className="py-2.5 text-right text-[12px]">{c.conversions}</td>
+                    <td className="py-2.5 text-right text-[12px] font-bold">${(c.revenue / 1000).toFixed(0)}K</td>
+                    <td className="py-2.5 text-right text-[12px] font-bold text-emerald-600">{c.roas}×</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-line bg-white p-5 shadow-card">

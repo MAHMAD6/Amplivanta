@@ -56,30 +56,32 @@ export default function LeadScoringPage() {
         <div className="border-b border-line p-4">
           <div className="text-[14px] font-bold text-ink">Scoring Rules</div>
         </div>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Rule</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Trigger</th>
-              <th className="px-4 py-3 text-right">Points</th>
-              <th className="px-4 py-3 text-right">Triggered</th>
-              <th className="px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {SCORING_RULES.map((r) => (
-              <tr key={r.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 text-[13px] font-semibold text-ink">{r.name}</td>
-                <td className="px-4 py-3"><StatusPill tone={r.type === "Positive" ? "green" : r.type === "Negative" ? "red" : "amber"}>{r.type}</StatusPill></td>
-                <td className="px-4 py-3 font-mono text-[11px] text-ink-muted">{r.trigger}</td>
-                <td className={`px-4 py-3 text-right text-[13px] font-bold ${r.points > 0 ? "text-emerald-600" : "text-red-600"}`}>{r.points > 0 ? "+" : ""}{r.points}</td>
-                <td className="px-4 py-3 text-right text-[12.5px]">{r.triggeredCount.toLocaleString()}</td>
-                <td className="px-4 py-3"><StatusPill tone={r.status === "Active" ? "green" : "amber"}>{r.status}</StatusPill></td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Rule</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Trigger</th>
+                <th className="px-4 py-3 text-right">Points</th>
+                <th className="px-4 py-3 text-right">Triggered</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {SCORING_RULES.map((r) => (
+                <tr key={r.id} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3 text-[13px] font-semibold text-ink">{r.name}</td>
+                  <td className="px-4 py-3"><StatusPill tone={r.type === "Positive" ? "green" : r.type === "Negative" ? "red" : "amber"}>{r.type}</StatusPill></td>
+                  <td className="px-4 py-3 font-mono text-[11px] text-ink-muted">{r.trigger}</td>
+                  <td className={`px-4 py-3 text-right text-[13px] font-bold ${r.points > 0 ? "text-emerald-600" : "text-red-600"}`}>{r.points > 0 ? "+" : ""}{r.points}</td>
+                  <td className="px-4 py-3 text-right text-[12.5px]">{r.triggeredCount.toLocaleString()}</td>
+                  <td className="px-4 py-3"><StatusPill tone={r.status === "Active" ? "green" : "amber"}>{r.status}</StatusPill></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

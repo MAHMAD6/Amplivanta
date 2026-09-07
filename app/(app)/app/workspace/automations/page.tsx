@@ -40,37 +40,39 @@ export default function WSAutomationsPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="px-4 py-3">Automation</th>
-                <th className="px-4 py-3">Trigger</th>
-                <th className="px-4 py-3">Channels</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Contacts</th>
-                <th className="px-4 py-3 text-right">Conv.</th>
-                <th className="px-4 py-3 text-right">Revenue</th>
-                <th className="w-10 px-2 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {WS_AUTOMATIONS.map((a) => (
-                <tr key={a.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
-                  <td className="px-4 py-3">
-                    <div className="text-[13px] font-semibold text-ink">{a.name}</div>
-                    {a.health === "Warn" && <div className="mt-0.5 text-[10.5px] font-semibold text-amber-700">⚠ Health warning</div>}
-                  </td>
-                  <td className="px-4 py-3 text-[11.5px] text-ink-soft">{a.trigger}</td>
-                  <td className="px-4 py-3 text-[11.5px] text-ink-soft">{a.channels.join(" · ")}</td>
-                  <td className="px-4 py-3"><StatusPill tone={a.status === "Active" ? "green" : "amber"}>{a.status}</StatusPill></td>
-                  <td className="px-4 py-3 text-right text-[12.5px]">{a.contacts.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">{a.conversions}</td>
-                  <td className="px-4 py-3 text-right text-[12.5px] font-bold text-ink">${(a.revenue / 1000).toFixed(0)}K</td>
-                  <td className="px-2 py-3 text-right"><button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft">{a.status === "Active" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}</button></td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[720px]">
+              <thead>
+                <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                  <th className="px-4 py-3">Automation</th>
+                  <th className="px-4 py-3">Trigger</th>
+                  <th className="px-4 py-3">Channels</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Contacts</th>
+                  <th className="px-4 py-3 text-right">Conv.</th>
+                  <th className="px-4 py-3 text-right">Revenue</th>
+                  <th className="w-10 px-2 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {WS_AUTOMATIONS.map((a) => (
+                  <tr key={a.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
+                    <td className="px-4 py-3">
+                      <div className="text-[13px] font-semibold text-ink">{a.name}</div>
+                      {a.health === "Warn" && <div className="mt-0.5 text-[10.5px] font-semibold text-amber-700">⚠ Health warning</div>}
+                    </td>
+                    <td className="px-4 py-3 text-[11.5px] text-ink-soft">{a.trigger}</td>
+                    <td className="px-4 py-3 text-[11.5px] text-ink-soft">{a.channels.join(" · ")}</td>
+                    <td className="px-4 py-3"><StatusPill tone={a.status === "Active" ? "green" : "amber"}>{a.status}</StatusPill></td>
+                    <td className="px-4 py-3 text-right text-[12.5px]">{a.contacts.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">{a.conversions}</td>
+                    <td className="px-4 py-3 text-right text-[12.5px] font-bold text-ink">${(a.revenue / 1000).toFixed(0)}K</td>
+                    <td className="px-2 py-3 text-right"><button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft">{a.status === "Active" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <aside className="space-y-4">

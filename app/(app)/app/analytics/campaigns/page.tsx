@@ -46,30 +46,32 @@ export default function CampaignAnalyticsPage() {
       </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-              <th className="px-4 py-3">Campaign</th>
-              <th className="px-4 py-3 text-right">Reach</th>
-              <th className="px-4 py-3 text-right">CTR</th>
-              <th className="px-4 py-3 text-right">Conversions</th>
-              <th className="px-4 py-3 text-right">Revenue</th>
-              <th className="px-4 py-3 text-right">ROAS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {CAMPAIGN_ANALYTICS.map((c) => (
-              <tr key={c.name} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 text-[13px] font-semibold text-ink">{c.name}</td>
-                <td className="px-4 py-3 text-right text-[12.5px]">{(c.reach / 1000).toFixed(1)}K</td>
-                <td className="px-4 py-3 text-right text-[12.5px]">{c.ctr}%</td>
-                <td className="px-4 py-3 text-right text-[12.5px] font-bold">{c.conversions}</td>
-                <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">${(c.revenue / 1000).toFixed(0)}K</td>
-                <td className="px-4 py-3 text-right text-[12.5px] font-bold text-violet">{c.roas}×</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                <th className="px-4 py-3">Campaign</th>
+                <th className="px-4 py-3 text-right">Reach</th>
+                <th className="px-4 py-3 text-right">CTR</th>
+                <th className="px-4 py-3 text-right">Conversions</th>
+                <th className="px-4 py-3 text-right">Revenue</th>
+                <th className="px-4 py-3 text-right">ROAS</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {CAMPAIGN_ANALYTICS.map((c) => (
+                <tr key={c.name} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3 text-[13px] font-semibold text-ink">{c.name}</td>
+                  <td className="px-4 py-3 text-right text-[12.5px]">{(c.reach / 1000).toFixed(1)}K</td>
+                  <td className="px-4 py-3 text-right text-[12.5px]">{c.ctr}%</td>
+                  <td className="px-4 py-3 text-right text-[12.5px] font-bold">{c.conversions}</td>
+                  <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">${(c.revenue / 1000).toFixed(0)}K</td>
+                  <td className="px-4 py-3 text-right text-[12.5px] font-bold text-violet">{c.roas}×</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

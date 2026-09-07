@@ -98,9 +98,11 @@ export default function ReportBuilderPage() {
             </div>
             <div className="rounded-xl border border-line bg-white p-4 shadow-card">
               <div className="mb-2 text-[12.5px] font-bold text-ink">Top Campaigns</div>
-              <table className="w-full text-[11px]"><thead><tr className="text-left text-ink-muted"><th className="py-1 font-semibold">Campaign</th><th className="py-1 font-semibold">Clicks</th><th className="py-1 font-semibold">Revenue</th></tr></thead>
-                <tbody>{[["Spring Promotion", "8,742", "$345,320"], ["Brand Awareness", "6,281", "$178,540"], ["Lead Gen Q2", "5,932", "$154,870"]].map((r) => <tr key={r[0]} className="border-t border-line/60"><td className="py-1 font-medium text-ink">{r[0]}</td><td className="py-1">{r[1]}</td><td className="py-1">{r[2]}</td></tr>)}</tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[11px]"><thead><tr className="text-left text-ink-muted"><th className="py-1 font-semibold">Campaign</th><th className="py-1 font-semibold">Clicks</th><th className="py-1 font-semibold">Revenue</th></tr></thead>
+                  <tbody>{[["Spring Promotion", "8,742", "$345,320"], ["Brand Awareness", "6,281", "$178,540"], ["Lead Gen Q2", "5,932", "$154,870"]].map((r) => <tr key={r[0]} className="border-t border-line/60"><td className="py-1 font-medium text-ink">{r[0]}</td><td className="py-1">{r[1]}</td><td className="py-1">{r[2]}</td></tr>)}</tbody>
+                </table>
+              </div>
             </div>
             <div className="rounded-xl border border-line bg-white p-4 shadow-card">
               <div className="mb-2 text-[12.5px] font-bold text-ink">Revenue by Channel</div>
