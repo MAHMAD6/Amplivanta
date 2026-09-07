@@ -18,24 +18,22 @@ export const metadata: Metadata = {
  * never be published without appearing in this list.
  */
 
+/** Program agreements live in LEGAL_DOCS too; they are grouped separately here. */
+const PROGRAM_SLUGS = new Set(["partner-terms", "affiliate-terms"]);
+
+const asDocs = (source: typeof LEGAL_DOCS) =>
+  Object.entries(source).map(([slug, doc]) => ({ slug, title: doc.breadcrumbLabel ?? doc.title }));
+
 const PLATFORM = [
-  ...Object.entries(LEGAL_DOCS).map(([slug, doc]) => ({
-    slug,
-    title: doc.breadcrumbLabel ?? doc.title,
-  })),
+  ...asDocs(LEGAL_DOCS).filter((d) => !PROGRAM_SLUGS.has(d.slug)),
+  // Rendered by the [slug] route's SIMPLE_DOCS map rather than a registry.
   { slug: "cookies", title: "Cookie Policy" },
   { slug: "compliance", title: "Compliance" },
 ];
 
-const MARKETPLACE = Object.entries(MARKETPLACE_LEGAL_DOCS).map(([slug, doc]) => ({
-  slug,
-  title: doc.breadcrumbLabel ?? doc.title,
-}));
+const MARKETPLACE = asDocs(MARKETPLACE_LEGAL_DOCS);
 
-const PROGRAMS = [
-  { slug: "partner-terms", title: "Partner Program Terms" },
-  { slug: "affiliate-terms", title: "Affiliate Program Terms" },
-];
+const PROGRAMS = asDocs(LEGAL_DOCS).filter((d) => PROGRAM_SLUGS.has(d.slug));
 
 function DocGroup({ title, docs }: { title: string; docs: { slug: string; title: string }[] }) {
   if (docs.length === 0) return null;
