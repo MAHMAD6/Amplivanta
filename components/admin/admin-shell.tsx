@@ -44,6 +44,12 @@ import {
 } from "lucide-react";
 import { LogoMark } from "@/components/layout/LogoMark";
 import { ADMIN_NAV, ADMIN_PAGE_BY_HREF, type AdminNavGroup } from "@/lib/admin/registry";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -175,6 +181,77 @@ function NavGroup({
   );
 }
 
+/**
+ * The sidebar's contents, rendered twice: as a static column from lg up and
+ * inside a Sheet below it. One definition means the two cannot drift apart.
+ */
+function SidebarBody({
+  sections,
+  pathname,
+  collapsed,
+  onToggleCollapse,
+}: {
+  sections: typeof ADMIN_NAV;
+  pathname: string;
+  collapsed: boolean;
+  /** Omitted in the mobile Sheet, where closing the panel replaces collapsing. */
+  onToggleCollapse?: () => void;
+}) {
+  return (
+    <>
+          {/* Brand */}
+          <div className="flex h-[78px] shrink-0 items-center gap-3 border-b border-white/10 px-5">
+            <LogoMark className="h-9 w-9 shrink-0" gradientId="amp-mark-super" />
+            {!collapsed && (
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[15.5px] font-extrabold tracking-wide">AMPLIVANTA</div>
+                <div className="text-[8.5px] font-semibold uppercase tracking-[0.22em] text-white/65">
+                  Engineering Growth
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+            >
+              <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto px-3 py-4">
+            {sections.map((section) => (
+              <div key={section.section} className="mb-5">
+                {!collapsed && (
+                  <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/60">
+                    {section.section}
+                  </div>
+                )}
+                <div className="space-y-0.5">
+                  {section.groups.map((group) => (
+                    <NavGroup key={group.group} group={group} pathname={pathname} collapsed={collapsed} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </nav>
+
+          <div className="hidden shrink-0 border-t border-white/10 p-3 lg:block">
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11.5px] font-semibold text-white/70 hover:bg-white/10 hover:text-white"
+            >
+              <ChevronsLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+              {!collapsed && "Collapse"}
+            </button>
+          </div>
+    </>
+  );
+}
+
 export function AdminShell({
   children,
   adminName,
@@ -190,7 +267,8 @@ export function AdminShell({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   // The sidebar is a fixed 280px panel. On a phone that leaves under a
-  // hundred pixels for content, so below lg it becomes an off-canvas drawer.
+  // hundred pixels for content, so below lg it moves into a Sheet, which
+  // brings the focus trap, Escape handling and scroll lock with it.
   const [mobileOpen, setMobileOpen] = useState(false);
   const sections = useMemo(() => ADMIN_NAV, []);
 
@@ -205,88 +283,44 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-bg-soft">
-      {/* Mobile topbar */}
-      <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-white px-4 lg:hidden">
-        <div className="flex min-w-0 items-center gap-2">
-          <LogoMark className="h-7 w-7 shrink-0" gradientId="amp-mark-super-mobile" />
-          <span className="truncate text-[14px] font-bold text-admin-navy">{title}</span>
+      {/* Mobile topbar. The sidebar lives in a Sheet below lg. */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-white px-4 lg:hidden">
+          <div className="flex min-w-0 items-center gap-2">
+            <LogoMark className="h-7 w-7 shrink-0" gradientId="amp-mark-super-mobile" />
+            <span className="truncate text-[14px] font-bold text-admin-navy">{title}</span>
+          </div>
+          <SheetTrigger
+            aria-label="Open admin menu"
+            className="shrink-0 rounded-lg p-2 text-admin-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-blue"
+          >
+            <Menu className="h-5 w-5" />
+          </SheetTrigger>
         </div>
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open admin menu"
-          aria-expanded={mobileOpen}
-          className="shrink-0 rounded-lg p-2 text-admin-navy"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      </div>
 
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-ink/40 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden
-        />
-      )}
+        <SheetContent
+          side="left"
+          hideClose
+          className="border-r-0 bg-admin-navy p-0 text-white lg:hidden"
+        >
+          {/* Radix announces the dialog by its title; the panel shows none. */}
+          <SheetTitle className="sr-only">Admin navigation</SheetTitle>
+          <SidebarBody sections={sections} pathname={pathname} collapsed={false} />
+        </SheetContent>
+      </Sheet>
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col bg-admin-navy text-white transition-transform duration-200",
-          mobileOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:translate-x-0 lg:transition-[width]",
-          collapsed ? "lg:w-[76px]" : "lg:w-[280px]",
+          "fixed inset-y-0 left-0 z-40 hidden flex-col bg-admin-navy text-white transition-[width] duration-200 lg:flex",
+          collapsed ? "w-[76px]" : "w-[280px]",
         )}
       >
-        {/* Brand */}
-        <div className="flex h-[78px] shrink-0 items-center gap-3 border-b border-white/10 px-5">
-          <LogoMark className="h-9 w-9 shrink-0" gradientId="amp-mark-super" />
-          {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[15.5px] font-extrabold tracking-wide">AMPLIVANTA</div>
-              <div className="text-[8.5px] font-semibold uppercase tracking-[0.22em] text-white/65">
-                Engineering Growth
-              </div>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => setCollapsed((v) => !v)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-          >
-            <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
-          </button>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {sections.map((section) => (
-            <div key={section.section} className="mb-5">
-              {!collapsed && (
-                <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-white/60">
-                  {section.section}
-                </div>
-              )}
-              <div className="space-y-0.5">
-                {section.groups.map((group) => (
-                  <NavGroup key={group.group} group={group} pathname={pathname} collapsed={collapsed} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        <div className="hidden shrink-0 border-t border-white/10 p-3 lg:block">
-          <button
-            type="button"
-            onClick={() => setCollapsed((v) => !v)}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11.5px] font-semibold text-white/70 hover:bg-white/10 hover:text-white"
-          >
-            <ChevronsLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
-            {!collapsed && "Collapse"}
-          </button>
-        </div>
+        <SidebarBody
+          sections={sections}
+          pathname={pathname}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((v) => !v)}
+        />
       </aside>
 
       <div className={cn("transition-[padding] duration-200", collapsed ? "lg:pl-[76px]" : "lg:pl-[280px]")}>
