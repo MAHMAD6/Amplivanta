@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronsLeft,
+  Menu,
   Circle,
   Contact,
   CreditCard,
@@ -188,7 +189,13 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  // The sidebar is a fixed 280px panel. On a phone that leaves under a
+  // hundred pixels for content, so below lg it becomes an off-canvas drawer.
+  const [mobileOpen, setMobileOpen] = useState(false);
   const sections = useMemo(() => ADMIN_NAV, []);
+
+  // A drawer left open would cover the destination it just navigated to.
+  useEffect(() => setMobileOpen(false), [pathname]);
 
   // The header title mirrors the approved route registry so every destination
   // is labelled consistently without each page repeating itself.
@@ -198,10 +205,37 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen bg-bg-soft">
+      {/* Mobile topbar */}
+      <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-white px-4 lg:hidden">
+        <div className="flex min-w-0 items-center gap-2">
+          <LogoMark className="h-7 w-7 shrink-0" gradientId="amp-mark-super-mobile" />
+          <span className="truncate text-[14px] font-bold text-admin-navy">{title}</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open admin menu"
+          aria-expanded={mobileOpen}
+          className="shrink-0 rounded-lg p-2 text-admin-navy"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      </div>
+
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-ink/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden
+        />
+      )}
+
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex flex-col bg-admin-navy text-white transition-[width] duration-200",
-          collapsed ? "w-[76px]" : "w-[280px]",
+          "fixed inset-y-0 left-0 z-40 flex w-[280px] flex-col bg-admin-navy text-white transition-transform duration-200",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+          "lg:translate-x-0 lg:transition-[width]",
+          collapsed ? "lg:w-[76px]" : "lg:w-[280px]",
         )}
       >
         {/* Brand */}
@@ -243,7 +277,7 @@ export function AdminShell({
           ))}
         </nav>
 
-        <div className="shrink-0 border-t border-white/10 p-3">
+        <div className="hidden shrink-0 border-t border-white/10 p-3 lg:block">
           <button
             type="button"
             onClick={() => setCollapsed((v) => !v)}
@@ -255,8 +289,8 @@ export function AdminShell({
         </div>
       </aside>
 
-      <div className={cn("transition-[padding] duration-200", collapsed ? "pl-[76px]" : "pl-[280px]")}>
-        <header className="sticky top-0 z-30 border-b border-line bg-white">
+      <div className={cn("transition-[padding] duration-200", collapsed ? "lg:pl-[76px]" : "lg:pl-[280px]")}>
+        <header className="sticky top-0 z-20 hidden border-b border-line bg-white lg:block">
           <div className="flex h-[78px] items-center gap-6 px-8">
             <div className="min-w-0 flex-1">
               <h1 className="truncate font-display text-[26px] font-extrabold leading-tight text-admin-navy">
@@ -308,9 +342,9 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="px-8 py-7">{children}</main>
+        <main className="px-4 py-5 sm:px-6 lg:px-8 lg:py-7">{children}</main>
 
-        <footer className="mt-4 border-t border-line bg-white px-8 py-5">
+        <footer className="mt-4 border-t border-line bg-white px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-3 text-[12.5px] text-ink-muted">
             <span>© {new Date().getFullYear()} Amplivanta Inc. All rights reserved.</span>
             <div className="flex flex-wrap items-center gap-5">
