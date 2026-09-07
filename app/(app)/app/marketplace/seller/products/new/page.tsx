@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MpDenied, MpHeader, MpNote } from "@/components/marketplace/ui";
-import { NewProductForm } from "@/components/marketplace/new-product-form";
+import { ProductWizard } from "@/components/marketplace/product-wizard";
 import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
 import { getMarketplaceViewer, guardMarketplace } from "@/lib/server/marketplace-access";
 import { prisma } from "@/lib/prisma";
@@ -49,7 +49,7 @@ export default async function NewProductPage() {
           { label: "Add New Product" },
         ]}
       />
-      <NewProductForm categories={categories} types={allowedTypes} />
+      <ProductWizard categories={categories} types={allowedTypes} />
       <MpNote title="Files and review">
         Supported file types, maximum upload size, retention policy and malware scanning are
         Marketplace operator settings. File upload is enabled once storage and scanning are configured.

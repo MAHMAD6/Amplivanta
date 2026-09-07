@@ -1861,6 +1861,25 @@ model MarketplaceProduct {
   createdAt   DateTime                 @default(now())
   updatedAt   DateTime                 @updatedAt
 
+  /// Listing gallery. coverImage stays the primary image; these are the rest,
+  /// in display order. Alt text is stored positionally alongside them.
+  galleryImages    String[]
+  coverImageAlt    String?
+  galleryImageAlts String[]
+
+  /// Buyer-facing listing detail.
+  language   String   @default("English")
+  highlights String[] /// "What's Included" bullets.
+  perfectFor String[] /// "Perfect For" audience bullets.
+
+  /// Search and discoverability. Seller-authored; the marketplace never
+  /// generates these on the seller's behalf.
+  seoTitle        String?
+  metaDescription String?
+  primaryKeyword  String?
+  keywords        String[]
+  allowIndexing   Boolean  @default(true)
+
   versions   MarketplaceProductVersion[]
   orderItems MarketplaceOrderItem[]
   reviews    MarketplaceReview[]

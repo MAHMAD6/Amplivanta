@@ -57,6 +57,42 @@ export function AddToCartButton({ productId, priceCents, currency }: { productId
   );
 }
 
+/**
+ * Buy Now — add to cart, then go straight to checkout.
+ *
+ * It is deliberately the same code path as Add to Cart: one cart, one
+ * checkout, one order-creation route. Nothing here grants access; that only
+ * happens once a payment provider confirms.
+ */
+export function BuyNowButton({ productId }: { productId: string }) {
+  const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  return (
+    <div>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          start(async () => {
+            const res = await addToCart(productId);
+            if (res.ok) {
+              router.push("/app/marketplace/checkout");
+              return;
+            }
+            setM({ ok: false, text: res.error });
+          })
+        }
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-violet px-5 text-[14px] font-bold text-white transition hover:opacity-90 disabled:opacity-60"
+      >
+        {pending && <Loader2 className="h-4 w-4 animate-spin" />} Buy Now
+      </button>
+      <Msg m={m} />
+    </div>
+  );
+}
+
 export function CartLines({ lines, currency, subtotalCents }: { lines: CheckoutLine[]; currency: string; subtotalCents: number }) {
   const [m, setM] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();

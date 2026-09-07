@@ -79,6 +79,53 @@ export async function applyToSell(formData: FormData): Promise<MpResult> {
 }
 
 /** Create a product draft owned by the signed-in seller. */
+/**
+ * Listing presentation and SEO fields shared by create and update.
+ *
+ * All of it is seller-authored — the marketplace never invents an SEO title,
+ * a meta description or alt text on a seller's behalf.
+ *
+ * Only keys the submitted form actually carries are returned. The inline edit
+ * form on the products list posts a handful of fields; without this check it
+ * would blank every listing and SEO value the wizard had captured.
+ */
+function listingFields(formData: FormData) {
+  const out: Record<string, unknown> = {};
+
+  const list = (key: string) => {
+    if (!formData.has(key)) return;
+    out[key] = String(formData.get(key) ?? "")
+      .split(/[\n,]/)
+      .map((v) => v.trim())
+      .filter(Boolean);
+  };
+  const text = (key: string, max: number) => {
+    if (!formData.has(key)) return;
+    const v = String(formData.get(key) ?? "").trim();
+    out[key] = v ? v.slice(0, max) : null;
+  };
+
+  if (formData.has("language")) {
+    out.language = String(formData.get("language") ?? "").trim() || "English";
+  }
+  if (formData.has("allowIndexing")) {
+    out.allowIndexing = String(formData.get("allowIndexing")) !== "false";
+  }
+
+  list("highlights");
+  list("perfectFor");
+  list("galleryImages");
+  list("galleryImageAlts");
+  list("keywords");
+  text("coverImage", 2048);
+  text("coverImageAlt", 125);
+  text("seoTitle", 60);
+  text("metaDescription", 160);
+  text("primaryKeyword", 120);
+
+  return out;
+}
+
 export async function createProduct(formData: FormData): Promise<MpResult> {
   const viewer = await getMarketplaceViewer();
   const gate = guardMarketplace(viewer, {
@@ -127,6 +174,7 @@ export async function createProduct(formData: FormData): Promise<MpResult> {
             .split(",")
             .map((t) => t.trim())
             .filter(Boolean),
+          ...listingFields(formData),
         },
       });
       // Version 1 carries the commercial terms; later edits publish new versions.
@@ -566,6 +614,7 @@ export async function updateProduct(productId: string, formData: FormData): Prom
           description: String(formData.get("description") ?? "").trim() || null,
           categoryId: String(formData.get("categoryId") ?? "").trim() || null,
           tags: String(formData.get("tags") ?? "").split(",").map((t) => t.trim()).filter(Boolean),
+          ...listingFields(formData),
         },
       });
       // Price lives on the version, and a draft version is still editable.
