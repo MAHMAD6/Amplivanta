@@ -12,6 +12,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Public site palette, from the approved HTML handoff. Kept as its own
+        // family so restyling the marketing surface cannot disturb the signed-in
+        // app or the admin console, which use the tokens below.
+        site: {
+          navy: "#071F45",
+          ink: "#0A1835",
+          muted: "#5E6A80",
+          line: "#E4E9F4",
+          soft: "#F6F8FC",
+          purple: "#5537F2",
+          "purple-2": "#7A42F4",
+          blue: "#2C4FFF",
+          green: "#1EAD78",
+          orange: "#FF6A00",
+          "cta-from": "#08295c",
+          "cta-mid": "#0a3e8c",
+          "cta-to": "#1d2f79",
+        },
         // Marketing palette (marketing pages) — restored after identity transition
         "deep-navy": "#0B2350",
         "royal-blue": "#1D5FD6",
