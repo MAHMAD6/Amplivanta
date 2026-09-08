@@ -121,3 +121,22 @@ export const INDUSTRY_PAGES: IndustryPage[] = [
 ];
 
 export const INDUSTRY_BY_SLUG = new Map(INDUSTRY_PAGES.map((p) => [p.slug, p]));
+
+/** The Industries index, which the reference builds from the same blocks. */
+export const INDUSTRY_OVERVIEW = {
+  eyebrow: "INDUSTRIES",
+  h1: "Industry-specific workflows, built on one connected platform.",
+  lead: "Amplivanta brings planning, content, campaigns, CRM, automation, social publishing, and analytics into one workspace. Explore practical ways these capabilities can support different marketing and growth workflows.",
+  actions: [["Explore Industries", "/signup"], ["Book a Demo", "/book-demo"]],
+  visualTitle: "One platform, different operating contexts",
+  visualItems: ["Plan and prioritize", "Create and organize", "Execute through connected modules", "Review available results"],
+  useTitle: "Explore by industry",
+  useLead: "Choose the industry closest to your workflow and operating context.",
+  useCards: [["Technology", "Coordinate product marketing, demand generation, content, pipeline activity, and reporting.", "Technology →"], ["Professional Services", "Organize service marketing, inquiries, client outreach, content, and pipeline work.", "Professional Services →"], ["E-commerce", "Coordinate product content, campaigns, customer engagement, channel activity, and reporting.", "E-commerce →"], ["Healthcare", "Support marketing, educational content, community outreach, inquiry management, and reporting.", "Healthcare →"], ["Real Estate", "Coordinate listing promotion, lead capture, marketing assets, publishing, and campaign reporting.", "Real Estate →"]],
+  capTitle: "How Amplivanta capabilities can support this work",
+  capLead: "Use only the modules, integrations, data, and channels that are actually enabled and configured.",
+  capCards: [["AI Advisor", "Review available context and generate suggested next steps that users can evaluate before acting."], ["Marketing Automation", "Build campaigns and workflows using configured triggers, audiences, content, and actions."], ["CRM & Pipelines", "Manage contacts, companies, deals, pipeline stages, activities, and tasks."], ["Social Publishing", "Create, approve, schedule, publish, and review social content for connected accounts."], ["Creative Studio", "Create and organize images, video, graphics, documents, social posts, and brand assets."], ["Analytics & Reports", "Review available campaign, channel, CRM, content, and attribution data where supported."], ["Integrations", "Connect supported external tools and data sources through configured integrations."]],
+  flowTitle: "A common operating pattern",
+  flowLead: "The details change by industry, but the core workflow remains connected.",
+  steps: [["Define the objective", "Clarify the audience, offer, service, product, or campaign context."], ["Prepare the work", "Organize content, assets, contacts, and campaign requirements."], ["Execute", "Use the relevant Amplivanta modules for the work being performed."], ["Measure", "Review available campaign, content, CRM, and channel results."], ["Refine", "Use what is available to decide what to adjust next."]],
+} as const;

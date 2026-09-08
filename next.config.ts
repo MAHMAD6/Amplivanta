@@ -26,6 +26,50 @@ const nextConfig: NextConfig = {
    */
   async redirects() {
     return [
+      // ---------------------------------------------------------------
+      // Public information architecture, per the approved design handoff.
+      // The handoff renames several destinations; the old URLs redirect so
+      // existing links and bookmarks keep working.
+      // ---------------------------------------------------------------
+      { source: "/blog", destination: "/resources/blog", permanent: true },
+      { source: "/blog/:slug", destination: "/resources/blog/:slug", permanent: true },
+      { source: "/help", destination: "/resources/help-center", permanent: true },
+      { source: "/affiliates", destination: "/affiliate-program", permanent: true },
+      { source: "/affiliates/:path*", destination: "/affiliate-program", permanent: true },
+      { source: "/demo", destination: "/book-demo", permanent: true },
+      { source: "/security", destination: "/trust", permanent: true },
+      { source: "/careers", destination: "/company/careers", permanent: true },
+      { source: "/platform/crm", destination: "/platform/crm-pipelines", permanent: true },
+      { source: "/platform/analytics", destination: "/platform/analytics-reports", permanent: true },
+
+      // The Solutions section is restructured into four pages; the previous
+      // ten slugs redirect to the closest replacement rather than 404.
+      { source: "/solutions/marketing-automation", destination: "/solutions/growth-marketing", permanent: true },
+      { source: "/solutions/social-publishing", destination: "/solutions/growth-marketing", permanent: true },
+      { source: "/solutions/crm-pipeline", destination: "/solutions/revenue-acceleration", permanent: true },
+      { source: "/solutions/enterprises", destination: "/solutions/revenue-acceleration", permanent: true },
+      { source: "/solutions/startups", destination: "/solutions/growth-marketing", permanent: true },
+      { source: "/solutions/business-type", destination: "/solutions", permanent: true },
+      { source: "/solutions/use-case", destination: "/solutions", permanent: true },
+      { source: "/solutions/growth-intelligence", destination: "/solutions/ai-workflows", permanent: true },
+      { source: "/solutions/creative-studio", destination: "/solutions/brand-intelligence", permanent: true },
+      { source: "/solutions/analytics-reports", destination: "/solutions/revenue-acceleration", permanent: true },
+
+      // Industry slugs the reference does not carry forward.
+      { source: "/industries/saas", destination: "/industries/technology", permanent: true },
+      { source: "/industries/agencies", destination: "/industries/professional-services", permanent: true },
+      { source: "/industries/education", destination: "/industries", permanent: true },
+      { source: "/industries/financial-services", destination: "/industries", permanent: true },
+      { source: "/industries/manufacturing", destination: "/industries", permanent: true },
+
+      // Resource slugs replaced by the reference's five.
+      { source: "/resources/guides", destination: "/resources/help-center", permanent: true },
+      { source: "/resources/case-studies", destination: "/resources/blog", permanent: true },
+      { source: "/resources/growth-engineering-playbook", destination: "/resources/blog", permanent: true },
+
+      // Company routes that moved under /company.
+      { source: "/company/press", destination: "/company/about", permanent: true },
+
       // The Super Admin console moved to /admin; keep old links working.
       { source: "/super", destination: "/admin", permanent: false },
       { source: "/super/:path*", destination: "/admin/:path*", permanent: false },

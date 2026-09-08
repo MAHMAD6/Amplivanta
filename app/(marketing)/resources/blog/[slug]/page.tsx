@@ -34,7 +34,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   return (
     <article className="bg-white py-12">
       <div className="mx-auto max-w-[820px] px-4 lg:px-8">
-        <MarketingBreadcrumb items={[["Home", "/"], ["Blog", "/blog"], [post.title, null]]} />
+        <MarketingBreadcrumb items={[["Home", "/"], ["Blog", "/resources/blog"], [post.title, null]]} />
 
         <div className="mt-6 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-violet">
           {post.tag}
@@ -94,7 +94,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {more.map((p) => (
               <Link
                 key={p.slug}
-                href={`/blog/${p.slug}`}
+                href={`/resources/blog/${p.slug}`}
                 className="group flex flex-col rounded-2xl border border-line bg-white p-5 shadow-card transition hover:-translate-y-1 hover:border-violet/30 hover:shadow-card-lg"
               >
                 <div className="text-[11px] font-bold uppercase tracking-wider text-violet">{p.tag}</div>

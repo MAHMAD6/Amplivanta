@@ -3,14 +3,11 @@ import { SITE_URL } from "@/lib/constants";
 import { BLOG_POSTS } from "@/lib/blog-posts";
 import { LEGAL_DOCS } from "@/lib/legal-docs";
 import { MARKETPLACE_LEGAL_DOCS } from "@/lib/marketplace-legal-docs";
-import {
-  COMPANY_PAGES,
-  INDUSTRY_PAGES,
-  MODULE_PAGES,
-  RESOURCE_PAGES,
-  SOLUTION_PAGES,
-} from "@/lib/marketing-modules";
-import { SOLUTION_DETAIL_PAGES } from "@/lib/solution-pages";
+import { COMPANY_PAGES } from "@/lib/marketing-modules";
+import { PLATFORM_PAGES } from "@/lib/site-platform";
+import { SOLUTION_PAGES } from "@/lib/site-solutions";
+import { INDUSTRY_PAGES } from "@/lib/site-industries";
+import { RESOURCE_PAGES } from "@/lib/site-resources";
 import { indexablePublicProductSlugs } from "@/lib/server/public-marketplace";
 
 /**
@@ -27,26 +24,27 @@ const STATIC_ROUTES = [
   "/pricing",
   "/platform",
   "/solutions",
-  "/solutions/marketing-automation",
-  "/solutions/crm-pipeline",
   "/industries",
   "/resources",
   "/company",
-  "/blog",
-  "/careers",
+  "/resources/blog",
+  "/company/careers",
   "/contact",
-  "/demo",
-  "/help",
-  "/security",
+  "/book-demo",
+  "/resources/help-center",
+  "/trust",
   "/community",
   "/partners",
   "/partners/apply",
   "/partners/terms",
-  "/affiliates",
-  "/affiliates/apply",
-  "/affiliates/terms",
+  "/affiliate-program",
   "/legal",
   "/marketplace",
+  "/marketplace/categories",
+  "/marketplace/sell",
+  "/privacy-choices",
+  "/accessibility",
+  "/sitemap",
   "/legal/dpa",
   "/login",
   "/signup",
@@ -56,15 +54,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
 
   const dynamic = [
-    ...BLOG_POSTS.map((p) => `/blog/${p.slug}`),
-    ...Object.keys(SOLUTION_DETAIL_PAGES).map((slug) => `/solutions/${slug}`),
-    ...Object.keys(SOLUTION_PAGES).map((slug) => `/solutions/${slug}`),
-    ...Object.keys(MODULE_PAGES).map((slug) => `/platform/${slug}`),
-    ...Object.keys(INDUSTRY_PAGES).map((slug) => `/industries/${slug}`),
+    ...BLOG_POSTS.map((p) => `/resources/blog/${p.slug}`),
+    ...SOLUTION_PAGES.map((p) => `/solutions/${p.slug}`),
+    ...PLATFORM_PAGES.map((p) => `/platform/${p.slug}`),
+    ...INDUSTRY_PAGES.map((p) => `/industries/${p.slug}`),
+    ...RESOURCE_PAGES.map((p) => `/resources/${p.slug}`),
     ...Object.keys(COMPANY_PAGES).map((slug) => `/company/${slug}`),
-    ...Object.keys(RESOURCE_PAGES)
-      .filter((slug) => slug !== "index")
-      .map((slug) => `/resources/${slug}`),
     ...Object.keys(LEGAL_DOCS).map((slug) => `/legal/${slug}`),
     ...Object.keys(MARKETPLACE_LEGAL_DOCS).map((slug) => `/legal/${slug}`),
     "/legal/cookies",
