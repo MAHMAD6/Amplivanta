@@ -83,6 +83,82 @@ export async function loadBilling(): Promise<BillingData> {
   }
 }
 
+export const USAGE_METRICS = [
+  "aiCredits",
+  "emailSends",
+  "storage",
+  "contacts",
+  "automations",
+  "connectedAccounts",
+] as const;
+export type UsageMetric = (typeof USAGE_METRICS)[number];
+
+export interface UsageOverview {
+  live: boolean;
+  planName: string | null;
+  period: { start: Date; end: Date } | null;
+  /** Limit per metric from the plan's `limits` JSON; null when the plan does not set one. */
+  limits: Record<UsageMetric, number | null>;
+  /**
+   * Metered consumption per metric. There is no metering pipeline yet, so
+   * these stay null and the page shows "Not available yet" rather than an
+   * estimate. Wire real sources in here when they exist.
+   */
+  used: Record<UsageMetric, number | null>;
+  grants: { id: string; type: string; amount: number | null; days: number | null; reason: string; createdAt: Date }[];
+}
+
+const nullMetrics = () =>
+  Object.fromEntries(USAGE_METRICS.map((m) => [m, null])) as Record<UsageMetric, number | null>;
+
+/** Plan period, plan limits and credit grants for the Usage & Credits page. */
+export async function loadUsageOverview(): Promise<UsageOverview> {
+  const empty: UsageOverview = {
+    live: false, planName: null, period: null, limits: nullMetrics(), used: nullMetrics(), grants: [],
+  };
+  const ctx = await ctxOrNull();
+  if (!ctx) return empty;
+  try {
+    const [subscription, grants] = await Promise.all([
+      db.subscription.findFirst({
+        where: { workspaceId: ctx.workspaceId },
+        include: { plan: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      ctx.userId
+        ? db.creditAdjustment.findMany({ where: { userId: ctx.userId }, orderBy: { createdAt: "desc" }, take: 20 })
+        : Promise.resolve([]),
+    ]);
+
+    const limits = nullMetrics();
+    const raw = subscription?.plan?.limits;
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      for (const m of USAGE_METRICS) {
+        const v = (raw as Record<string, unknown>)[m];
+        if (typeof v === "number" && Number.isFinite(v)) limits[m] = v;
+      }
+    }
+
+    return {
+      live: true,
+      planName: subscription?.plan?.name ?? null,
+      period: subscription ? { start: subscription.currentPeriodStart, end: subscription.currentPeriodEnd } : null,
+      limits,
+      used: nullMetrics(),
+      grants: grants.map((g) => ({
+        id: g.id,
+        type: g.grantType.replace(/_/g, " ").toLowerCase(),
+        amount: g.amount,
+        days: g.days,
+        reason: g.reason,
+        createdAt: g.createdAt,
+      })),
+    };
+  } catch {
+    return empty;
+  }
+}
+
 /** Workspace pipeline stages as {value:id,label:name} for form selects. Empty when unauthenticated. */
 export async function loadStageOptions(): Promise<{ value: string; label: string }[]> {
   const ctx = await ctxOrNull();
