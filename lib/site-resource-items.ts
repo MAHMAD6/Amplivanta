@@ -69,8 +69,26 @@ export const RESOURCE_TEMPLATES: TemplateItem[] = [];
 export const HELP_ARTICLES: HelpArticle[] = [];
 
 /** Listing entries for a Resources section, in a shape the index can render. */
-export function resourceListing(section: string): { title: string; summary: string; href: string }[] {
-  const map: Record<string, { slug: string; title: string; summary: string }[]> = {
+export type ListingEntry = {
+  title: string;
+  summary: string;
+  href: string;
+  topic?: string;
+  date?: string;
+  /** Quick-filter label the index chips match on (webinar status). */
+  tag?: string;
+};
+
+const WEBINAR_TAG: Record<WebinarStatus, string> = {
+  upcoming: "Upcoming",
+  "registration-open": "Upcoming",
+  "registration-closed": "Upcoming",
+  completed: "On-demand",
+  replay: "On-demand",
+};
+
+export function resourceListing(section: string): ListingEntry[] {
+  const map: Record<string, { slug: string; title: string; summary: string; topic?: string; publishedLabel?: string; scheduleLabel?: string; status?: WebinarStatus }[]> = {
     videos: RESOURCE_VIDEOS,
     webinars: RESOURCE_WEBINARS,
     templates: RESOURCE_TEMPLATES,
@@ -80,5 +98,8 @@ export function resourceListing(section: string): { title: string; summary: stri
     title: i.title,
     summary: i.summary,
     href: `/resources/${section}/${i.slug}`,
+    topic: i.topic,
+    date: i.publishedLabel ?? i.scheduleLabel,
+    tag: i.status ? WEBINAR_TAG[i.status] : i.topic,
   }));
 }

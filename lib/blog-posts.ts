@@ -15,6 +15,8 @@ export type BlogPost = {
   author: string;
   date: string;
   tag: string;
+  /** One of the blog's topic cards, used by the library filter. */
+  topic: string;
   readMinutes: number;
   intro: string;
   sections: BlogSection[];
@@ -28,6 +30,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: "Alex Johnson",
     date: "Aug 10, 2026",
     tag: "Strategy",
+    topic: "Growth Strategy",
     readMinutes: 7,
     intro:
       "A funnel spends attention to produce a customer. A loop spends a customer to produce more attention. That single difference decides whether your acquisition costs rise every quarter or fall.",
@@ -75,6 +78,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: "Priya Ramesh",
     date: "Aug 7, 2026",
     tag: "AI",
+    topic: "AI & Workflows",
     readMinutes: 9,
     intro:
       "Two years of production experience has sorted AI's lifecycle claims into three piles: reliably useful, useful with supervision, and still a liability. Here is where each line falls today.",
@@ -127,6 +131,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: "Sarah Chen",
     date: "Aug 3, 2026",
     tag: "Analytics",
+    topic: "Analytics",
     readMinutes: 8,
     intro:
       "Attribution arguments are rarely about statistics. They are about whether the marketing team's numbers and the finance team's numbers can be reconciled in the same meeting. That is a solvable problem, and it does not require a perfect model.",
@@ -172,6 +177,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: "Marcus Lee",
     date: "Jul 28, 2026",
     tag: "PLG",
+    topic: "Growth Strategy",
     readMinutes: 6,
     intro:
       "Most product-qualified lead scores are demographic models wearing a product-usage costume. The signals below are the ones that repeatedly survive validation across self-serve products.",
@@ -218,6 +224,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: "Emily Davis",
     date: "Jul 22, 2026",
     tag: "Automation",
+    topic: "Marketing Automation",
     readMinutes: 6,
     intro:
       "Automation failures are rarely loud. They are workflows that run correctly for months while producing a slightly worse outcome than doing nothing. These eight show up most often.",
@@ -252,6 +259,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: "Daniel Williams",
     date: "Jul 15, 2026",
     tag: "CRO",
+    topic: "Analytics",
     readMinutes: 7,
     intro:
       "Most landing page tests are unreadable before they launch. The sample size was never going to be sufficient, the metric was chosen after the fact, or the variant changed six things at once. A short pre-launch checklist prevents nearly all of it.",
