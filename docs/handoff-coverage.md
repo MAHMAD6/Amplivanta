@@ -219,12 +219,50 @@ would bill 396.96 where the reference bills 396.90.
 
 **Marketplace.** Content Creation disclosure (Human-created / AI-assisted /
 Primarily AI-generated) is required on every new listing — enum, wizard field,
-server check, and a badge on both product pages. `/marketplace/checkout` is the
-public sign-in gate.
+server check, and a badge on both product pages.
+
+The public storefront follows the eight reference screens: home (search bar,
+hero, six type tiles, info strip), Browse Products (Product Type / License /
+Creation filters and sort), category collections, product detail (price card,
+facts, wishlist / share / promote, section tabs), a public seller store,
+Sell on Amplivanta, cart, and the checkout sign-in gate. Collections are the
+six `MarketplaceProductType` values (`lib/marketplace/storefront.ts`), so none
+needs admin setup or can show a category that holds nothing. Every filter is a
+GET form, so results work before hydration and have shareable URLs. Buying,
+carting and wishlisting send a signed-out visitor to sign in and back to the
+in-app page; a signed-in visitor to `/marketplace/cart` or `/checkout` goes
+straight to the real one. Only approved sellers have a public store.
 
 **Resources.** Blog renders real posts. Videos, webinars, templates and Help
 Center read deliberately empty registries in `lib/site-resource-items.ts`; the
 reference forbids sample content and there is no public content source yet.
+Each index has the reference's library panel — hero search, topic cards that
+filter it, search / topic / sort controls, quick-filter chips on webinars and
+Help Center, and a no-results state distinct from "nothing published". The
+unfiltered listing is the Suspense fallback, so it is in the server HTML.
+
+**Header.** Matches the locked master header: Platform, Solutions,
+Marketplace, Resources, Pricing, Company, Help. Industries is not in it; those
+pages remain reachable from the homepage and sitemap.
+
+**Button classes live in `components/marketing/site-buttons.ts`.** They were
+exported from `site-shell.tsx`, which is `"use client"`. A server component
+importing a constant from a client module receives a client reference, not
+the string, so every server page rendered its buttons unstyled. Typecheck and
+build both pass in that state; the symptom is `Attempted to call btnPrimary()`
+inside a `class` attribute in the HTML. Keep shared constants out of client
+modules.
+
+**Usage & Credits** (`/app/usage-credits`) follows the reference layout.
+`loadUsageOverview()` reads the real billing period and any numeric limits in
+the plan's `limits` JSON. There is no metering pipeline, so usage values are
+null and render as "Not available yet" rather than estimates; wire sources in
+that loader when they exist.
+
+**Not yet compared screen by screen:** the in-app Marketplace buyer (3), seller
+(11) and Super Admin (8) screens from the final polished set. Those routes were
+built from the earlier Marketplace package and exist; this pass did not diff
+them against the updated screenshots.
 
 **404s.** The root `app/loading.tsx` is gone: its Suspense boundary made
 unknown slugs stream HTTP 200 with the not-found page. With it removed,
