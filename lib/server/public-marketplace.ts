@@ -1,6 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/constants";
+import { isContentCreation } from "@/lib/marketplace/content-creation";
+import { STANDARD_LICENSE, type StoreType } from "@/lib/marketplace/storefront";
 
 /**
  * Public, unauthenticated view of the Marketplace catalogue.
@@ -25,7 +27,21 @@ export type PublicProductCard = {
   coverImageAlt: string | null;
   categoryName: string | null;
   sellerName: string;
+  sellerSlug: string;
   priceLabel: string;
+  priceCents: number | null;
+};
+
+export type CatalogueQuery = {
+  categorySlug?: string;
+  take?: number;
+  q?: string;
+  types?: StoreType[];
+  creation?: string[];
+  /** "standard" | "other" — matched against the latest version's licence. */
+  licenses?: string[];
+  sellerSlug?: string;
+  sort?: string;
 };
 
 const priceLabel = (v: { priceCents: number; currency: string } | undefined) => {
@@ -36,13 +52,28 @@ const priceLabel = (v: { priceCents: number; currency: string } | undefined) => 
   );
 };
 
-export async function loadPublicCatalogue(opts: { categorySlug?: string; take?: number } = {}) {
+export async function loadPublicCatalogue(opts: CatalogueQuery = {}) {
+  const q = opts.q?.trim();
+  const creation = (opts.creation ?? []).filter(isContentCreation);
   try {
     const [rows, categories] = await Promise.all([
       prisma.marketplaceProduct.findMany({
         where: {
           status: "PUBLISHED",
           ...(opts.categorySlug ? { category: { slug: opts.categorySlug } } : {}),
+          ...(opts.types?.length ? { type: { in: opts.types } } : {}),
+          ...(creation.length ? { contentCreation: { in: creation } } : {}),
+          ...(opts.sellerSlug ? { seller: { slug: opts.sellerSlug } } : {}),
+          ...(q
+            ? {
+                OR: [
+                  { title: { contains: q, mode: "insensitive" as const } },
+                  { summary: { contains: q, mode: "insensitive" as const } },
+                  { seller: { storeName: { contains: q, mode: "insensitive" as const } } },
+                  { category: { name: { contains: q, mode: "insensitive" as const } } },
+                ],
+              }
+            : {}),
         },
         orderBy: { publishedAt: "desc" },
         take: opts.take ?? 48,
@@ -50,8 +81,12 @@ export async function loadPublicCatalogue(opts: { categorySlug?: string; take?: 
           id: true, slug: true, title: true, summary: true,
           coverImage: true, coverImageAlt: true,
           category: { select: { name: true } },
-          seller: { select: { storeName: true } },
-          versions: { orderBy: { version: "desc" }, take: 1, select: { priceCents: true, currency: true } },
+          seller: { select: { storeName: true, slug: true } },
+          versions: {
+            orderBy: { version: "desc" },
+            take: 1,
+            select: { priceCents: true, currency: true, licenseVersion: true },
+          },
         },
       }),
       prisma.marketplaceCategory.findMany({
@@ -61,7 +96,16 @@ export async function loadPublicCatalogue(opts: { categorySlug?: string; take?: 
       }),
     ]);
 
-    const products: PublicProductCard[] = rows.map((r) => ({
+    // Licence lives on the version, so it is filtered after the query.
+    const licenses = opts.licenses ?? [];
+    const licensed = licenses.length
+      ? rows.filter((r) => {
+          const standard = r.versions[0]?.licenseVersion === STANDARD_LICENSE;
+          return (standard && licenses.includes("standard")) || (!standard && licenses.includes("other"));
+        })
+      : rows;
+
+    const products: PublicProductCard[] = licensed.map((r) => ({
       id: r.id,
       slug: r.slug,
       title: r.title,
@@ -70,8 +114,17 @@ export async function loadPublicCatalogue(opts: { categorySlug?: string; take?: 
       coverImageAlt: r.coverImageAlt,
       categoryName: r.category?.name ?? null,
       sellerName: r.seller.storeName,
+      sellerSlug: r.seller.slug,
       priceLabel: priceLabel(r.versions[0]),
+      priceCents: r.versions[0]?.priceCents ?? null,
     }));
+
+    // Prices can be in different currencies; this orders by amount only,
+    // which is the best available without an exchange-rate source.
+    if (opts.sort === "price-asc" || opts.sort === "price-desc") {
+      const dir = opts.sort === "price-asc" ? 1 : -1;
+      products.sort((a, b) => ((a.priceCents ?? Infinity) - (b.priceCents ?? Infinity)) * dir);
+    }
 
     return { connected: true, products, categories };
   } catch {
@@ -98,6 +151,17 @@ export function loadPublicProduct(slug: string) {
         },
       },
     },
+  });
+}
+
+/**
+ * A seller's public store. Only approved sellers have one; applicants,
+ * suspended and closed stores are not addressable.
+ */
+export async function loadPublicStore(slug: string) {
+  return prisma.marketplaceSeller.findFirst({
+    where: { slug, status: "APPROVED" },
+    select: { storeName: true, slug: true, headline: true, bio: true, approvedAt: true },
   });
 }
 

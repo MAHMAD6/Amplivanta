@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { btn } from "@/components/marketing/site-shell";
+import { btn } from "@/components/marketing/site-buttons";
 import { Crumb, Eyebrow, InfoCard, Note } from "@/components/marketing/site-ui";
 import { RESOURCE_VIDEOS } from "@/lib/site-resource-items";
 

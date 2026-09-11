@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { btn, btnPrimary } from "@/components/marketing/site-shell";
+import { btn, btnPrimary } from "@/components/marketing/site-buttons";
 import { Crumb, Hero, InfoCard, Note, Panel, Section, Split } from "@/components/marketing/site-ui";
 
 export const metadata: Metadata = {

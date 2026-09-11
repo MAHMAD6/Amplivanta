@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { btnPrimary } from "@/components/marketing/site-shell";
+import { btnPrimary } from "@/components/marketing/site-buttons";
 import { Crumb, Eyebrow, HeroVisual, Section } from "@/components/marketing/site-ui";
 import { LibraryView, ResourceLibrary, type LibraryItem } from "@/components/marketing/resource-library";
 import { RESOURCE_BY_SLUG, RESOURCE_PAGES } from "@/lib/site-resources";

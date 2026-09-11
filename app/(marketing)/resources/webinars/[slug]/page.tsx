@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { btn, btnPrimary } from "@/components/marketing/site-shell";
+import { btn, btnPrimary } from "@/components/marketing/site-buttons";
 import { Crumb, EmptyState, Eyebrow, InfoCard, Section, StatusChip } from "@/components/marketing/site-ui";
 import { RESOURCE_WEBINARS, type WebinarStatus } from "@/lib/site-resource-items";
 

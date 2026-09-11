@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LogoMark } from "@/components/layout/LogoMark";
 import { cn } from "@/lib/utils";
 import { SiteMobileNav } from "./site-mobile-nav";
+import { btn, btnPrimary, btnSmall } from "./site-buttons";
 
 /**
  * Public marketing shell, rebuilt in Tailwind from the approved design
@@ -20,25 +21,22 @@ export type NavKey =
   | "pricing"
   | "resources"
   | "company"
+  | "help"
   | null;
 
+// Order and items follow the locked master header in the handoff. Industries
+// is not in it; those pages stay reachable from the homepage and sitemap.
 export const PRIMARY_NAV: { key: Exclude<NavKey, null>; label: string; href: string }[] = [
   { key: "platform", label: "Platform", href: "/platform" },
   { key: "solutions", label: "Solutions", href: "/solutions" },
-  { key: "industries", label: "Industries", href: "/industries" },
   { key: "marketplace", label: "Marketplace", href: "/marketplace" },
-  { key: "pricing", label: "Pricing", href: "/pricing" },
   { key: "resources", label: "Resources", href: "/resources" },
+  { key: "pricing", label: "Pricing", href: "/pricing" },
   { key: "company", label: "Company", href: "/company" },
+  { key: "help", label: "Help", href: "/resources/help-center" },
 ];
 
-export const btn =
-  "inline-flex items-center justify-center whitespace-nowrap rounded-[10px] border border-[#D7DDF0] bg-white px-6 py-[15px] text-[16px] font-bold text-site-ink transition hover:bg-site-soft";
-export const btnPrimary =
-  "inline-flex items-center justify-center whitespace-nowrap rounded-[10px] border-0 bg-gradient-to-r from-site-blue to-site-purple-2 px-6 py-[15px] text-[16px] font-bold text-white shadow-[0_10px_30px_rgba(86,55,242,0.18)] transition hover:opacity-95";
-export const btnSmall = "px-4 py-[11px] text-[13px]";
-export const btnDisabled =
-  "pointer-events-none border-[#E1E6F0] bg-[#F3F5F9] text-[#7B879D] shadow-none";
+export { btn, btnPrimary, btnSmall, btnDisabled } from "./site-buttons";
 
 function Brand({ className }: { className?: string }) {
   return (
@@ -63,6 +61,7 @@ export function navKeyForPath(pathname: string): NavKey {
   if (pathname.startsWith("/industries")) return "industries";
   if (pathname.startsWith("/marketplace")) return "marketplace";
   if (pathname.startsWith("/pricing")) return "pricing";
+  if (pathname.startsWith("/resources/help-center")) return "help";
   if (pathname.startsWith("/resources")) return "resources";
   // Partners, the affiliate program and contact all sit under Company.
   if (/^\/(company|partners|affiliate-program|contact|careers)/.test(pathname)) return "company";

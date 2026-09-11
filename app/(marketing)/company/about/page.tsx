@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SitePage } from "@/components/marketing/site-shell";
-import { btn, btnPrimary } from "@/components/marketing/site-shell";
+import { btn, btnPrimary } from "@/components/marketing/site-buttons";
 import {
   Card,
   CardGrid,

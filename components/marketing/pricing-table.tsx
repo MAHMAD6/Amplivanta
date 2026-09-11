@@ -14,7 +14,7 @@ import {
   money,
   monthlyPrice,
 } from "@/lib/site-pricing";
-import { btn } from "./site-shell";
+import { btn } from "./site-buttons";
 import { cn } from "@/lib/utils";
 
 /**

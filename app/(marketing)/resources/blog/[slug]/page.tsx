@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { btn, btnPrimary } from "@/components/marketing/site-shell";
+import { btn, btnPrimary } from "@/components/marketing/site-buttons";
 import { Card, CardGrid, Crumb, Eyebrow, InfoCard, Section } from "@/components/marketing/site-ui";
 import { BLOG_POSTS, BLOG_POST_BY_SLUG } from "@/lib/blog-posts";
 

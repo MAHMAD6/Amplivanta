@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { Field, FormGrid, inputClass } from "./site-ui";
-import { btnPrimary } from "./site-shell";
+import { btnPrimary } from "./site-buttons";
 
 const TOPICS = ["Product question", "Demo", "Partnership", "Affiliate Program", "Other"];
 

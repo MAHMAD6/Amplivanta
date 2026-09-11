@@ -1,83 +1,93 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { btn, btnPrimary } from "@/components/marketing/site-shell";
-import {
-  Card,
-  CardGrid,
-  Crumb,
-  Hero,
-  HeroVisual,
-  InfoCard,
-  Note,
-  Panel,
-  Section,
-} from "@/components/marketing/site-ui";
+import { CircleCheck } from "lucide-react";
+import { btn, btnPrimary } from "@/components/marketing/site-buttons";
+import { IconTile, StoreHead } from "@/components/marketing/storefront";
 
 export const metadata: Metadata = {
   title: "Sell on Amplivanta",
   description:
-    "Publish downloadable marketing products to the Amplivanta Marketplace. Seller applications are reviewed before a store goes live.",
+    "Apply to become a Marketplace seller, publish eligible digital products, and manage listings through your Amplivanta account.",
 };
 
+const APPLY = "/app/marketplace/sell";
+
 const STEPS = [
-  ["Apply to sell", "Submit a seller application with your store name and what you intend to publish."],
-  ["Build the listing", "Add the product, its media, pricing, licence and the deliverable buyers receive."],
-  ["Submit for review", "A Marketplace admin reviews the listing and its files before anything is published."],
-  ["Publish and get paid", "Approved listings go live. Earnings and payouts follow the operator's configured terms."],
+  ["Apply", "Tell us about your store and the products you plan to offer."],
+  ["Review", "Marketplace eligibility and submitted information are reviewed."],
+  ["Set up", "Approved sellers complete any required store, payout, and policy setup."],
+  ["List products", "Create listings and submit products for applicable review before publication."],
 ];
 
 export default function SellOnAmplivantaPage() {
+  const next = encodeURIComponent(APPLY);
+  const before: [string, React.ReactNode][] = [
+    [
+      "Seller terms",
+      <>
+        Review the{" "}
+        <Link href="/legal/marketplace-seller-agreement" className="text-site-purple hover:underline">Seller Agreement</Link>,{" "}
+        Product &amp; Content Policy, and applicable{" "}
+        <Link href="/legal/marketplace-terms" className="text-site-purple hover:underline">Marketplace terms</Link>.
+      </>,
+    ],
+    [
+      "AI-created products",
+      "AI-generated and AI-assisted products may be permitted when rights, disclosure, quality, and policy requirements are met.",
+    ],
+    [
+      "Fees & payouts",
+      "Current commission, payout timing, methods, thresholds, currencies, and fees are shown from production configuration.",
+    ],
+    [
+      "Rights & licenses",
+      "Sellers must have sufficient rights to every product component and provide accurate license information.",
+    ],
+  ];
+
   return (
     <>
-      <Crumb items={["Home", "Marketplace", "Sell on Amplivanta"]} />
-      <Hero
-        eyebrow="MARKETPLACE"
-        title="Publish your work to the Amplivanta Marketplace."
-        lead="Sell templates, graphics, documents and toolkits to Amplivanta users. Every listing is reviewed before it goes live, and every purchase records the exact version the buyer received."
-        actions={
-          <>
-            <Link className={btnPrimary} href="/signup">Create an account to sell</Link>
-            <Link className={btn} href="/legal/marketplace-seller-agreement">Read the Seller Agreement</Link>
-          </>
-        }
-        aside={
-          <HeroVisual
-            title="What selling involves"
-            items={[
-              "Seller application",
-              "Product listing",
-              "Deliverable upload",
-              "Admin review",
-              "Publishing",
-              "Earnings & payouts",
-            ]}
-          />
-        }
+      <StoreHead
+        crumbs={["Marketplace", "Sell on Amplivanta"]}
+        title="Sell digital marketing resources on Amplivanta"
+        lead="Apply to become a Marketplace seller, publish eligible digital products, and manage listings through your Amplivanta account."
       />
+      <div className="flex flex-wrap gap-3.5">
+        <Link href={`/login?next=${next}`} className={`${btnPrimary} px-10 py-3.5`}>Sign in to Apply</Link>
+        <Link href={`/signup?next=${next}`} className={`${btn} px-10 py-3.5`}>Create Account</Link>
+      </div>
 
-      <Section
-        title="How it works"
-        lead="Four steps from application to a published listing."
-      >
-        <CardGrid cols={4}>
+      <section className="mt-12">
+        <h2 className="m-0 mb-4 text-[22px] font-extrabold text-site-ink">How it works</h2>
+        <ol className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 xl:grid-cols-4">
           {STEPS.map(([title, body], i) => (
-            <Card key={title} icon={i + 1} title={title}>{body}</Card>
+            <li key={title} className="rounded-2xl border border-site-line bg-white p-5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F4F1FF] text-[11.5px] font-bold text-site-purple">
+                {i + 1}
+              </span>
+              <h3 className="m-0 mt-4 text-[14.5px] font-extrabold text-site-ink">{title}</h3>
+              <p className="m-0 mt-2 text-[12.5px] leading-relaxed text-site-muted">{body}</p>
+            </li>
           ))}
-        </CardGrid>
-      </Section>
+        </ol>
+      </section>
 
-      <Panel>
-        <InfoCard title="Terms that come from the operator, not this page">
-          Commission rate, payout schedule, payout threshold, refund window and supported file types
-          are Marketplace settings. They are shown in your seller dashboard once your application is
-          approved, so this page does not quote figures that could differ from the ones you are
-          actually held to.
-        </InfoCard>
-        <Note>
-          Selling on the Marketplace is separate from the Partner Program and the Affiliate Program.
-          Being approved for one does not enroll you in another.
-        </Note>
-      </Panel>
+      <section className="mt-8 rounded-2xl bg-[#F8F8FD] p-6 sm:p-8">
+        <h2 className="m-0 mb-6 text-[18px] font-extrabold text-site-ink">Before you apply</h2>
+        <div className="grid grid-cols-1 gap-x-10 gap-y-7 md:grid-cols-2">
+          {before.map(([title, body]) => (
+            <div key={title} className="flex gap-4">
+              <IconTile className="h-10 w-10 bg-white">
+                <CircleCheck aria-hidden className="h-5 w-5" />
+              </IconTile>
+              <div>
+                <h3 className="m-0 text-[14px] font-extrabold text-site-ink">{title}</h3>
+                <p className="m-0 mt-1 text-[12.5px] leading-relaxed text-site-muted">{body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </>
   );
 }
