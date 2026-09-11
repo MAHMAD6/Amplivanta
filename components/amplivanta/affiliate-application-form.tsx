@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Users2, Monitor, Gift, ShieldCheck } from "lucide-react";
+import { TurnstileWidget } from "@/components/marketing/turnstile-widget";
+import { toast } from "@/lib/toast";
 
 const CHANNELS = ["Blog / Website", "YouTube", "Email Newsletter", "Social Media", "Online Community", "Other"];
 const AUDIENCE = ["Marketers", "Founders / SMB owners", "Agencies", "Developers", "General business", "Other"];
@@ -16,14 +18,42 @@ export function AffiliateApplicationForm() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
+    // Only a confirmed submission leads to the success page.
     try {
-      await fetch("/api/contact", {
+      // The contact API stores name, email, service and message, so the
+      // application's answers travel in the message rather than being dropped.
+      const fd = new FormData(e.currentTarget);
+      const get = (k: string) => String(fd.get(k) ?? "").trim();
+      const answers: [string, string][] = [
+        ["Country", get("country")],
+        ["Website", get("website")],
+        ["Social profile", get("social")],
+        ["Audience type", get("audience")],
+        ["Audience size", get("audienceSize")],
+        ["Promotion channels", fd.getAll("channels").map(String).join(", ")],
+        ["Promotion plan", get("plan")],
+        ["Heard about us", get("heard")],
+      ];
+      const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...Object.fromEntries(new FormData(e.currentTarget) as never), subject: "Affiliate application" }),
+        body: JSON.stringify({
+          name: get("fullName"),
+          email: get("email"),
+          service: "Affiliate application",
+          message: answers.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n"),
+          "cf-turnstile-response": get("cf-turnstile-response") || undefined,
+        }),
       });
-    } catch { /* ignore */ }
-    router.push("/partners/success");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Your application could not be submitted.");
+      }
+      router.push("/partners/success");
+    } catch (err) {
+      toast.error("Application not submitted", { description: (err as Error).message });
+      setLoading(false);
+    }
   }
 
   return (
@@ -67,7 +97,9 @@ export function AffiliateApplicationForm() {
           <label className="flex items-start gap-2 text-[12.5px] text-ink-soft"><input type="checkbox" required className="mt-0.5 accent-royal-blue" /> I agree to disclose my affiliate relationship and will follow all applicable laws and regulations.</label>
         </Group>
 
-        <button type="submit" className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-royal-blue text-[14px] font-bold text-white transition hover:bg-royal-soft">
+        <TurnstileWidget />
+
+        <button type="submit" disabled={loading} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-royal-blue text-[14px] font-bold text-white transition hover:bg-royal-soft">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Application"}
         </button>
         <p className="text-center text-[12px] text-ink-muted">🔒 Your information will be used only to review and manage your affiliate application.</p>

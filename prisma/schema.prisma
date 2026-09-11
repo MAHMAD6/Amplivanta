@@ -2155,3 +2155,100 @@ model MarketplaceSetting {
   value     Json
   updatedAt DateTime @updatedAt
 }
+
+// ---------------------------------------------------------------------------
+// Credits (External API Master Revision, section 4.2)
+//
+// Credits are an Amplivanta ledger, not a Stripe balance. Stripe only takes
+// the money; the wallet, the append-only ledger and consumption live here.
+// Plan and purchased credits are kept apart so plan credits can be consumed
+// first. Workspace-owned, so these carry a plain workspaceId.
+// ---------------------------------------------------------------------------
+
+enum CreditBucket {
+  PLAN
+  PURCHASED
+}
+
+enum CreditLedgerKind {
+  PLAN_ALLOCATION
+  PURCHASE
+  USAGE
+  ADMIN_ADJUSTMENT
+  REFUND
+  EXPIRATION
+}
+
+model CreditWallet {
+  id               String   @id @default(cuid())
+  workspaceId      String   @unique
+  planCredits      Int      @default(0)
+  purchasedCredits Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model CreditLedgerEntry {
+  id           String           @id @default(cuid())
+  workspaceId  String
+  kind         CreditLedgerKind
+  bucket       CreditBucket
+  /// Signed: positive grants, negative consumption.
+  amount       Int
+  balanceAfter Int
+  /// What caused the entry, e.g. "stripe_checkout" + session id. Unique per
+  /// kind and bucket so a replayed event can never post the same credit twice.
+  sourceType   String
+  sourceId     String
+  note         String?
+  actorUserId  String?
+  createdAt    DateTime         @default(now())
+
+  @@unique([sourceType, sourceId, kind, bucket])
+  @@index([workspaceId, createdAt])
+}
+
+model CreditPurchase {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  userId          String?
+  packCode        String
+  /// Quantity and amount are fixed server-side at checkout creation.
+  credits         Int
+  amountCents     Int
+  currency        String
+  stripeSessionId String    @unique
+  paymentRef      String?
+  status          String    @default("pending")
+  createdAt       DateTime  @default(now())
+  fulfilledAt     DateTime?
+
+  @@index([workspaceId])
+}
+
+/// Durable record of every provider webhook event, for replay protection.
+model ProviderEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String
+  type        String
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  error       String?
+
+  @@unique([provider, eventId])
+}
+
+/// A sign-in identity from an OAuth/OIDC provider, keyed by the provider's
+/// immutable subject rather than by email.
+model UserIdentity {
+  id        String   @id @default(cuid())
+  userId    String
+  provider  String
+  subject   String
+  email     String?
+  createdAt DateTime @default(now())
+
+  @@unique([provider, subject])
+  @@index([userId])
+}

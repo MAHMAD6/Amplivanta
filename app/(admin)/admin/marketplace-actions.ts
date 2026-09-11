@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import {
   MarketplaceOrderStatus,
   MarketplacePayoutStatus,
@@ -255,11 +256,32 @@ export async function refundOrder(orderId: string, reason: string, full = true):
       }
     });
 
-    await audit(user.id ?? null, "marketplace.order.refunded", "MarketplaceOrder", orderId, { full }, reason);
+    // A full refund of a Stripe-paid order is submitted to Stripe. Partial
+    // amounts are not captured by this action, so those stay with the operator.
+    let submitted = false;
+    if (full && order.paymentProvider === "stripe" && order.paymentIntentRef?.startsWith("pi_") && isStripeConfigured()) {
+      try {
+        await getStripe().refunds.create(
+          { payment_intent: order.paymentIntentRef, metadata: { orderId } },
+          { idempotencyKey: `mp-refund:${orderId}` },
+        );
+        await prisma.marketplaceRefund.updateMany({
+          where: { orderId, status: "pending_provider" },
+          data: { status: "submitted" },
+        });
+        submitted = true;
+      } catch {
+        submitted = false;
+      }
+    }
+
+    await audit(user.id ?? null, "marketplace.order.refunded", "MarketplaceOrder", orderId, { full, submitted }, reason);
     revalidatePath("/admin/marketplace-management/orders-refunds-and-disputes");
     return {
       ok: true,
-      message: "Refund recorded and access revoked. The money movement completes once a payment provider is connected.",
+      message: submitted
+        ? "Refund submitted to Stripe and access revoked."
+        : "Refund recorded and access revoked. The money movement must be completed with the payment provider.",
     };
   } catch {
     return { ok: false, error: "Could not record the refund — the platform database was unreachable." };

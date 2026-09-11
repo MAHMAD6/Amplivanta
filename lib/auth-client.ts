@@ -21,12 +21,23 @@ export const authClient = {
     },
   },
   signUp: {
-    email: async ({ name, email, password }: { name: string; email: string; password: string }) => {
+    email: async ({
+      name,
+      email,
+      password,
+      turnstileToken,
+    }: {
+      name: string;
+      email: string;
+      password: string;
+      /** Cloudflare Turnstile token, when the challenge is enabled. */
+      turnstileToken?: string;
+    }) => {
       try {
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name, email, password, "cf-turnstile-response": turnstileToken }),
         });
         const data = await res.json();
         if (!res.ok) {

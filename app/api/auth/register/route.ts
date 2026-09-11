@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { TURNSTILE_FIELD, requestIp, verifyTurnstile } from "@/lib/turnstile";
 
 const registerSchema = z.object({
   name: z.string().min(1).max(120),
@@ -13,6 +14,8 @@ const registerSchema = z.object({
 export async function POST(req: Request) {
   try {
     const raw = await req.json();
+    const check = await verifyTurnstile(raw?.[TURNSTILE_FIELD], requestIp(req));
+    if (!check.ok) return NextResponse.json({ error: check.error }, { status: 400 });
     const { name, email, password } = registerSchema.parse(raw);
 
     const existing = await db.user.findUnique({

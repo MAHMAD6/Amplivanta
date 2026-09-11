@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LogIn, UserPlus, TrendingUp, ShieldCheck, LifeBuoy, Lock, Layers, Headphones, ArrowRight } from "lucide-react";
 import { LogoMark } from "@/components/layout/LogoMark";
 import { AuthSignInForm } from "@/components/amplivanta/auth-signin-form";
+import { oauthSignInProviders } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Sign In" };
 
@@ -71,7 +72,7 @@ export default function LoginPage() {
 
             <div className="lg:pt-2">
               <Suspense fallback={<div className="min-h-[420px] rounded-2xl border border-line bg-white shadow-card" />}>
-                <AuthSignInForm />
+                <AuthSignInForm oauth={oauthSignInProviders} />
               </Suspense>
             </div>
           </div>

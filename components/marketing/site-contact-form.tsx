@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { Field, FormGrid, inputClass } from "./site-ui";
 import { btnPrimary } from "./site-buttons";
+import { TurnstileWidget } from "./turnstile-widget";
 
 const TOPICS = ["Product question", "Demo", "Partnership", "Affiliate Program", "Other"];
 
@@ -51,7 +52,7 @@ export function SiteContactForm() {
       <form onSubmit={onSubmit}>
         <FormGrid>
           <Field label="Full name">
-            <input name="fullName" required className={inputClass} />
+            <input name="name" required minLength={2} className={inputClass} />
           </Field>
           <Field label="Email address">
             <input name="email" type="email" required className={inputClass} />
@@ -60,15 +61,17 @@ export function SiteContactForm() {
             <input name="company" className={inputClass} />
           </Field>
           <Field label="Topic">
-            <select name="topic" defaultValue="" className={inputClass}>
+            <select name="service" defaultValue="" className={inputClass}>
               <option value="" disabled>Choose a topic</option>
               {TOPICS.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </Field>
           <Field label="Message" full>
-            <textarea name="message" required rows={6} className={`${inputClass} min-h-[135px] resize-y`} />
+            <textarea name="message" required minLength={20} rows={6} className={`${inputClass} min-h-[135px] resize-y`} />
           </Field>
         </FormGrid>
+
+        <TurnstileWidget className="mt-3.5" />
 
         <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
           <button type="submit" disabled={pending} className={`${btnPrimary} disabled:opacity-60`}>

@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { contactSchema } from "@/lib/validations/contact";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { TURNSTILE_FIELD, requestIp, verifyTurnstile } from "@/lib/turnstile";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const check = await verifyTurnstile(body?.[TURNSTILE_FIELD], requestIp(req));
+    if (!check.ok) return NextResponse.json({ error: check.error }, { status: 400 });
     const parsed = contactSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(

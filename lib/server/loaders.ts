@@ -1,6 +1,8 @@
 import { formatDistanceToNow } from "date-fns";
 import { db } from "@/lib/db";
 import { getSessionContext } from "@/lib/tenant";
+import { isStripeConfigured } from "@/lib/stripe";
+import { parseCreditPacks } from "@/lib/credits/policy";
 import { DEALS, ACTIVITIES, CRM_TASKS, CONTACTS, type Deal, type DealStage, type ActivityType, type Contact } from "@/lib/crm-data";
 import { CAMPAIGNS, WORKFLOWS, type Campaign, type Workflow } from "@/lib/marketing-auto-data";
 import { INTEGRATIONS, type Integration } from "@/lib/integrations-data";
@@ -106,6 +108,10 @@ export interface UsageOverview {
    */
   used: Record<UsageMetric, number | null>;
   grants: { id: string; type: string; amount: number | null; days: number | null; reason: string; createdAt: Date }[];
+  /** The workspace credit wallet; null until any credit has been posted. */
+  wallet: { planCredits: number; purchasedCredits: number; usedThisPeriod: number } | null;
+  /** One-time credit packs on offer; empty unless Stripe and CREDIT_PACKS are configured. */
+  creditPacks: { code: string; label: string; credits: number }[];
 }
 
 const nullMetrics = () =>
@@ -115,6 +121,7 @@ const nullMetrics = () =>
 export async function loadUsageOverview(): Promise<UsageOverview> {
   const empty: UsageOverview = {
     live: false, planName: null, period: null, limits: nullMetrics(), used: nullMetrics(), grants: [],
+    wallet: null, creditPacks: [],
   };
   const ctx = await ctxOrNull();
   if (!ctx) return empty;
@@ -128,6 +135,15 @@ export async function loadUsageOverview(): Promise<UsageOverview> {
       ctx.userId
         ? db.creditAdjustment.findMany({ where: { userId: ctx.userId }, orderBy: { createdAt: "desc" }, take: 20 })
         : Promise.resolve([]),
+    ]);
+
+    const since = subscription?.currentPeriodStart;
+    const [wallet, usage] = await Promise.all([
+      db.creditWallet.findUnique({ where: { workspaceId: ctx.workspaceId } }),
+      db.creditLedgerEntry.aggregate({
+        where: { workspaceId: ctx.workspaceId, kind: "USAGE", ...(since ? { createdAt: { gte: since } } : {}) },
+        _sum: { amount: true },
+      }),
     ]);
 
     const limits = nullMetrics();
@@ -145,6 +161,16 @@ export async function loadUsageOverview(): Promise<UsageOverview> {
       period: subscription ? { start: subscription.currentPeriodStart, end: subscription.currentPeriodEnd } : null,
       limits,
       used: nullMetrics(),
+      wallet: wallet
+        ? {
+            planCredits: wallet.planCredits,
+            purchasedCredits: wallet.purchasedCredits,
+            usedThisPeriod: -(usage._sum.amount ?? 0),
+          }
+        : null,
+      creditPacks: isStripeConfigured()
+        ? parseCreditPacks(process.env.CREDIT_PACKS).map(({ code, label, credits }) => ({ code, label, credits }))
+        : [],
       grants: grants.map((g) => ({
         id: g.id,
         type: g.grantType.replace(/_/g, " ").toLowerCase(),

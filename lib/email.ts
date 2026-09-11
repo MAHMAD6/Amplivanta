@@ -1,27 +1,57 @@
 import nodemailer from "nodemailer";
+import { db } from "@/lib/db";
 
 /**
- * Email transport. Uses SMTP when SMTP_* env vars are set (production); otherwise
- * logs the message to the server console (development), so auth flows that send
- * verification / reset emails still work end-to-end without a provider account.
+ * Email transport.
+ *
+ * - EMAIL_PROVIDER=ses: Amazon SES through its SMTP interface
+ *   (email-smtp.<SES_REGION>.amazonaws.com) with SES SMTP credentials. When
+ *   SES_CONFIGURATION_SET is set, each message is tagged with it so delivery,
+ *   bounce and complaint events reach /api/webhooks/ses via SNS.
+ * - Otherwise generic SMTP from SMTP_* (production), or console logging in
+ *   development, so auth flows still work without a provider account.
+ *
+ * Recipients on the suppression list (hard bounce, complaint, unsubscribe)
+ * are never sent to; consent and suppression stay inside Amplivanta.
  */
 
 const FROM = process.env.EMAIL_FROM || "Amplivanta <no-reply@amplivanta.com>";
 
-let transporter: nodemailer.Transporter | null = null;
-function getTransport(): nodemailer.Transporter | null {
-  if (!process.env.SMTP_HOST) return null;
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_SECURE === "true",
-      auth: process.env.SMTP_USER
-        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-        : undefined,
-    });
+type Transport = { transporter: nodemailer.Transporter; provider: "ses" | "smtp" };
+
+let cached: Transport | null | undefined;
+function getTransport(): Transport | null {
+  if (cached !== undefined) return cached;
+  const e = process.env;
+  if (e.EMAIL_PROVIDER === "ses" && e.SES_REGION && e.SES_SMTP_USER && e.SES_SMTP_PASS) {
+    cached = {
+      provider: "ses",
+      transporter: nodemailer.createTransport({
+        host: `email-smtp.${e.SES_REGION}.amazonaws.com`,
+        port: 587,
+        secure: false,
+        requireTLS: true,
+        auth: { user: e.SES_SMTP_USER, pass: e.SES_SMTP_PASS },
+      }),
+    };
+  } else if (e.SMTP_HOST) {
+    cached = {
+      provider: "smtp",
+      transporter: nodemailer.createTransport({
+        host: e.SMTP_HOST,
+        port: Number(e.SMTP_PORT || 587),
+        secure: e.SMTP_SECURE === "true",
+        auth: e.SMTP_USER ? { user: e.SMTP_USER, pass: e.SMTP_PASS } : undefined,
+      }),
+    };
+  } else {
+    cached = null;
   }
-  return transporter;
+  return cached;
+}
+
+export function emailProvider(): "ses" | "smtp" | null {
+  return getTransport()?.provider ?? null;
 }
 
 export interface EmailMessage {
@@ -29,19 +59,55 @@ export interface EmailMessage {
   subject: string;
   html: string;
   text?: string;
+  /** Marketing mail is also held back by unsubscribes; transactional is not. */
+  category?: "transactional" | "marketing";
 }
 
-export async function sendEmail(msg: EmailMessage): Promise<void> {
+export type SendResult = { sent: true } | { sent: false; reason: "suppressed" | "not_configured" };
+
+/** Suppression reasons that block every kind of mail. */
+const HARD_SUPPRESSIONS = ["bounce", "complaint"];
+
+async function isSuppressed(to: string, category: EmailMessage["category"]): Promise<boolean> {
+  try {
+    const reasons = category === "marketing" ? [...HARD_SUPPRESSIONS, "unsubscribe"] : HARD_SUPPRESSIONS;
+    const hit = await db.suppressionEntry.findFirst({
+      where: { email: to.toLowerCase(), reason: { in: reasons } },
+      select: { id: true },
+    });
+    return Boolean(hit);
+  } catch {
+    // An unreachable database must not block password resets.
+    return false;
+  }
+}
+
+export async function sendEmail(msg: EmailMessage): Promise<SendResult> {
+  if (await isSuppressed(msg.to, msg.category)) return { sent: false, reason: "suppressed" };
+
   const transport = getTransport();
   if (!transport) {
-    // Dev fallback — no SMTP configured.
+    // Dev fallback — no provider configured.
     console.log("\n📧 [email:dev] would send:");
     console.log(`   to:      ${msg.to}`);
     console.log(`   subject: ${msg.subject}`);
     console.log(`   text:    ${msg.text ?? stripHtml(msg.html)}\n`);
-    return;
+    return { sent: false, reason: "not_configured" };
   }
-  await transport.sendMail({ from: FROM, to: msg.to, subject: msg.subject, html: msg.html, text: msg.text });
+
+  const headers: Record<string, string> = {};
+  if (transport.provider === "ses" && process.env.SES_CONFIGURATION_SET) {
+    headers["X-SES-CONFIGURATION-SET"] = process.env.SES_CONFIGURATION_SET;
+  }
+  await transport.transporter.sendMail({
+    from: FROM,
+    to: msg.to,
+    subject: msg.subject,
+    html: msg.html,
+    text: msg.text,
+    headers,
+  });
+  return { sent: true };
 }
 
 function stripHtml(html: string): string {

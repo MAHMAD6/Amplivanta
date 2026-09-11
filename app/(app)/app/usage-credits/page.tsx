@@ -24,6 +24,7 @@ import {
   Zap,
 } from "lucide-react";
 import { MpCard, MpHeader } from "@/components/marketplace/ui";
+import { BuyCredits } from "@/components/amplivanta/buy-credits";
 import { loadUsageOverview, type UsageMetric } from "@/lib/server/loaders";
 import { cn } from "@/lib/utils";
 
@@ -108,6 +109,13 @@ function RailCard({
 export default async function UsageCreditsPage() {
   const usage = await loadUsageOverview();
   const anyUsage = Object.values(usage.used).some((v) => v != null);
+  const w = usage.wallet;
+  const available = w ? w.planCredits + w.purchasedCredits : null;
+  const creditRows: [string, number | null][] = [
+    ["Credits Used", w ? w.usedThisPeriod : null],
+    ["Credits Remaining", available],
+    ["Purchased / Add-on Credits", w ? w.purchasedCredits : null],
+  ];
 
   return (
     <>
@@ -181,23 +189,28 @@ export default async function UsageCreditsPage() {
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-line bg-bg-soft p-4">
                   <div className="text-[13.5px] font-bold text-deep-navy">Credits Available</div>
-                  <div className="mt-4 text-[22px] font-extrabold text-deep-navy">—</div>
-                  <div className="mt-2 text-[12px] text-ink-muted">Not available yet</div>
+                  <div className="mt-4 text-[22px] font-extrabold text-deep-navy">{fmt(available)}</div>
+                  <div className="mt-2 text-[12px] text-ink-muted">
+                    {w ? `${fmt(w.planCredits)} plan · ${fmt(w.purchasedCredits)} purchased` : "Not available yet"}
+                  </div>
                 </div>
                 <dl className="divide-y divide-line rounded-xl border border-line">
-                  {["Credits Used", "Credits Remaining", "Purchased / Add-on Credits"].map((r) => (
+                  {creditRows.map(([r, v]) => (
                     <div key={r} className="flex justify-between px-4 py-3 text-[12.5px]">
                       <dt className="text-deep-navy">{r}</dt>
-                      <dd className="text-ink-muted">—</dd>
+                      <dd className={v == null ? "text-ink-muted" : "font-bold text-deep-navy"}>{fmt(v)}</dd>
                     </div>
                   ))}
                 </dl>
               </div>
-              <div className="mt-4">
-                <Banner action={<TextLink href={BILLING}>View credit details</TextLink>}>
-                  Credit balances will appear once credits are enabled for your plan.
-                </Banner>
-              </div>
+              {usage.creditPacks.length > 0 && <BuyCredits packs={usage.creditPacks} />}
+              {!w && (
+                <div className="mt-4">
+                  <Banner action={<TextLink href={BILLING}>View credit details</TextLink>}>
+                    Credit balances will appear once credits are enabled for your plan.
+                  </Banner>
+                </div>
+              )}
             </MpCard>
 
             {/* Plan limits */}

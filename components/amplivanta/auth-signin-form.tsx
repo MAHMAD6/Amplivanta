@@ -3,10 +3,21 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { signIn as oauthSignIn } from "next-auth/react";
 import { authClient } from "@/lib/auth-client";
 import { Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 
-export function AuthSignInForm() {
+const OAUTH_ERRORS: Record<string, string> = {
+  OAuthNoAccount:
+    "No Amplivanta account uses that email yet. Create an account first, then you can sign in with that provider.",
+  OAuthEmailUnverified: "That provider did not confirm your email address, so it cannot be used to sign in.",
+  AccessDenied: "Sign-in was cancelled or not allowed.",
+};
+
+/** Which OAuth sign-in providers are configured on the server. */
+export type OAuthAvailability = { google: boolean; "microsoft-entra-id": boolean };
+
+export function AuthSignInForm({ oauth }: { oauth?: OAuthAvailability }) {
   const router = useRouter();
   const params = useSearchParams();
   // Accept `next` (also legacy `callbackUrl`), but only allow same-site paths —
@@ -15,7 +26,12 @@ export function AuthSignInForm() {
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/app";
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const oauthError = params.get("error");
+  const [error, setError] = useState<string | null>(oauthError ? (OAUTH_ERRORS[oauthError] ?? "Sign-in failed. Please try again.") : null);
+  const providers = [
+    ...(oauth?.google ? [{ id: "google", label: "Continue with Google" }] : []),
+    ...(oauth?.["microsoft-entra-id"] ? [{ id: "microsoft-entra-id", label: "Continue with Microsoft" }] : []),
+  ];
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -62,6 +78,24 @@ export function AuthSignInForm() {
             <Link href="/forgot-password" className="text-[12.5px] font-semibold text-royal-blue hover:underline">Forgot password?</Link>
           </div>
         </div>
+
+        {providers.length > 0 && (
+          <div className="space-y-2.5">
+            {providers.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => oauthSignIn(p.id, { callbackUrl: next })}
+                className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-line bg-white text-[14px] font-semibold text-deep-navy transition hover:bg-bg-soft"
+              >
+                {p.label}
+              </button>
+            ))}
+            <div className="flex items-center gap-2 text-[12px] text-ink-muted">
+              <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
+            </div>
+          </div>
+        )}
 
         <label className="flex items-center gap-2 text-[13px] text-ink-soft">
           <input type="checkbox" name="remember" className="h-4 w-4 accent-royal-blue" /> Remember me

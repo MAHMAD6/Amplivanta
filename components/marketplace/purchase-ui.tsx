@@ -139,7 +139,11 @@ export function PlaceOrderButton({
         disabled={blocked || pending}
         onClick={() =>
           start(async () => {
-            if (toastResult(await placeOrder())) router.push("/app/marketplace/purchases");
+            const res = await placeOrder();
+            if (!toastResult(res)) return;
+            // Paid orders continue at the payment provider's hosted page.
+            if (res.ok && res.redirectUrl) window.location.assign(res.redirectUrl);
+            else router.push("/app/marketplace/purchases");
           })
         }
         className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-royal-blue text-[14px] font-bold text-white transition hover:bg-royal-soft disabled:cursor-not-allowed disabled:opacity-50"

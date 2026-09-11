@@ -3,6 +3,8 @@ import { MpCard, MpDenied, MpHeader, MpNote } from "@/components/marketplace/ui"
 import { SellerSettingsForm } from "@/components/marketplace/seller-settings-form";
 import { getMarketplaceViewer, guardMarketplace } from "@/lib/server/marketplace-access";
 import { prisma } from "@/lib/prisma";
+import { PayoutOnboardingButton } from "@/components/marketplace/payout-onboarding-button";
+import { CONNECT_PROVIDER, isConnectEnabled, payoutAccountStatus } from "@/lib/stripe-connect";
 
 export const metadata: Metadata = { title: "Seller Settings" };
 
@@ -14,15 +16,26 @@ export default async function SellerSettingsPage() {
   });
   if (!gate.ok) return <MpDenied denial={gate} />;
 
-  let seller: { storeName: string; slug: string; headline: string | null; bio: string | null } | null = null;
+  let seller: {
+    storeName: string;
+    slug: string;
+    headline: string | null;
+    bio: string | null;
+    payoutProvider: string | null;
+    payoutAccountRef: string | null;
+  } | null = null;
   try {
     seller = await prisma.marketplaceSeller.findUnique({
       where: { id: viewer.seller!.id },
-      select: { storeName: true, slug: true, headline: true, bio: true },
+      select: { storeName: true, slug: true, headline: true, bio: true, payoutProvider: true, payoutAccountRef: true },
     });
   } catch {
     seller = null;
   }
+
+  const connectOn = isConnectEnabled();
+  const accountRef = seller?.payoutProvider === CONNECT_PROVIDER ? seller.payoutAccountRef : null;
+  const payout = await payoutAccountStatus(accountRef);
 
   return (
     <>
@@ -47,9 +60,26 @@ export default async function SellerSettingsPage() {
           Your seller profile could not be loaded because the platform database was unreachable.
         </MpCard>
       )}
+      <MpCard className="mt-6 flex flex-wrap items-center justify-between gap-4 px-6 py-5">
+        <div>
+          <div className="text-[15px] font-bold text-deep-navy">Payout account</div>
+          <p className="mt-1 max-w-[560px] text-[12.5px] leading-relaxed text-ink-soft">
+            {!connectOn
+              ? "Seller payouts are not enabled yet. They open once payout onboarding, reconciliation and dispute handling are ready."
+              : !accountRef
+                ? "Set up your payout account with Stripe to receive earnings. Bank and identity details are held by Stripe, not Amplivanta."
+                : payout?.payoutsEnabled
+                  ? "Your payout account is set up and can receive payouts."
+                  : "Your payout account needs more details before payouts can be sent."}
+          </p>
+        </div>
+        {connectOn && !payout?.payoutsEnabled && (
+          <PayoutOnboardingButton label={accountRef ? "Continue payout setup" : "Set up payouts"} />
+        )}
+      </MpCard>
       <MpNote title="Payout account">
-        Payout account details are held with the configured payout provider, not in Amplivanta. Only a
-        provider reference is stored here.
+        Payout account details are held with the payout provider, not in Amplivanta. Only a provider
+        reference is stored here.
       </MpNote>
     </>
   );

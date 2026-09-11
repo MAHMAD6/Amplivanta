@@ -17,7 +17,12 @@ export const POST = route(async (ctx, req) => {
   if (!plan) throw new ApiError(404, "Plan not found");
 
   if (!isStripeConfigured() || !plan.stripePriceId) {
-    // Local fallback: activate the subscription immediately.
+    // Paid access must come from a verified payment. The free "activate
+    // immediately" shortcut exists for local development only; in production
+    // an unconfigured plan is simply unavailable.
+    if (process.env.NODE_ENV === "production" && plan.price > 0) {
+      throw new ApiError(503, "Online checkout is not available yet. Contact sales to change plans.");
+    }
     const now = new Date();
     const end = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const existing = await db.subscription.findFirst({ where: { workspaceId: ctx.workspaceId } });

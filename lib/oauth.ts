@@ -26,6 +26,15 @@ export const OAUTH_PROVIDERS: Record<string, OAuthProvider> = {
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   },
+  microsoft: {
+    id: "microsoft",
+    name: "Microsoft",
+    authorizeUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT || "common"}/oauth2/v2.0/authorize`,
+    tokenUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT || "common"}/oauth2/v2.0/token`,
+    scopes: ["openid", "email", "profile", "offline_access", "User.Read"],
+    clientId: process.env.MICROSOFT_CLIENT_ID,
+    clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+  },
   hubspot: {
     id: "hubspot",
     name: "HubSpot",

@@ -10,9 +10,11 @@ import { canSellerEdit, canSellerTransition, canSubmit, type ProductStatus } fro
 import { fulfilOrder } from "@/lib/server/marketplace-fulfilment";
 import { nextOrderStatusOnPlace } from "@/lib/marketplace/order-policy";
 import { complete } from "@/lib/ai";
+import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { isContentCreation } from "@/lib/marketplace/content-creation";
 
-export type MpResult = { ok: true; message: string } | { ok: false; error: string };
+/** `redirectUrl` is set when the buyer must continue at the payment provider. */
+export type MpResult = { ok: true; message: string; redirectUrl?: string } | { ok: false; error: string };
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -449,6 +451,9 @@ export async function placeOrder(): Promise<MpResult> {
       error: "No payment provider is connected, so a paid order cannot be taken. Free products can be claimed now.",
     };
   }
+  if (quote.requiresProvider && quote.providerId === "stripe" && !isStripeConfigured()) {
+    return { ok: false, error: "Stripe is selected as the payment provider but its keys are not configured yet." };
+  }
 
   let orderId: string;
   try {
@@ -521,6 +526,49 @@ export async function placeOrder(): Promise<MpResult> {
     return { ok: true, message: `Order complete. Reference ${orderId}` };
   }
 
+  // Paid order through Stripe Checkout. Amounts come from the order's own
+  // snapshot, never from the browser; access unlocks only when the signed
+  // webhook confirms the payment covers the order total.
+  if (quote.providerId === "stripe") {
+    try {
+      const appUrl = process.env.NEXTAUTH_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000";
+      const session = await getStripe().checkout.sessions.create(
+        {
+          mode: "payment",
+          line_items: quote.lines.map((l) => ({
+            quantity: 1,
+            price_data: {
+              currency: l.currency.toLowerCase(),
+              unit_amount: l.unitPriceCents,
+              product_data: { name: l.title },
+            },
+          })),
+          client_reference_id: viewer.userId!,
+          metadata: { kind: "marketplace_order", orderId },
+          success_url: `${appUrl}/app/marketplace/orders/${orderId}/confirmation`,
+          cancel_url: `${appUrl}/app/marketplace/purchases/${orderId}`,
+        },
+        { idempotencyKey: `mp-order:${orderId}` },
+      );
+      await prisma.marketplaceOrder.update({
+        where: { id: orderId },
+        data: { status: "PAYMENT_PENDING", paymentIntentRef: session.id },
+      });
+      revalidatePath("/app/marketplace/purchases");
+      revalidatePath("/app/marketplace/cart");
+      return {
+        ok: true,
+        message: "Continue to Stripe to pay. Access unlocks once the payment is confirmed.",
+        redirectUrl: session.url ?? undefined,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: `Order ${orderId} was created but the payment page could not be opened. Try again from My Purchases.`,
+      };
+    }
+  }
+
   // Paid order: awaiting the provider. Access unlocks when the webhook confirms.
   revalidatePath("/app/marketplace/purchases");
   revalidatePath("/app/marketplace/cart");
@@ -562,7 +610,7 @@ export async function issueDownload(entitlementId: string): Promise<DownloadResu
       };
     }
 
-    const signed = await issueSignedUrl(asset.storageKey);
+    const signed = await issueSignedUrl(asset.storageKey, asset.fileName);
     if (!signed.ok) {
       return { ok: false, error: "No file storage provider is connected, so a download link cannot be issued." };
     }

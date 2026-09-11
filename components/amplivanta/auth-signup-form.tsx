@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User, Building2, Check, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { TurnstileWidget } from "@/components/marketing/turnstile-widget";
 
 const FREE_FEATURES = ["1 user", "250 contacts", "500 emails/month", "1 landing page", "1 subdomain", "Basic reports", "Basic templates"];
 
@@ -21,7 +22,13 @@ export function AuthSignupForm() {
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email"));
     const name = email.split("@")[0] || "New user";
-    const { error: authError } = await authClient.signUp.email({ name, email, password: String(fd.get("password")) });
+    const turnstileToken = fd.get("cf-turnstile-response");
+    const { error: authError } = await authClient.signUp.email({
+      name,
+      email,
+      password: String(fd.get("password")),
+      turnstileToken: typeof turnstileToken === "string" ? turnstileToken : undefined,
+    });
     if (authError) {
       setLoading(false);
       setError(authError.message || "Signup failed");
@@ -77,6 +84,7 @@ export function AuthSignupForm() {
           <input type="checkbox" required className="mt-0.5 h-4 w-4 accent-royal-blue" />
           <span>I agree to the <Link href="/legal/terms" className="font-semibold text-royal-blue hover:underline">Terms of Service</Link> and acknowledge the <Link href="/legal/privacy" className="font-semibold text-royal-blue hover:underline">Privacy Policy</Link>.</span>
         </label>
+        <TurnstileWidget />
         <button type="submit" disabled={loading} className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-emerald-600 text-[15px] font-bold text-white transition hover:bg-emerald-700 disabled:opacity-60">
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Create My Free Account"}
         </button>

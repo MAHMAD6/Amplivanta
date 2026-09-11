@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { isStorageConfigured, presignPrivateDownload } from "@/lib/storage";
 
 /**
  * Provider adapters.
@@ -55,12 +56,23 @@ export type SignedUrlResult =
  * operator settings; with none configured this refuses rather than returning a
  * link that cannot work.
  */
-export async function issueSignedUrl(storageKey: string): Promise<SignedUrlResult> {
+export async function issueSignedUrl(storageKey: string, filename?: string): Promise<SignedUrlResult> {
   const provider = await getStorageProvider();
   if (!provider) return { ok: false, reason: "no_provider" };
 
   const ttlSeconds = Number(provider.config.signedUrlTtlSeconds ?? 300);
-  const base = String(provider.config.baseUrl ?? "").replace(/\/$/, "");
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
-  return { ok: true, url: `${base}/${storageKey}`, expiresAt };
+
+  // S3-compatible providers (IONOS, R2) get a real presigned, expiring URL
+  // from the server's storage credentials. The earlier base-URL join produced
+  // a permanent link to the object, which defeats entitlement checks.
+  if (["s3", "ionos", "r2"].includes(provider.id)) {
+    if (!isStorageConfigured()) return { ok: false, reason: "no_provider" };
+    const url = await presignPrivateDownload(storageKey, ttlSeconds, filename);
+    return { ok: true, url, expiresAt };
+  }
+
+  // Any other provider id is not implemented: refuse rather than hand out a
+  // guessable permanent URL.
+  return { ok: false, reason: "no_provider" };
 }
