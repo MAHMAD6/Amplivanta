@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight } from "lucide-react";
-import { MarketingBreadcrumb } from "@/components/amplivanta/marketing-breadcrumb";
+import { btn, btnPrimary } from "@/components/marketing/site-shell";
+import { Card, CardGrid, Crumb, Eyebrow, InfoCard, Section } from "@/components/marketing/site-ui";
 import { BLOG_POSTS, BLOG_POST_BY_SLUG } from "@/lib/blog-posts";
 
 export function generateStaticParams() {
@@ -18,95 +18,92 @@ export async function generateMetadata({
   const post = BLOG_POST_BY_SLUG.get(slug);
   if (!post) return {};
   return {
-    title: `${post.title}`,
+    title: post.title,
     description: post.excerpt,
     openGraph: { title: post.title, description: post.excerpt, type: "article" },
   };
 }
 
-export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+/** Blog article, on the reference's Blog Article template. */
+export default async function BlogArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = BLOG_POST_BY_SLUG.get(slug);
   if (!post) notFound();
 
-  const more = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 3);
+  const related = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 3);
 
   return (
-    <article className="bg-white py-12">
-      <div className="mx-auto max-w-[820px] px-4 lg:px-8">
-        <MarketingBreadcrumb items={[["Home", "/"], ["Blog", "/resources/blog"], [post.title, null]]} />
+    <>
+      <Crumb items={["Home", "Resources", "Blog", "Article"]} />
 
-        <div className="mt-6 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-violet">
-          {post.tag}
-          <span className="text-ink-muted">· {post.date} · {post.readMinutes} min read</span>
-        </div>
-
-        <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
-          {post.title}
-        </h1>
-        <p className="mt-4 text-[17px] leading-relaxed text-ink-soft">{post.intro}</p>
-        <p className="mt-6 border-t border-line pt-4 text-[13px] font-semibold text-ink-muted">
-          By {post.author}
-        </p>
-
-        <div className="mt-10 space-y-10">
-          {post.sections.map((s) => (
-            <section key={s.heading}>
-              <h2 className="font-display text-2xl font-extrabold text-ink">{s.heading}</h2>
-              <div className="mt-4 space-y-4 text-[15.5px] leading-relaxed text-ink-soft">
-                {s.paragraphs.map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
-              {s.bullets && (
-                <ul className="mt-4 space-y-2.5">
-                  {s.bullets.map((b) => (
-                    <li key={b} className="flex gap-3 text-[15px] leading-relaxed text-ink-soft">
-                      <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-violet" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))}
-        </div>
-
-        <div className="mt-14 rounded-2xl border border-line bg-bg-soft p-7">
-          <h2 className="font-display text-xl font-extrabold text-ink">
-            Put this into practice with Amplivanta.
-          </h2>
-          <p className="mt-2 text-[14.5px] leading-relaxed text-ink-soft">
-            Strategy, automation, analytics and creative in one platform — so the loop you design is
-            the loop you can actually measure.
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <article className="min-w-0">
+          <Eyebrow>BLOG ARTICLE · {post.tag.toUpperCase()}</Eyebrow>
+          <h1 className="m-0 mb-4 text-[32px] font-extrabold leading-[1.08] tracking-[-1.2px] text-site-ink sm:text-[42px]">
+            {post.title}
+          </h1>
+          <p className="m-0 text-[17px] leading-[1.6] text-site-muted">{post.intro}</p>
+          <p className="mt-5 border-t border-site-line pt-4 text-[13px] font-semibold text-site-muted">
+            {post.author} · {post.date} · {post.readMinutes} min read
           </p>
-          <Link
-            href="/demo"
-            className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-violet px-5 text-[14px] font-bold text-white transition hover:opacity-90"
-          >
-            Book a demo <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
 
-        <div className="mt-14">
-          <h2 className="font-display text-2xl font-extrabold text-ink">Keep reading</h2>
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {more.map((p) => (
-              <Link
-                key={p.slug}
-                href={`/resources/blog/${p.slug}`}
-                className="group flex flex-col rounded-2xl border border-line bg-white p-5 shadow-card transition hover:-translate-y-1 hover:border-violet/30 hover:shadow-card-lg"
-              >
-                <div className="text-[11px] font-bold uppercase tracking-wider text-violet">{p.tag}</div>
-                <h3 className="mt-2 text-[15px] font-bold leading-snug text-ink">{p.title}</h3>
-                <span className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-violet">
-                  Read <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-                </span>
-              </Link>
+          <div className="mt-8 space-y-9">
+            {post.sections.map((s) => (
+              <section key={s.heading}>
+                <h2 className="m-0 text-[24px] font-extrabold tracking-[-0.5px] text-site-ink">{s.heading}</h2>
+                <div className="mt-3.5 space-y-4 text-[15.5px] leading-[1.7] text-[#2E3B55]">
+                  {s.paragraphs.map((p, i) => (
+                    <p key={i} className="m-0">{p}</p>
+                  ))}
+                </div>
+                {s.bullets && (
+                  <ul className="mt-4 space-y-2.5">
+                    {s.bullets.map((b) => (
+                      <li key={b} className="flex gap-3 text-[15px] leading-[1.6] text-[#2E3B55]">
+                        <span aria-hidden className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-site-purple" />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
             ))}
           </div>
-        </div>
+        </article>
+
+        <aside className="h-fit space-y-4 lg:sticky lg:top-6">
+          <InfoCard title="Article details">
+            <ul>
+              <li>Topic: {post.tag}</li>
+              <li>Author: {post.author}</li>
+              <li>Published: {post.date}</li>
+              <li>Reading time: {post.readMinutes} min</li>
+            </ul>
+          </InfoCard>
+          <div className="rounded-[15px] border border-[#E5E7F5] bg-gradient-to-br from-[#F8FAFF] to-[#F1EEFF] p-5">
+            <h3 className="m-0 mb-2 text-[16px] font-extrabold text-site-ink">Put this into practice</h3>
+            <p className="m-0 mb-4 text-[13px] leading-[1.5] text-site-muted">
+              Plan, create, execute and measure in one connected workspace.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Link className={`${btnPrimary} px-4 py-[11px] text-[13px]`} href="/signup">Start Engineering Growth</Link>
+              <Link className={`${btn} px-4 py-[11px] text-[13px]`} href="/resources/blog">All articles</Link>
+            </div>
+          </div>
+        </aside>
       </div>
-    </article>
+
+      {related.length > 0 && (
+        <Section title="Related articles">
+          <CardGrid cols={3}>
+            {related.map((p) => (
+              <Card key={p.slug} title={p.title} link={{ label: "Read", href: `/resources/blog/${p.slug}` }}>
+                {p.excerpt}
+              </Card>
+            ))}
+          </CardGrid>
+        </Section>
+      )}
+    </>
   );
 }

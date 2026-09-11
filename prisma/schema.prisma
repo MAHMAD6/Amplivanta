@@ -1844,6 +1844,14 @@ model MarketplaceCategory {
   createdAt   DateTime              @default(now())
 }
 
+/// How a Marketplace listing was made. Required on every product by the
+/// Marketplace spec so buyers are told whether generative AI produced it.
+enum ContentCreation {
+  HUMAN_CREATED
+  AI_ASSISTED
+  PRIMARILY_AI_GENERATED
+}
+
 model MarketplaceProduct {
   id          String                   @id @default(cuid())
   sellerId    String
@@ -1869,9 +1877,12 @@ model MarketplaceProduct {
   galleryImageAlts String[]
 
   /// Buyer-facing listing detail.
-  language   String   @default("English")
-  highlights String[] /// "What's Included" bullets.
-  perfectFor String[] /// "Perfect For" audience bullets.
+  language        String           @default("English")
+  /// Nullable only so listings created before the disclosure existed stay valid;
+  /// the server requires it on every new product.
+  contentCreation ContentCreation?
+  highlights      String[] /// "What's Included" bullets.
+  perfectFor      String[] /// "Perfect For" audience bullets.
 
   /// Search and discoverability. Seller-authored; the marketplace never
   /// generates these on the seller's behalf.

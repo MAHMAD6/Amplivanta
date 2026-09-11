@@ -17,6 +17,11 @@ import { toastResult } from "@/lib/action-toast";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { MpCard } from "./ui";
+import {
+  CONTENT_CREATION,
+  CONTENT_CREATION_HINT,
+  CONTENT_CREATION_LABEL,
+} from "@/lib/marketplace/content-creation";
 
 const STEPS = [
   { id: 1, title: "Product Details", hint: "Basic information" },
@@ -248,6 +253,38 @@ export function ProductWizard({
             <Field label="Language">
               <input name="language" defaultValue="English" className={field} />
             </Field>
+            <fieldset className="md:col-span-2">
+              <legend className="mb-1.5 text-[12.5px] font-bold text-deep-navy">
+                Content creation <span className="text-orange-cta">*</span>
+              </legend>
+              <p className="mb-2.5 text-[11.5px] text-ink-muted">
+                Buyers see this on the listing. Declare how the product was actually made.
+              </p>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                {CONTENT_CREATION.map((value) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer gap-2.5 rounded-xl border border-line bg-white p-3.5 transition has-[:checked]:border-royal-blue has-[:checked]:bg-royal-tint"
+                  >
+                    <input
+                      type="radio"
+                      name="contentCreation"
+                      value={value}
+                      required
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-royal-blue"
+                    />
+                    <span>
+                      <span className="block text-[13px] font-bold text-deep-navy">
+                        {CONTENT_CREATION_LABEL[value]}
+                      </span>
+                      <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-muted">
+                        {CONTENT_CREATION_HINT[value]}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
             <Field label="Tags" hint="Comma separated.">
               <input name="tags" placeholder="email, template, saas" className={field} />
             </Field>

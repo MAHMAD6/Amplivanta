@@ -25,6 +25,7 @@ import { getMarketplaceViewer } from "@/lib/server/marketplace-access";
 import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
 import { MARKETPLACE_LEGAL_DOCS } from "@/lib/marketplace-legal-docs";
 import { prisma } from "@/lib/prisma";
+import { CONTENT_CREATION_LABEL } from "@/lib/marketplace/content-creation";
 
 const TYPE_LABEL: Record<string, string> = {
   TEMPLATE: "Template",
@@ -61,7 +62,7 @@ function load(productSlug: string) {
     select: {
       id: true, slug: true, title: true, summary: true, description: true, tags: true, type: true,
       coverImage: true, coverImageAlt: true, galleryImages: true, galleryImageAlts: true,
-      language: true, highlights: true, perfectFor: true, categoryId: true,
+      language: true, highlights: true, perfectFor: true, categoryId: true, contentCreation: true,
       seoTitle: true, metaDescription: true, allowIndexing: true,
       seller: { select: { storeName: true, slug: true, bio: true, createdAt: true } },
       category: { select: { name: true, slug: true } },
@@ -219,6 +220,14 @@ export default async function ProductDetailPage({
                 <BadgeCheck aria-hidden className="h-3.5 w-3.5" />
                 {TYPE_LABEL[product.type] ?? product.type}
               </span>
+                {product.contentCreation && (
+                  <span
+                    title="How the seller declares this product was made"
+                    className="ml-2 inline-flex items-center rounded-full border border-line bg-white px-3 py-1 text-[11.5px] font-bold text-ink-muted"
+                  >
+                    {CONTENT_CREATION_LABEL[product.contentCreation]}
+                  </span>
+                )}
 
               {product.description && (
                 <p className="mt-4 whitespace-pre-line text-[14px] leading-relaxed text-ink-soft">

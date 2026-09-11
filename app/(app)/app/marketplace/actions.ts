@@ -10,6 +10,7 @@ import { canSellerEdit, canSellerTransition, canSubmit, type ProductStatus } fro
 import { fulfilOrder } from "@/lib/server/marketplace-fulfilment";
 import { nextOrderStatusOnPlace } from "@/lib/marketplace/order-policy";
 import { complete } from "@/lib/ai";
+import { isContentCreation } from "@/lib/marketplace/content-creation";
 
 export type MpResult = { ok: true; message: string } | { ok: false; error: string };
 
@@ -109,6 +110,10 @@ function listingFields(formData: FormData) {
   if (formData.has("language")) {
     out.language = String(formData.get("language") ?? "").trim() || "English";
   }
+  if (formData.has("contentCreation")) {
+    const v = formData.get("contentCreation");
+    if (isContentCreation(v)) out.contentCreation = v;
+  }
   if (formData.has("allowIndexing")) {
     out.allowIndexing = String(formData.get("allowIndexing")) !== "false";
   }
@@ -144,6 +149,11 @@ export async function createProduct(formData: FormData): Promise<MpResult> {
     return { ok: false, error: "Select a valid product type." };
   }
   const type = typeRaw as MarketplaceProductType;
+
+  // Required by the Marketplace spec: every new listing declares how it was made.
+  if (!isContentCreation(formData.get("contentCreation"))) {
+    return { ok: false, error: "Choose how this product was created before saving it." };
+  }
 
   // Image and video product types are individually flag-gated.
   if (type === MarketplaceProductType.IMAGE && viewer.flags[MARKETPLACE_FLAGS.imageProducts] !== true) {

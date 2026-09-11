@@ -13,6 +13,7 @@ import {
 } from "@/components/marketing/site-ui";
 import { RESOURCE_BY_SLUG, RESOURCE_PAGES } from "@/lib/site-resources";
 import { BLOG_POSTS } from "@/lib/blog-posts";
+import { resourceListing } from "@/lib/site-resource-items";
 
 export function generateStaticParams() {
   return RESOURCE_PAGES.map((p) => ({ slug: p.slug }));
@@ -33,9 +34,12 @@ export default async function ResourceIndexPage({ params }: { params: Promise<{ 
   const page = RESOURCE_BY_SLUG.get(slug);
   if (!page) notFound();
 
-  // Only the blog has published content today. The rest render the reference's
-  // neutral state rather than sample listings.
-  const posts = slug === "blog" ? BLOG_POSTS : [];
+  // Each section lists only what is actually published; an empty section
+  // renders the reference's neutral state rather than sample listings.
+  const items =
+    slug === "blog"
+      ? BLOG_POSTS.map((p) => ({ title: p.title, summary: p.excerpt, href: `/resources/blog/${p.slug}` }))
+      : resourceListing(slug);
 
   return (
     <>
@@ -53,15 +57,11 @@ export default async function ResourceIndexPage({ params }: { params: Promise<{ 
       />
 
       <Section title={`Latest ${page.name.toLowerCase()}`}>
-        {posts.length > 0 ? (
+        {items.length > 0 ? (
           <CardGrid cols={3}>
-            {posts.map((p) => (
-              <Card
-                key={p.slug}
-                title={p.title}
-                link={{ label: "Read", href: `/resources/blog/${p.slug}` }}
-              >
-                {p.excerpt}
+            {items.map((item) => (
+              <Card key={item.href} title={item.title} link={{ label: "Open", href: item.href }}>
+                {item.summary}
               </Card>
             ))}
           </CardGrid>

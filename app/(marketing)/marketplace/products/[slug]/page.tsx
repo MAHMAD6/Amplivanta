@@ -6,6 +6,7 @@ import { MarketingBreadcrumb } from "@/components/amplivanta/marketing-breadcrum
 import { ProductGallery, type GalleryImage } from "@/components/marketplace/product-gallery";
 import { SharePopover } from "@/components/marketplace/share-popover";
 import { loadPublicProduct, publicProductUrl } from "@/lib/server/public-marketplace";
+import { CONTENT_CREATION_LABEL } from "@/lib/marketplace/content-creation";
 
 export const dynamic = "force-dynamic";
 
@@ -70,11 +71,11 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
     return (
       <section className="bg-white py-16">
         <div className="mx-auto max-w-[900px] px-4 text-center lg:px-8">
-          <Package aria-hidden className="mx-auto h-7 w-7 text-ink-muted" />
-          <h1 className="mt-3 font-display text-2xl font-extrabold text-deep-navy">
+          <Package aria-hidden className="mx-auto h-7 w-7 text-site-muted" />
+          <h1 className="mt-3 font-display text-2xl font-extrabold text-site-ink">
             Marketplace unavailable
           </h1>
-          <p className="mt-2 text-[14px] text-ink-soft">
+          <p className="mt-2 text-[14px] text-site-muted">
             This listing could not be loaded right now. Please try again shortly.
           </p>
         </div>
@@ -120,19 +121,27 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
               <ProductGallery images={images} title={product.title} />
 
               <div>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-royal-tint px-3 py-1 text-[11.5px] font-bold text-royal-blue">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F0ECFF] px-3 py-1 text-[11.5px] font-bold text-site-purple">
                   <BadgeCheck aria-hidden className="h-3.5 w-3.5" />
                   {TYPE_LABEL[product.type] ?? product.type}
                 </span>
-                <h1 className="mt-3 font-display text-3xl font-extrabold leading-tight text-deep-navy">
+                {product.contentCreation && (
+                  <span
+                    title="How the seller declares this product was made"
+                    className="ml-2 inline-flex items-center rounded-full border border-site-line bg-white px-3 py-1 text-[11.5px] font-bold text-site-muted"
+                  >
+                    {CONTENT_CREATION_LABEL[product.contentCreation]}
+                  </span>
+                )}
+                <h1 className="mt-3 font-display text-3xl font-extrabold leading-tight text-site-ink">
                   {product.title}
                 </h1>
                 {product.summary && (
-                  <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{product.summary}</p>
+                  <p className="mt-2 text-[15px] leading-relaxed text-site-muted">{product.summary}</p>
                 )}
-                <p className="mt-3 text-[12.5px] text-ink-muted">
+                <p className="mt-3 text-[12.5px] text-site-muted">
                   By{" "}
-                  <Link href={`/marketplace?seller=${product.seller.slug}`} className="font-semibold text-royal-blue hover:underline">
+                  <Link href={`/marketplace?seller=${product.seller.slug}`} className="font-semibold text-site-purple hover:underline">
                     {product.seller.storeName}
                   </Link>
                 </p>
@@ -140,7 +149,7 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
                 {product.tags.length > 0 && (
                   <div className="mt-5 flex flex-wrap gap-2">
                     {product.tags.map((t) => (
-                      <span key={t} className="rounded-lg border border-line px-2.5 py-1 text-[11.5px] text-ink-soft">
+                      <span key={t} className="rounded-lg border border-site-line px-2.5 py-1 text-[11.5px] text-site-muted">
                         {t}
                       </span>
                     ))}
@@ -155,8 +164,8 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
 
             {product.description && (
               <div className="mt-10">
-                <h2 className="font-display text-2xl font-extrabold text-deep-navy">About this product</h2>
-                <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-ink-soft">
+                <h2 className="font-display text-2xl font-extrabold text-site-ink">About this product</h2>
+                <p className="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-site-muted">
                   {product.description}
                 </p>
               </div>
@@ -164,11 +173,11 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
 
             {product.highlights.length > 0 && (
               <div className="mt-9">
-                <h2 className="font-display text-xl font-extrabold text-deep-navy">What&apos;s included</h2>
+                <h2 className="font-display text-xl font-extrabold text-site-ink">What&apos;s included</h2>
                 <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {product.highlights.map((h) => (
-                    <li key={h} className="flex gap-2.5 text-[14px] text-ink-soft">
-                      <BadgeCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-royal-blue" />
+                    <li key={h} className="flex gap-2.5 text-[14px] text-site-muted">
+                      <BadgeCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-site-purple" />
                       {h}
                     </li>
                   ))}
@@ -178,11 +187,11 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
 
             {product.perfectFor.length > 0 && (
               <div className="mt-9">
-                <h2 className="font-display text-xl font-extrabold text-deep-navy">Perfect for</h2>
+                <h2 className="font-display text-xl font-extrabold text-site-ink">Perfect for</h2>
                 <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {product.perfectFor.map((h) => (
-                    <li key={h} className="flex gap-2.5 text-[14px] text-ink-soft">
-                      <BadgeCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-royal-blue" />
+                    <li key={h} className="flex gap-2.5 text-[14px] text-site-muted">
+                      <BadgeCheck aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-site-purple" />
                       {h}
                     </li>
                   ))}
@@ -191,25 +200,25 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
             )}
           </div>
 
-          <aside className="h-fit rounded-2xl border border-line bg-white p-6 shadow-card lg:sticky lg:top-6">
-            <div className="text-[12.5px] font-bold uppercase tracking-wide text-ink-muted">Price</div>
-            <div className="mt-1.5 text-[30px] font-extrabold leading-none text-deep-navy">{price}</div>
-            <div className="mt-1.5 text-[12px] text-ink-muted">Set by seller</div>
+          <aside className="h-fit rounded-2xl border border-site-line bg-white p-6 shadow-card lg:sticky lg:top-6">
+            <div className="text-[12.5px] font-bold uppercase tracking-wide text-site-muted">Price</div>
+            <div className="mt-1.5 text-[30px] font-extrabold leading-none text-site-ink">{price}</div>
+            <div className="mt-1.5 text-[12px] text-site-muted">Set by seller</div>
 
             <Link
               href={`/login?next=${encodeURIComponent(`/app/marketplace/products/${product.slug}`)}`}
-              className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-royal-blue text-[14px] font-bold text-white transition hover:bg-royal-soft"
+              className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-site-purple text-[14px] font-bold text-white transition hover:bg-site-purple-2"
             >
               Sign in to buy
             </Link>
-            <p className="mt-2.5 text-center text-[11.5px] text-ink-muted">
+            <p className="mt-2.5 text-center text-[11.5px] text-site-muted">
               New to Amplivanta?{" "}
-              <Link href="/signup" className="font-semibold text-royal-blue hover:underline">
+              <Link href="/signup" className="font-semibold text-site-purple hover:underline">
                 Create an account
               </Link>
             </p>
 
-            <dl className="mt-6 space-y-3.5 border-t border-line pt-5">
+            <dl className="mt-6 space-y-3.5 border-t border-site-line pt-5">
               {(
                 [
                   [FileText, "File size", totalBytes > 0 ? fileSize(totalBytes) : "Varies by file"],
@@ -219,18 +228,18 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
                 ] as [React.ComponentType<{ className?: string }>, string, string][]
               ).map(([Icon, label, value]) => (
                 <div key={label} className="flex items-start gap-3">
-                  <Icon aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-ink-muted" />
-                  <dt className="w-[74px] shrink-0 text-[12.5px] font-bold text-deep-navy">{label}</dt>
-                  <dd className="min-w-0 text-[12.5px] text-ink-soft">{value}</dd>
+                  <Icon aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-site-muted" />
+                  <dt className="w-[74px] shrink-0 text-[12.5px] font-bold text-site-ink">{label}</dt>
+                  <dd className="min-w-0 text-[12.5px] text-site-muted">{value}</dd>
                 </div>
               ))}
             </dl>
 
-            <div className="mt-5 flex gap-3 border-t border-line pt-5">
-              <ShieldCheck aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-royal-blue" />
+            <div className="mt-5 flex gap-3 border-t border-site-line pt-5">
+              <ShieldCheck aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-site-purple" />
               <div>
-                <div className="text-[13px] font-bold text-deep-navy">Delivered securely</div>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-ink-muted">
+                <div className="text-[13px] font-bold text-site-ink">Delivered securely</div>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-site-muted">
                   Access is issued after a confirmed payment, on the seller&apos;s terms.
                 </p>
               </div>

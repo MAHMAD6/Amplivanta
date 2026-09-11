@@ -85,7 +85,7 @@ export function loadPublicProduct(slug: string) {
     select: {
       id: true, slug: true, title: true, summary: true, description: true, tags: true, type: true,
       coverImage: true, coverImageAlt: true, galleryImages: true, galleryImageAlts: true,
-      language: true, highlights: true, perfectFor: true,
+      language: true, highlights: true, perfectFor: true, contentCreation: true,
       seoTitle: true, metaDescription: true, allowIndexing: true,
       seller: { select: { storeName: true, slug: true, bio: true, createdAt: true } },
       category: { select: { name: true, slug: true } },

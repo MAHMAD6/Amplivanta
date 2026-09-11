@@ -114,6 +114,8 @@ async function create() {
       "Panel describing a 34-page strategy guide",
     ],
     language: "English",
+    // The demo copy and images were machine-generated, so declare it honestly.
+    contentCreation: "PRIMARILY_AI_GENERATED",
     highlights: [
       "40 editable social templates",
       "120 caption prompts",
