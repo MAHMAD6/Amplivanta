@@ -271,7 +271,31 @@ reintroduce a root loading boundary over the public site. (`dynamicParams =
 false` was tried as well and dropped: it is redundant once the boundary is
 gone, and Next logs a NoFallbackError stack trace for every refused slug.)
 
-**Not built from the handoff:** the External API Master Revision PDF (Stripe
-subscriptions and one-time credits, Stripe Connect, SES, IONOS storage, OAuth
-providers). It is a backend integration workstream that needs provider
-credentials and approvals.
+## External providers (External API Master Revision)
+
+The code for each V1 provider is in place and stays off until its
+credentials are set; nothing is shown as available before then. Variables
+are documented in `.env.example`.
+
+| Provider | Switch on with | What it does |
+| --- | --- | --- |
+| Stripe subscriptions | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, plan price IDs | Existing Checkout; the webhook now dedupes every event in `ProviderEvent` |
+| Stripe one-time credits | the above + `CREDIT_PACKS` (JSON) | `POST /api/billing/credits/checkout`; webhook verifies amount and currency, then posts to the credit ledger once |
+| Credit wallet / ledger | always on | `CreditWallet` (plan and purchased buckets) and append-only `CreditLedgerEntry`; plan credits are consumed first; unique source keys make grants idempotent |
+| Marketplace payments | Stripe keys + Marketplace setting `payment.provider = {"provider":"stripe"}` | Paid orders go to Stripe Checkout from the order's own snapshot; full refunds are submitted to Stripe |
+| Stripe Connect | `STRIPE_CONNECT_ENABLED=true` | Express onboarding from seller settings; `account.updated` is audited. Phase 2 — keep off until payout reconciliation and dispute policy are approved |
+| IONOS storage | `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET` (R2 vars still work) | Presigned uploads; Marketplace downloads are presigned and expire |
+| Amazon SES | `EMAIL_PROVIDER=ses`, `SES_REGION`, `SES_SMTP_USER/PASS`, `SES_CONFIGURATION_SET`, `SES_SNS_TOPIC_ARNS` | Sends through the SES SMTP interface; `/api/webhooks/ses` verifies SNS signatures and suppresses hard bounces and complaints |
+| Google / Microsoft sign-in | `AUTH_GOOGLE_*`, `AUTH_MICROSOFT_ENTRA_ID_*` | Buttons appear on the login page; links an existing account by verified email, then matches by provider subject (`UserIdentity`). Never creates an account on its own |
+| Microsoft integration OAuth | `MICROSOFT_CLIENT_ID/SECRET`, `MICROSOFT_TENANT` | Connected-data OAuth alongside Google and HubSpot; tokens encrypted at rest |
+| Cloudflare Turnstile | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Widget on signup, contact and affiliate forms; server verification fails closed |
+
+**Fixed along the way.** `/api/billing/checkout` activated any paid plan free
+in production when Stripe was unconfigured; that shortcut is now
+development-only. Marketplace `issueSignedUrl` returned a permanent
+base-URL link; it now presigns. The contact and affiliate forms sent field
+names the API rejects, so every submission failed validation.
+
+**Not built:** OpenAI, fal.ai, Google Analytics/Ads, Meta Marketing, Cloudflare
+DNS/WAF automation and the Phase 1.1+ connectors. These are growth-data and AI
+workstreams beyond payments, email, storage and identity.
