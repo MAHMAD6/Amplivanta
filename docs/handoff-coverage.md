@@ -193,3 +193,45 @@ Those now scroll.
 Pages whose loaders read the database cannot be checked on a machine without
 one: they render the error boundary locally. They were verified structurally
 only.
+
+## New public design (September 2026 handoff)
+
+The approved handoff arrived as standalone HTML and screenshots. It was
+rebuilt in Tailwind rather than ported — the delivered markup and CSS are a
+reference, not source. A `site-*` colour family carries the public palette so
+the marketing surface cannot disturb the app or admin tokens.
+
+**Shell.** `components/marketing/site-shell.tsx` (header, footer) is mounted by
+the marketing layout and derives the active nav item from the pathname.
+`components/marketing/site-ui.tsx` holds the section vocabulary every page
+composes. Social marks are non-linking glyphs until official profile URLs are
+confirmed, per the handoff README.
+
+**Content registries.** Platform, Solutions, Industries and Resources pages
+render from `lib/site-*.ts`; the section indexes and homepage list from the
+same registries, so a new entry appears everywhere without a second edit.
+
+**Pricing.** `lib/site-pricing.ts` holds list prices and the two published
+discounts; every displayed figure is derived and rounded to cents explicitly,
+and `tests/site-pricing.test.ts` locks the reference's numbers. The annual
+total is computed from the unrounded rate — the rounded monthly figure × 12
+would bill 396.96 where the reference bills 396.90.
+
+**Marketplace.** Content Creation disclosure (Human-created / AI-assisted /
+Primarily AI-generated) is required on every new listing — enum, wizard field,
+server check, and a badge on both product pages. `/marketplace/checkout` is the
+public sign-in gate.
+
+**Resources.** Blog renders real posts. Videos, webinars, templates and Help
+Center read deliberately empty registries in `lib/site-resource-items.ts`; the
+reference forbids sample content and there is no public content source yet.
+
+**404s.** Registry-driven dynamic routes set `dynamicParams = false`, and the
+root `app/loading.tsx` is gone: both caused unknown slugs to stream a 200 with
+the not-found page. Do not reintroduce a root loading boundary over the public
+site.
+
+**Not built from the handoff:** the External API Master Revision PDF (Stripe
+subscriptions and one-time credits, Stripe Connect, SES, IONOS storage, OAuth
+providers). It is a backend integration workstream that needs provider
+credentials and approvals.
