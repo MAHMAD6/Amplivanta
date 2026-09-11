@@ -5,6 +5,11 @@ import { btn, btnPrimary } from "@/components/marketing/site-shell";
 import { Card, CardGrid, Crumb, Hero, HeroVisual, Section } from "@/components/marketing/site-ui";
 import { PLATFORM_BY_SLUG, PLATFORM_PAGES } from "@/lib/site-platform";
 
+// Every valid slug is known at build time from the registry, so refuse
+// anything else at routing. Without this, an unknown slug streamed a 200
+// with the not-found page — a soft 404 that search engines index.
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return PLATFORM_PAGES.map((p) => ({ slug: p.slug }));
 }

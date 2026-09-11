@@ -7,6 +7,11 @@ import { RESOURCE_VIDEOS } from "@/lib/site-resource-items";
 
 const BY_SLUG = new Map(RESOURCE_VIDEOS.map((v) => [v.slug, v]));
 
+// Every valid slug is known at build time from the registry, so refuse
+// anything else at routing. Without this, an unknown slug streamed a 200
+// with the not-found page — a soft 404 that search engines index.
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return RESOURCE_VIDEOS.map((v) => ({ slug: v.slug }));
 }
