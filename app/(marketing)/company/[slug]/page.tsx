@@ -3,11 +3,6 @@ import { COMPANY_PAGES } from "@/lib/marketing-modules";
 import { MarketingPage } from "@/components/amplivanta/marketing-page";
 import type { Metadata } from "next";
 
-// Every valid slug is known at build time from the registry, so refuse
-// anything else at routing. Without this, an unknown slug streamed a 200
-// with the not-found page — a soft 404 that search engines index.
-export const dynamicParams = false;
-
 export function generateStaticParams() {
   return Object.keys(COMPANY_PAGES).map((slug) => ({ slug }));
 }

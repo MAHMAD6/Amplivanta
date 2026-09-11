@@ -226,10 +226,12 @@ public sign-in gate.
 Center read deliberately empty registries in `lib/site-resource-items.ts`; the
 reference forbids sample content and there is no public content source yet.
 
-**404s.** Registry-driven dynamic routes set `dynamicParams = false`, and the
-root `app/loading.tsx` is gone: both caused unknown slugs to stream a 200 with
-the not-found page. Do not reintroduce a root loading boundary over the public
-site.
+**404s.** The root `app/loading.tsx` is gone: its Suspense boundary made
+unknown slugs stream HTTP 200 with the not-found page. With it removed,
+`notFound()` returns a real 404 on every dynamic public route. Do not
+reintroduce a root loading boundary over the public site. (`dynamicParams =
+false` was tried as well and dropped: it is redundant once the boundary is
+gone, and Next logs a NoFallbackError stack trace for every refused slug.)
 
 **Not built from the handoff:** the External API Master Revision PDF (Stripe
 subscriptions and one-time credits, Stripe Connect, SES, IONOS storage, OAuth

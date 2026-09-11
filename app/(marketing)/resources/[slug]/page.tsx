@@ -15,11 +15,6 @@ import { RESOURCE_BY_SLUG, RESOURCE_PAGES } from "@/lib/site-resources";
 import { BLOG_POSTS } from "@/lib/blog-posts";
 import { resourceListing } from "@/lib/site-resource-items";
 
-// Every valid slug is known at build time from the registry, so refuse
-// anything else at routing. Without this, an unknown slug streamed a 200
-// with the not-found page — a soft 404 that search engines index.
-export const dynamicParams = false;
-
 export function generateStaticParams() {
   return RESOURCE_PAGES.map((p) => ({ slug: p.slug }));
 }

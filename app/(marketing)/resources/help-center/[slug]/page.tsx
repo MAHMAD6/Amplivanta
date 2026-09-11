@@ -7,11 +7,6 @@ import { HELP_ARTICLES } from "@/lib/site-resource-items";
 
 const BY_SLUG = new Map(HELP_ARTICLES.map((a) => [a.slug, a]));
 
-// Every valid slug is known at build time from the registry, so refuse
-// anything else at routing. Without this, an unknown slug streamed a 200
-// with the not-found page — a soft 404 that search engines index.
-export const dynamicParams = false;
-
 export function generateStaticParams() {
   return HELP_ARTICLES.map((a) => ({ slug: a.slug }));
 }

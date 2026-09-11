@@ -15,11 +15,6 @@ const STATUS_LABEL: Record<WebinarStatus, string> = {
   replay: "Replay available",
 };
 
-// Every valid slug is known at build time from the registry, so refuse
-// anything else at routing. Without this, an unknown slug streamed a 200
-// with the not-found page — a soft 404 that search engines index.
-export const dynamicParams = false;
-
 export function generateStaticParams() {
   return RESOURCE_WEBINARS.map((w) => ({ slug: w.slug }));
 }

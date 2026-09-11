@@ -18,11 +18,6 @@ const SIMPLE_DOCS: Record<string, { title: string; body: string[] }> = {
   ]},
 };
 
-// Every valid slug is known at build time from the registry, so refuse
-// anything else at routing. Without this, an unknown slug streamed a 200
-// with the not-found page — a soft 404 that search engines index.
-export const dynamicParams = false;
-
 export function generateStaticParams() {
   // "dpa" has its own dedicated rich route at /legal/dpa — exclude it here.
   return [...Object.keys(LEGAL_DOCS), ...Object.keys(MARKETPLACE_LEGAL_DOCS), ...Object.keys(SIMPLE_DOCS)]
