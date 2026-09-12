@@ -296,6 +296,60 @@ development-only. Marketplace `issueSignedUrl` returned a permanent
 base-URL link; it now presigns. The contact and affiliate forms sent field
 names the API rejects, so every submission failed validation.
 
-**Not built:** OpenAI, fal.ai, Google Analytics/Ads, Meta Marketing, Cloudflare
-DNS/WAF automation and the Phase 1.1+ connectors. These are growth-data and AI
-workstreams beyond payments, email, storage and identity.
+| AI provider | `AI_PROVIDER`, `OPENAI_API_KEY` (or the existing `ANTHROPIC_API_KEY`) | Every model call goes through `lib/ai.ts`; OpenAI uses the Responses API |
+| fal.ai video | `FAL_KEY`, `FAL_MODELS`, `FAL_VIDEO_CREDIT_COST` | `/api/ai/video`; server-side model allowlist, each job debited through the credit ledger |
+| Google Analytics (GA4) | Google OAuth + `propertyId` on the connection | `runReport` over a trailing window, normalized into `ProviderMetricDaily` |
+| Google Ads | the above + `GOOGLE_ADS_DEVELOPER_TOKEN`, `adsCustomerId` | campaign cost, clicks, impressions, conversions |
+| Meta Marketing | `META_CLIENT_ID/SECRET`, `adAccountId` | campaign spend, impressions, clicks |
+| HubSpot | `HUBSPOT_CLIENT_ID/SECRET` | read-only contact import, matched on email so a re-sync updates rather than duplicates |
+| Cloudflare | `CLOUDFLARE_API_TOKEN` | zone status only — read-only by design |
+| Phase 1.1 / 2 connectors | per-provider client id and secret | Salesforce, LinkedIn, Shopify, YouTube, TikTok, Slack, Google and Microsoft Calendar connect flows exist; unavailable until configured |
+
+Connectors run from `POST /api/integrations/:id/sync` (workspace scoped, rate
+limited) and each reports why it could not run — a missing developer token or
+property id is a visible reason, never silently "no data". Totals appear on
+Connected Apps.
+
+## Marketplace extensions (feature-flagged)
+
+The four items the handoff left flagged are implemented, each off until an
+operator enables its flag in the admin console.
+
+| Feature | Flag | Behaviour |
+| --- | --- | --- |
+| Store follows | `marketplace.store_follows` | Follow an approved seller's store; live follower count |
+| Coupons | `marketplace.coupons` | Percent or fixed amount, platform-wide (admin) or seller-scoped. Re-validated on every quote and redeemed atomically, so a code can never exceed its limit |
+| Bundles | `marketplace.bundles` | Two or more of a seller's published products at one price; cart lines are repriced to sum to it, and an incomplete bundle reverts to list prices |
+| Sponsored listings | `marketplace.sponsored_listings` | Admin-curated placements on the Marketplace home, always rendered with their label, each creation audited with a reason |
+| Affiliate promotion | `marketplace.affiliate_promotion` | `?ref=` codes captured for 30 days; commission recorded only when a referred order is paid, at the affiliate's configured rate |
+
+Discount maths is pure and unit-tested (`lib/marketplace/pricing.ts`), because
+per-line snapshot prices must sum exactly to the total Stripe charges and the
+seller ledger records.
+
+## Public-site analytics
+
+`POST /api/site-events` counts page views, CTA clicks, searches, contact and
+signup events. Event names are allow-listed, the endpoint is rate limited per
+IP, and nothing identifying the visitor is stored — only a name, a path and a
+daily count. Totals show in the admin console under Super Admin Analytics,
+which previously had no data source.
+
+## In-app Marketplace screen parity
+
+The 22 buyer, seller and Super Admin screens were compared against the final
+polished screenshots. Closed: Purchase Confirmation (order details and next
+steps), My Purchases (views, search, sort), Purchase Detail (order summary,
+license, seller, help, items table), seller Orders & Sales (listed nothing even
+when orders existed), seller Earnings (eligible / pending / earned / paid out,
+payout information, and payout readiness from the real connected account rather
+than a hard-coded false), My Products (status tabs, search, quality checklist),
+and Marketplace Overview (all eight figures plus top product types).
+
+**Verification limit.** The Marketplace viewer resolves from the real session,
+not the dev-bypass tenant, so signed-in buyer and seller screens cannot be
+rendered locally without credentials. Those were verified by typecheck, build
+and unit tests; admin screens render under `next dev` and were checked directly.
+
+**Not built:** nothing further from the API document's V1 set. Remaining items
+there are provider accounts and approvals, not code.
