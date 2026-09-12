@@ -1,15 +1,68 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 /**
- * AI provider (Anthropic Claude). When ANTHROPIC_API_KEY is set, calls the real
- * Messages API; otherwise returns a deterministic local stub so AI features work
- * in development without a key. Every call records token usage for the caller.
+ * AI gateway. Every model call in the product goes through here, so provider
+ * credentials never reach the browser and usage is recorded for the caller.
+ *
+ * Provider is chosen by AI_PROVIDER ("anthropic" | "openai"), else by whichever
+ * key is present. With no key at all, a deterministic local stub keeps AI
+ * features usable in development.
  */
 
 const MODEL = process.env.AI_MODEL || "claude-sonnet-5";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5";
+
+export type AiProvider = "anthropic" | "openai" | "stub";
+
+export function aiProvider(): AiProvider {
+  const pick = (process.env.AI_PROVIDER ?? "").toLowerCase();
+  if (pick === "openai" && process.env.OPENAI_API_KEY) return "openai";
+  if (pick === "anthropic" && process.env.ANTHROPIC_API_KEY) return "anthropic";
+  if (process.env.ANTHROPIC_API_KEY) return "anthropic";
+  if (process.env.OPENAI_API_KEY) return "openai";
+  return "stub";
+}
 
 export function isAiConfigured(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return aiProvider() !== "stub";
+}
+
+/** OpenAI Responses API, per the approved provider inventory. */
+async function completeOpenAi(opts: { system?: string; prompt: string; maxTokens?: number }): Promise<AiResult> {
+  const res = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      ...(opts.system ? { instructions: opts.system } : {}),
+      input: opts.prompt,
+      max_output_tokens: opts.maxTokens ?? 1024,
+    }),
+    signal: AbortSignal.timeout(Number(process.env.AI_TIMEOUT_MS ?? 60000)),
+  });
+  if (!res.ok) throw new Error(`OpenAI request failed (${res.status})`);
+  const data = (await res.json()) as {
+    output_text?: string;
+    output?: { content?: { type?: string; text?: string }[] }[];
+    usage?: { input_tokens?: number; output_tokens?: number };
+  };
+  const text =
+    data.output_text ??
+    (data.output ?? [])
+      .flatMap((o) => o.content ?? [])
+      .filter((c) => c.type === "output_text" && typeof c.text === "string")
+      .map((c) => c.text as string)
+      .join("\n");
+  return {
+    text: text ?? "",
+    model: OPENAI_MODEL,
+    tokensIn: data.usage?.input_tokens ?? 0,
+    tokensOut: data.usage?.output_tokens ?? 0,
+    stubbed: false,
+  };
 }
 
 let client: Anthropic | null = null;
@@ -31,9 +84,9 @@ export async function complete(opts: {
   prompt: string;
   maxTokens?: number;
 }): Promise<AiResult> {
-  if (!isAiConfigured()) {
-    return stub(opts.prompt);
-  }
+  const provider = aiProvider();
+  if (provider === "stub") return stub(opts.prompt);
+  if (provider === "openai") return completeOpenAi(opts);
   const res = await getClient().messages.create({
     model: MODEL,
     max_tokens: opts.maxTokens ?? 1024,

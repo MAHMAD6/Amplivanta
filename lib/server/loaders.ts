@@ -400,6 +400,7 @@ export async function loadIntegrations(): Promise<Live<Integration>> {
     const meta = PROVIDER_META[i.provider] ?? { name: i.provider, category: "Data" as const, logo: "🔌" };
     return {
       id: i.id,
+      provider: i.provider,
       name: meta.name,
       category: meta.category,
       logo: meta.logo,

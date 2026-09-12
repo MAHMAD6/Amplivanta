@@ -2350,3 +2350,22 @@ model SiteEventAggregate {
   @@unique([name, path, date])
   @@index([date])
 }
+
+/// Normalized daily metrics from growth-data connectors (GA4, Ads, Meta).
+/// One shape for every provider; unique per dimension so a re-sync corrects
+/// values instead of duplicating them.
+model ProviderMetricDaily {
+  id          String   @id @default(cuid())
+  workspaceId String
+  provider    String
+  metric      String
+  date        DateTime
+  dimension   String   @default("")
+  value       Float    @default(0)
+  currency    String?
+  meta        Json?
+  updatedAt   DateTime @updatedAt
+
+  @@unique([workspaceId, provider, metric, date, dimension])
+  @@index([workspaceId, date])
+}

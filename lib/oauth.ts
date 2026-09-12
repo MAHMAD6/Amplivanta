@@ -35,6 +35,15 @@ export const OAUTH_PROVIDERS: Record<string, OAuthProvider> = {
     clientId: process.env.MICROSOFT_CLIENT_ID,
     clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
   },
+  meta: {
+    id: "meta",
+    name: "Meta",
+    authorizeUrl: "https://www.facebook.com/v21.0/dialog/oauth",
+    tokenUrl: "https://graph.facebook.com/v21.0/oauth/access_token",
+    scopes: ["ads_read", "business_management"],
+    clientId: process.env.META_CLIENT_ID,
+    clientSecret: process.env.META_CLIENT_SECRET,
+  },
   hubspot: {
     id: "hubspot",
     name: "HubSpot",
@@ -45,6 +54,87 @@ export const OAUTH_PROVIDERS: Record<string, OAuthProvider> = {
     clientSecret: process.env.HUBSPOT_CLIENT_SECRET,
   },
 };
+
+/**
+ * Phase 1.1 and Phase 2 providers from the approved inventory. The connect
+ * flow exists for each, but a provider without credentials is simply
+ * unavailable — never shown as connectable.
+ */
+const LATER_PHASE: OAuthProvider[] = [
+  {
+    id: "salesforce",
+    name: "Salesforce",
+    authorizeUrl: `${process.env.SALESFORCE_LOGIN_URL || "https://login.salesforce.com"}/services/oauth2/authorize`,
+    tokenUrl: `${process.env.SALESFORCE_LOGIN_URL || "https://login.salesforce.com"}/services/oauth2/token`,
+    scopes: ["api", "refresh_token"],
+    clientId: process.env.SALESFORCE_CLIENT_ID,
+    clientSecret: process.env.SALESFORCE_CLIENT_SECRET,
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    authorizeUrl: "https://www.linkedin.com/oauth/v2/authorization",
+    tokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
+    scopes: ["r_ads_reporting", "r_ads"],
+    clientId: process.env.LINKEDIN_CLIENT_ID,
+    clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+  },
+  {
+    id: "shopify",
+    name: "Shopify",
+    authorizeUrl: `https://${process.env.SHOPIFY_SHOP_DOMAIN || "shop.myshopify.com"}/admin/oauth/authorize`,
+    tokenUrl: `https://${process.env.SHOPIFY_SHOP_DOMAIN || "shop.myshopify.com"}/admin/oauth/access_token`,
+    scopes: ["read_orders", "read_customers", "read_products"],
+    clientId: process.env.SHOPIFY_CLIENT_ID,
+    clientSecret: process.env.SHOPIFY_CLIENT_SECRET,
+  },
+  {
+    id: "youtube",
+    name: "YouTube",
+    authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    scopes: ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/yt-analytics.readonly"],
+    clientId: process.env.YOUTUBE_CLIENT_ID,
+    clientSecret: process.env.YOUTUBE_CLIENT_SECRET,
+  },
+  {
+    id: "tiktok",
+    name: "TikTok",
+    authorizeUrl: "https://www.tiktok.com/v2/auth/authorize/",
+    tokenUrl: "https://open.tiktokapis.com/v2/oauth/token/",
+    scopes: ["video.publish", "video.upload"],
+    clientId: process.env.TIKTOK_CLIENT_KEY,
+    clientSecret: process.env.TIKTOK_CLIENT_SECRET,
+  },
+  {
+    id: "slack",
+    name: "Slack",
+    authorizeUrl: "https://slack.com/oauth/v2/authorize",
+    tokenUrl: "https://slack.com/api/oauth.v2.access",
+    scopes: ["chat:write", "channels:read"],
+    clientId: process.env.SLACK_CLIENT_ID,
+    clientSecret: process.env.SLACK_CLIENT_SECRET,
+  },
+  {
+    id: "google-calendar",
+    name: "Google Calendar",
+    authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    scopes: ["https://www.googleapis.com/auth/calendar.events"],
+    clientId: process.env.GOOGLE_CALENDAR_CLIENT_ID || process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET,
+  },
+  {
+    id: "microsoft-calendar",
+    name: "Microsoft Calendar",
+    authorizeUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT || "common"}/oauth2/v2.0/authorize`,
+    tokenUrl: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT || "common"}/oauth2/v2.0/token`,
+    scopes: ["offline_access", "Calendars.ReadWrite"],
+    clientId: process.env.MICROSOFT_CLIENT_ID,
+    clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+  },
+];
+for (const p of LATER_PHASE) OAUTH_PROVIDERS[p.id] = p;
 
 export function isProviderConfigured(p?: OAuthProvider): boolean {
   return Boolean(p?.clientId && p?.clientSecret);

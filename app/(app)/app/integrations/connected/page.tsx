@@ -6,12 +6,15 @@ import { StatusPill } from "@/components/amplivanta/status-pill";
 import { INTG_TONE } from "@/lib/integrations-data";
 import { LiveBadge } from "@/components/amplivanta/live-badge";
 import { loadIntegrations } from "@/lib/server/loaders";
+import { IntegrationSyncButton } from "@/components/amplivanta/integration-sync-button";
+import { isSyncable } from "@/lib/providers/syncable";
+import { loadWorkspaceMetricSummary } from "@/lib/server/provider-metrics-summary";
 
 export const metadata: Metadata = { title: "Connected Apps" };
 export const dynamic = "force-dynamic";
 
 export default async function ConnectedAppsPage() {
-  const { items: all, live } = await loadIntegrations();
+  const [{ items: all, live }, metrics] = await Promise.all([loadIntegrations(), loadWorkspaceMetricSummary()]);
   const items = all.filter((i) => i.status !== "Available");
   return (
     <div className="mx-auto max-w-[1500px]">
@@ -34,6 +37,29 @@ export default async function ConnectedAppsPage() {
           <button key={l} className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-3 text-[12px] font-semibold text-ink-soft">{l}</button>
         ))}
       </div>
+
+      {metrics.rows.length > 0 && (
+        <div className="mb-4 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
+          <div className="border-b border-line px-4 py-3 text-[13px] font-bold text-ink">
+            Synced provider data — last 30 days
+          </div>
+          <div className="divide-y divide-line">
+            {metrics.rows.map((r) => (
+              <div key={`${r.provider}-${r.metric}`} className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-[12.5px] text-ink-soft">
+                  {r.provider.replace(/_/g, " ")} · {r.metric}
+                </span>
+                <span className="text-[13px] font-bold text-ink">
+                  {r.total.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-line px-4 py-2 text-[11px] text-ink-muted">
+            Normalized from each provider&apos;s own API. Sync a connection to refresh.
+          </div>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
         <div className="overflow-x-auto">
@@ -66,6 +92,7 @@ export default async function ConnectedAppsPage() {
                   <td className="px-2 py-3 text-right">
                     <div className="flex justify-end gap-1">
                       <button className="rounded-lg border border-line px-2 py-1 text-[10.5px] font-semibold text-ink-soft">Configure</button>
+                      {isSyncable(i.provider) && <IntegrationSyncButton id={i.id} name={i.name} />}
                       {(i.status === "Warning" || i.status === "Error") && <button className="rounded-lg bg-amber-500 px-2 py-1 text-[10.5px] font-bold text-white">Reconnect</button>}
                       <button className="rounded-lg p-1 text-ink-muted"><MoreHorizontal className="h-3.5 w-3.5" /></button>
                     </div>

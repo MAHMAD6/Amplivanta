@@ -3,6 +3,8 @@ export const INTG_TONE = { Connected: "green", Available: "gray", Warning: "ambe
 
 export interface Integration {
   id: string;
+  /** Provider key (e.g. "google"), present on database-backed rows only. */
+  provider?: string;
   name: string;
   category: "CRM" | "Ads" | "Social" | "Email" | "Analytics" | "Storage" | "Communication" | "Payments" | "Data";
   logo: string;
