@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CreditCard } from "lucide-react";
 import { MpButton, MpCard, MpEmpty, MpHeader, MpNote } from "@/components/marketplace/ui";
 import { PlaceOrderButton } from "@/components/marketplace/purchase-ui";
+import { CouponBox } from "@/components/marketplace/extension-ui";
 import { getCheckoutQuote } from "@/app/(app)/app/marketplace/actions";
 
 export const metadata: Metadata = { title: "Checkout" };
@@ -47,9 +48,19 @@ export default async function CheckoutPage() {
                 <div key={l.itemId} className="flex items-center justify-between gap-4 px-6 py-4">
                   <div>
                     <div className="text-[14px] font-semibold text-deep-navy">{l.title}</div>
-                    <div className="text-[12px] text-ink-muted">Licence {l.licenseVersion}</div>
+                    <div className="text-[12px] text-ink-muted">
+                      Licence {l.licenseVersion}
+                      {l.bundleId ? " · bundle price" : ""}
+                    </div>
                   </div>
-                  <span className="text-[14px] font-bold text-deep-navy">{money(l.unitPriceCents, l.currency)}</span>
+                  <span className="text-right text-[14px] font-bold text-deep-navy">
+                    {money(l.unitPriceCents, l.currency)}
+                    {l.unitPriceCents !== l.listPriceCents && (
+                      <span className="block text-[11.5px] font-normal text-ink-muted line-through">
+                        {money(l.listPriceCents, l.currency)}
+                      </span>
+                    )}
+                  </span>
                 </div>
               ))}
             </div>
@@ -60,9 +71,27 @@ export default async function CheckoutPage() {
               <span>Subtotal</span>
               <span className="font-semibold text-deep-navy">{money(quote.subtotalCents, quote.currency)}</span>
             </div>
+            {quote.bundleSavingsCents > 0 && (
+              <div className="mt-2 flex items-center justify-between text-[13px] text-ink-soft">
+                <span>Bundle savings</span>
+                <span className="font-semibold text-emerald-700">-{money(quote.bundleSavingsCents, quote.currency)}</span>
+              </div>
+            )}
+            {quote.discountCents > 0 && (
+              <div className="mt-2 flex items-center justify-between text-[13px] text-ink-soft">
+                <span>Coupon {quote.couponCode}</span>
+                <span className="font-semibold text-emerald-700">-{money(quote.discountCents, quote.currency)}</span>
+              </div>
+            )}
             <div className="mt-2 flex items-center justify-between text-[13px] text-ink-soft">
               <span>Tax</span>
               <span className="text-ink-muted">Not configured</span>
+            </div>
+            <div className="mt-4 border-t border-line pt-4">
+              <CouponBox code={quote.couponCode} error={quote.couponError} />
+              {quote.couponError && (
+                <p className="mt-2 text-[12px] font-semibold text-orange-cta">{quote.couponError}</p>
+              )}
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
               <span className="text-[14px] font-bold text-deep-navy">Total</span>

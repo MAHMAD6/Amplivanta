@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/constants";
 import { isContentCreation } from "@/lib/marketplace/content-creation";
 import { STANDARD_LICENSE, type StoreType } from "@/lib/marketplace/storefront";
+import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
+import { isMarketplaceFlagOn } from "@/lib/server/marketplace-flags";
 
 /**
  * Public, unauthenticated view of the Marketplace catalogue.
@@ -163,6 +165,59 @@ export async function loadPublicStore(slug: string) {
     where: { slug, status: "APPROVED" },
     select: { storeName: true, slug: true, headline: true, bio: true, approvedAt: true },
   });
+}
+
+/**
+ * Admin-curated placements for the public Marketplace home. Off unless the
+ * sponsored-listings flag is on; every entry carries the label it must be
+ * shown with, and expired or unpublished products drop out.
+ */
+export async function loadSponsoredProducts(): Promise<{ product: PublicProductCard; label: string }[]> {
+  try {
+    if (!(await isMarketplaceFlagOn(MARKETPLACE_FLAGS.sponsoredListings))) return [];
+    const now = new Date();
+    const placements = await prisma.marketplaceSponsoredPlacement.findMany({
+      where: { isActive: true, placement: "home", startsAt: { lte: now }, OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: { productId: true, label: true },
+    });
+    if (placements.length === 0) return [];
+    const rows = await prisma.marketplaceProduct.findMany({
+      where: { id: { in: placements.map((p) => p.productId) }, status: "PUBLISHED" },
+      select: {
+        id: true, slug: true, title: true, summary: true,
+        coverImage: true, coverImageAlt: true,
+        category: { select: { name: true } },
+        seller: { select: { storeName: true, slug: true } },
+        versions: { orderBy: { version: "desc" }, take: 1, select: { priceCents: true, currency: true, licenseVersion: true } },
+      },
+    });
+    return placements.flatMap((pl) => {
+      const r = rows.find((x) => x.id === pl.productId);
+      if (!r) return [];
+      return [
+        {
+          label: pl.label,
+          product: {
+            id: r.id,
+            slug: r.slug,
+            title: r.title,
+            summary: r.summary,
+            coverImage: r.coverImage,
+            coverImageAlt: r.coverImageAlt,
+            categoryName: r.category?.name ?? null,
+            sellerName: r.seller.storeName,
+            sellerSlug: r.seller.slug,
+            priceLabel: priceLabel(r.versions[0]),
+            priceCents: r.versions[0]?.priceCents ?? null,
+          },
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
 }
 
 /** Slugs safe to advertise in the sitemap: published and indexable. */

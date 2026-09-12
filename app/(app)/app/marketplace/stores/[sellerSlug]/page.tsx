@@ -6,6 +6,8 @@ import { MpCard, MpDenied, MpEmpty, MpHeader } from "@/components/marketplace/ui
 import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
 import { getMarketplaceViewer, guardMarketplace } from "@/lib/server/marketplace-access";
 import { prisma } from "@/lib/prisma";
+import { flagEnabled } from "@/lib/server/marketplace-access";
+import { FollowButton } from "@/components/marketplace/extension-ui";
 
 export const metadata: Metadata = { title: "Seller Store" };
 
@@ -44,6 +46,8 @@ export default async function SellerStorePage({
 
   const { sellerSlug } = await params;
   let seller: { id: string; storeName: string; headline: string | null } | null = null;
+  let follow = { following: false, count: 0 };
+  let bundles: { id: string; slug: string; title: string; summary: string | null; priceCents: number; currency: string }[] = [];
   let products: { id: string; slug: string; title: string; summary: string | null; versions: { priceCents: number; currency: string }[] }[] = [];
   let reachable = true;
   try {
@@ -52,6 +56,22 @@ export default async function SellerStorePage({
       select: { id: true, storeName: true, headline: true },
     });
     if (seller) {
+      const [followCount, mine, bundleRows] = await Promise.all([
+        prisma.marketplaceStoreFollow.count({ where: { sellerId: seller.id } }),
+        viewer.userId
+          ? prisma.marketplaceStoreFollow.findFirst({ where: { sellerId: seller.id, userId: viewer.userId }, select: { id: true } })
+          : Promise.resolve(null),
+        flagEnabled(viewer, MARKETPLACE_FLAGS.bundles)
+          ? prisma.marketplaceBundle.findMany({
+              where: { sellerId: seller.id, status: "PUBLISHED" },
+              orderBy: { createdAt: "desc" },
+              take: 12,
+              select: { id: true, slug: true, title: true, summary: true, priceCents: true, currency: true },
+            })
+          : Promise.resolve([]),
+      ]);
+      follow = { following: Boolean(mine), count: followCount };
+      bundles = bundleRows;
       products = await prisma.marketplaceProduct.findMany({
         where: { status: "PUBLISHED", sellerId: seller.id },
         orderBy: { publishedAt: "desc" },
@@ -73,7 +93,31 @@ export default async function SellerStorePage({
         title={seller?.storeName ?? "Seller Store"}
         description={seller?.headline ?? undefined}
         breadcrumb={[{ label: "Marketplace", href: "/app/marketplace" }, { label: seller?.storeName ?? sellerSlug }]}
+        action={
+          seller && flagEnabled(viewer, MARKETPLACE_FLAGS.storeFollows) ? (
+            <FollowButton sellerId={seller.id} following={follow.following} count={follow.count} />
+          ) : undefined
+        }
       />
+
+      {bundles.length > 0 && (
+        <MpCard className="mb-6">
+          <div className="border-b border-line px-6 py-4 text-[15px] font-bold text-deep-navy">Bundles</div>
+          <div className="divide-y divide-line">
+            {bundles.map((b) => (
+              <Link key={b.id} href={`/app/marketplace/bundles/${b.slug}`} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-bg-soft">
+                <div>
+                  <div className="text-[14px] font-semibold text-deep-navy">{b.title}</div>
+                  {b.summary && <p className="text-[12.5px] text-ink-soft">{b.summary}</p>}
+                </div>
+                <span className="text-[14px] font-bold text-royal-blue">
+                  {new Intl.NumberFormat("en-US", { style: "currency", currency: b.currency }).format(b.priceCents / 100)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </MpCard>
+      )}
       {products.length > 0 ? (
         <ProductGrid products={products} />
       ) : (

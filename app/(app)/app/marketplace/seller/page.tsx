@@ -71,6 +71,14 @@ export default async function SellerDashboardPage() {
         </MpCard>
       </div>
 
+      <div className="mt-6 flex flex-wrap gap-3">
+        <MpButton href="/app/marketplace/seller/products">My Products</MpButton>
+        <MpButton href="/app/marketplace/seller/coupons">Coupons</MpButton>
+        <MpButton href="/app/marketplace/seller/bundles">Bundles</MpButton>
+        <MpButton href="/app/marketplace/seller/earnings">Earnings &amp; Payouts</MpButton>
+        <MpButton href="/app/marketplace/seller/settings">Profile &amp; Settings</MpButton>
+      </div>
+
       <MpCard className="mt-6 flex flex-wrap items-center justify-between gap-4 px-6 py-5">
         <div>
           <div className="text-[15px] font-bold text-deep-navy">Ready to start selling?</div>

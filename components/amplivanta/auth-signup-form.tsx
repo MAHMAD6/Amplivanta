@@ -6,6 +6,7 @@ import Link from "next/link";
 import { User, Building2, Check, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { TurnstileWidget } from "@/components/marketing/turnstile-widget";
+import { trackSite } from "@/components/marketing/site-analytics";
 
 const FREE_FEATURES = ["1 user", "250 contacts", "500 emails/month", "1 landing page", "1 subdomain", "Basic reports", "Basic templates"];
 
@@ -19,6 +20,7 @@ export function AuthSignupForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    trackSite("signup_started");
     const fd = new FormData(e.currentTarget);
     const email = String(fd.get("email"));
     const name = email.split("@")[0] || "New user";

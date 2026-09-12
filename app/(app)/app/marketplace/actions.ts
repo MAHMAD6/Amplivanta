@@ -4,13 +4,15 @@ import { revalidatePath } from "next/cache";
 import { MarketplaceProductType, Prisma, SellerStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
-import { getMarketplaceViewer, guardMarketplace } from "@/lib/server/marketplace-access";
+import { flagEnabled, getMarketplaceViewer, guardMarketplace } from "@/lib/server/marketplace-access";
 import { getPaymentProvider, getStorageProvider, issueSignedUrl, malwareScanRequired, requiresPaymentProvider } from "@/lib/marketplace/providers";
 import { canSellerEdit, canSellerTransition, canSubmit, type ProductStatus } from "@/lib/marketplace/product-policy";
 import { fulfilOrder } from "@/lib/server/marketplace-fulfilment";
 import { nextOrderStatusOnPlace } from "@/lib/marketplace/order-policy";
 import { complete } from "@/lib/ai";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { cookies } from "next/headers";
+import { COUPON_COOKIE, applyBundles, applyCoupon, type PricedLine } from "@/lib/marketplace/pricing";
 import { isContentCreation } from "@/lib/marketplace/content-creation";
 
 /** `redirectUrl` is set when the buyer must continue at the payment provider. */
@@ -334,8 +336,13 @@ export type CheckoutLine = {
   itemId: string;
   productId: string;
   versionId: string;
+  sellerId: string;
+  bundleId: string | null;
   title: string;
+  /** Price after bundle and coupon discounts - what the buyer pays. */
   unitPriceCents: number;
+  /** Published list price, before any discount. */
+  listPriceCents: number;
   currency: string;
   licenseVersion: string;
 };
@@ -343,7 +350,12 @@ export type CheckoutLine = {
 export type CheckoutQuote = {
   connected: boolean;
   lines: CheckoutLine[];
+  /** Sum of published list prices, before discounts. */
   subtotalCents: number;
+  bundleSavingsCents: number;
+  discountCents: number;
+  couponCode: string | null;
+  couponError: string | null;
   taxCents: number;
   totalCents: number;
   currency: string;
@@ -362,6 +374,10 @@ export async function getCheckoutQuote(): Promise<CheckoutQuote> {
     connected: false,
     lines: [],
     subtotalCents: 0,
+    bundleSavingsCents: 0,
+    discountCents: 0,
+    couponCode: null,
+    couponError: null,
     taxCents: 0,
     totalCents: 0,
     currency: "USD",
@@ -383,6 +399,7 @@ export async function getCheckoutQuote(): Promise<CheckoutQuote> {
       select: {
         id: true,
         title: true,
+        sellerId: true,
         versions: {
           where: { status: "PUBLISHED" },
           orderBy: { version: "desc" },
@@ -392,7 +409,7 @@ export async function getCheckoutQuote(): Promise<CheckoutQuote> {
       },
     });
 
-    const lines: CheckoutLine[] = items.flatMap((i) => {
+    let lines: CheckoutLine[] = items.flatMap((i) => {
       const p = products.find((x) => x.id === i.productId);
       const v = p?.versions[0];
       if (!p || !v) return [];
@@ -401,24 +418,84 @@ export async function getCheckoutQuote(): Promise<CheckoutQuote> {
           itemId: i.id,
           productId: p.id,
           versionId: v.id,
+          sellerId: p.sellerId,
+          bundleId: i.bundleId ?? null,
           title: p.title,
           unitPriceCents: v.priceCents,
+          listPriceCents: v.priceCents,
           currency: v.currency,
           licenseVersion: v.licenseVersion,
         },
       ];
     });
+    const subtotalCents = lines.reduce((sum, l) => sum + l.listPriceCents, 0);
+    const toPriced = (l: CheckoutLine): PricedLine => ({
+      key: l.itemId,
+      productId: l.productId,
+      sellerId: l.sellerId,
+      unitPriceCents: l.unitPriceCents,
+      currency: l.currency,
+      bundleId: l.bundleId,
+    });
+    const merge = (priced: PricedLine[]) =>
+      lines.map((l) => ({
+        ...l,
+        unitPriceCents: priced.find((x) => x.key === l.itemId)?.unitPriceCents ?? l.unitPriceCents,
+      }));
 
-    const subtotalCents = lines.reduce((s, l) => s + l.unitPriceCents, 0);
+    // Bundle pricing. An incomplete bundle stays at list price.
+    const bundleIds = [...new Set(lines.map((l) => l.bundleId).filter((b): b is string => Boolean(b)))];
+    if (bundleIds.length > 0 && flagEnabled(viewer, MARKETPLACE_FLAGS.bundles)) {
+      const bundles = await prisma.marketplaceBundle.findMany({
+        where: { id: { in: bundleIds }, status: "PUBLISHED" },
+        include: { items: true },
+      });
+      lines = merge(
+        applyBundles(
+          lines.map(toPriced),
+          bundles.map((b) => ({
+            id: b.id,
+            priceCents: b.priceCents,
+            currency: b.currency,
+            productIds: b.items.map((i) => i.productId),
+          })),
+        ),
+      );
+    }
+    const afterBundles = lines.reduce((sum, l) => sum + l.unitPriceCents, 0);
+
+    // Coupon, re-validated on every quote - never trusted from the cookie alone.
+    let discountCents = 0;
+    let couponCode: string | null = null;
+    let couponError: string | null = null;
+    const code = (await cookies()).get(COUPON_COOKIE)?.value;
+    if (code && flagEnabled(viewer, MARKETPLACE_FLAGS.coupons)) {
+      couponCode = code;
+      const coupon = await prisma.marketplaceCoupon.findUnique({ where: { code } });
+      if (!coupon) couponError = "That coupon is no longer available.";
+      else {
+        const r = applyCoupon(lines.map(toPriced), coupon);
+        if (r.ok) {
+          lines = merge(r.lines);
+          discountCents = r.discountCents;
+        } else couponError = r.error;
+      }
+    }
+
+    const totalCents = lines.reduce((sum, l) => sum + l.unitPriceCents, 0);
     const provider = await getPaymentProvider();
     return {
       connected: true,
       lines,
       subtotalCents,
+      bundleSavingsCents: subtotalCents - afterBundles,
+      discountCents,
+      couponCode,
+      couponError,
       taxCents: 0,
-      totalCents: subtotalCents,
+      totalCents,
       currency: lines[0]?.currency ?? "USD",
-      requiresProvider: requiresPaymentProvider(subtotalCents),
+      requiresProvider: requiresPaymentProvider(totalCents),
       providerConfigured: provider !== null,
       providerId: provider?.id ?? null,
     };
@@ -455,9 +532,25 @@ export async function placeOrder(): Promise<MpResult> {
     return { ok: false, error: "Stripe is selected as the payment provider but its keys are not configured yet." };
   }
 
+  // An affiliate code is only a claim; attribution is decided at fulfilment.
+  const refCookie = (await cookies()).get("av_ref")?.value;
+  const affiliateRef =
+    refCookie && flagEnabled(viewer, MARKETPLACE_FLAGS.affiliatePromotion) && /^[A-Za-z0-9_-]{3,40}$/.test(refCookie)
+      ? refCookie
+      : null;
+  const couponApplied = quote.discountCents > 0 && quote.couponCode ? quote.couponCode : null;
+
   let orderId: string;
   try {
     const order = await prisma.$transaction(async (tx) => {
+      // Redeem atomically, so a coupon can never exceed its limit even when
+      // two buyers check out at the same moment.
+      if (couponApplied) {
+        const redeemed = await tx.$executeRaw`UPDATE "MarketplaceCoupon" SET "redemptions" = "redemptions" + 1
+          WHERE "code" = ${couponApplied} AND "isActive" = true
+          AND ("maxRedemptions" IS NULL OR "redemptions" < "maxRedemptions")`;
+        if (redeemed !== 1) throw new Error("COUPON_UNAVAILABLE");
+      }
       const created = await tx.marketplaceOrder.create({
         data: {
           buyerUserId: viewer.userId!,
@@ -467,6 +560,9 @@ export async function placeOrder(): Promise<MpResult> {
           totalCents: quote.totalCents,
           currency: quote.currency,
           paymentProvider: quote.totalCents > 0 ? quote.providerId : null,
+          couponCode: couponApplied,
+          discountCents: quote.discountCents,
+          affiliateRef,
         },
       });
 
@@ -508,9 +604,13 @@ export async function placeOrder(): Promise<MpResult> {
       return created;
     });
     orderId = order.id;
-  } catch {
+  } catch (e) {
+    if ((e as Error).message === "COUPON_UNAVAILABLE") {
+      return { ok: false, error: "That coupon was just fully redeemed or deactivated. Remove it to continue." };
+    }
     return { ok: false, error: "Could not place the order — the platform database was unreachable." };
   }
+  if (couponApplied) (await cookies()).delete(COUPON_COOKIE);
 
   await audit(viewer.userId, "marketplace.order.placed", "MarketplaceOrder", orderId, {
     totalCents: quote.totalCents,

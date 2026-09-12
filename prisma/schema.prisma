@@ -1960,6 +1960,9 @@ model MarketplaceCartItem {
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
 
+  /// Set when the item was added as part of a bundle.
+  bundleId String?
+
   @@unique([userId, productId])
   @@index([userId])
 }
@@ -1983,6 +1986,13 @@ model MarketplaceOrder {
   items    MarketplaceOrderItem[]
   refunds  MarketplaceRefund[]
   disputes MarketplaceDispute[]
+
+  /// Coupon applied at checkout and the discount it produced (already
+  /// reflected in totalCents and in each item's snapshot price).
+  couponCode    String?
+  discountCents Int     @default(0)
+  /// Affiliate code captured from a ?ref= link, for commission attribution.
+  affiliateRef  String?
 
   @@index([buyerUserId])
   @@index([status])
@@ -2251,4 +2261,92 @@ model UserIdentity {
 
   @@unique([provider, subject])
   @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace extensions (feature-flagged): store follows, coupons, bundles,
+// sponsored placements.
+// ---------------------------------------------------------------------------
+
+model MarketplaceStoreFollow {
+  id        String   @id @default(cuid())
+  sellerId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([sellerId, userId])
+  @@index([userId])
+}
+
+model MarketplaceCoupon {
+  id              String    @id @default(cuid())
+  /// Stored upper-case; matched case-insensitively.
+  code            String    @unique
+  /// Null for a platform-wide coupon; otherwise it discounts only that seller's items.
+  sellerId        String?
+  percentOff      Int?
+  amountOffCents  Int?
+  currency        String?
+  startsAt        DateTime?
+  endsAt          DateTime?
+  maxRedemptions  Int?
+  redemptions     Int       @default(0)
+  isActive        Boolean   @default(true)
+  createdByUserId String?
+  createdAt       DateTime  @default(now())
+
+  @@index([sellerId])
+}
+
+model MarketplaceBundle {
+  id         String                  @id @default(cuid())
+  sellerId   String
+  slug       String                  @unique
+  title      String
+  summary    String?
+  priceCents Int
+  currency   String                  @default("USD")
+  /// DRAFT | PUBLISHED | ARCHIVED
+  status     String                  @default("DRAFT")
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  items      MarketplaceBundleItem[]
+
+  @@index([sellerId])
+}
+
+model MarketplaceBundleItem {
+  id        String            @id @default(cuid())
+  bundleId  String
+  bundle    MarketplaceBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  productId String
+
+  @@unique([bundleId, productId])
+}
+
+/// Admin-curated paid/curated placement. Always rendered with its label.
+model MarketplaceSponsoredPlacement {
+  id              String    @id @default(cuid())
+  productId       String
+  placement       String    @default("home")
+  label           String    @default("Sponsored")
+  startsAt        DateTime  @default(now())
+  endsAt          DateTime?
+  isActive        Boolean   @default(true)
+  createdByUserId String?
+  createdAt       DateTime  @default(now())
+
+  @@index([placement, isActive])
+}
+
+/// Anonymous public-site event counts (no personal data, no workspace).
+model SiteEventAggregate {
+  id    String   @id @default(cuid())
+  name  String
+  path  String   @default("")
+  date  DateTime
+  count Int      @default(0)
+
+  @@unique([name, path, date])
+  @@index([date])
 }

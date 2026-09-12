@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { canFulfil, type FulfilReason } from "@/lib/marketplace/order-policy";
+import { MARKETPLACE_FLAGS } from "@/lib/marketplace/config";
 
 /**
  * Order fulfilment.
@@ -71,6 +72,41 @@ export async function fulfilOrder(orderId: string, reason: FulfilReason, provide
             availableAt: new Date(),
           },
         });
+      }
+    }
+
+    // Affiliate attribution: only for an approved affiliate with a configured
+    // rate, and only once per order (the referral carries the order id).
+    if (order.affiliateRef && order.totalCents > 0) {
+      const flag = await tx.featureFlag.findUnique({ where: { key: MARKETPLACE_FLAGS.affiliatePromotion }, select: { enabled: true } });
+      if (flag?.enabled) {
+        const affiliate = await tx.affiliate.findFirst({
+          where: { code: order.affiliateRef, status: "APPROVED" },
+          select: { id: true, commissionRate: true },
+        });
+        const existing = affiliate
+          ? await tx.referral.findFirst({ where: { affiliateId: affiliate.id, source: `marketplace:${orderId}` }, select: { id: true } })
+          : null;
+        if (affiliate && !existing && affiliate.commissionRate > 0) {
+          const referral = await tx.referral.create({
+            data: {
+              affiliateId: affiliate.id,
+              source: `marketplace:${orderId}`,
+              status: "converted",
+              convertedAt: new Date(),
+            },
+          });
+          await tx.commission.create({
+            data: {
+              affiliateId: affiliate.id,
+              referralId: referral.id,
+              // commissionRate is a percentage, as the admin console displays it.
+              amount: Math.round(order.totalCents * (affiliate.commissionRate / 100)) / 100,
+              currency: order.currency,
+              status: "pending",
+            },
+          });
+        }
       }
     }
 

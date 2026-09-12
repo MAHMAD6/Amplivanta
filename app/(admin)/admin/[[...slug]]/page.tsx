@@ -17,6 +17,10 @@ import {
 import { loadPlatformControls } from "@/app/(admin)/admin/platform-actions";
 import { loadCategories, loadMarketplaceSettings } from "@/app/(admin)/admin/marketplace-actions";
 import { MarketplaceSettingsPanel } from "@/components/admin/marketplace-settings";
+import { MarketplacePromotionsPanel } from "@/components/admin/marketplace-promotions";
+import { SiteAnalyticsPanel } from "@/components/admin/site-analytics-panel";
+import { loadPromotions } from "@/app/(admin)/admin/marketplace-promo-actions";
+import { loadSiteEvents } from "@/lib/server/site-analytics";
 import { loadGovernanceOptions } from "@/app/(admin)/admin/governance-actions";
 import {
   AccessAssignmentsPanel,
@@ -360,6 +364,16 @@ export default async function SuperCatchAllPage({
     );
   }
 
+  if (page.canonical === "dashboard-super-admin-analytics") {
+    const s = await loadSiteEvents(30);
+    return (
+      <>
+        <SiteAnalyticsPanel rows={s.rows} days={30} connected={s.connected} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+
   // ---- Marketplace management.
   if (page.canonical === "marketplace-management-marketplace-overview") {
     const o = await loadMarketplaceOverview();
@@ -426,10 +440,11 @@ export default async function SuperCatchAllPage({
     );
   }
   if (page.canonical === "marketplace-management-marketplace-settings") {
-    const r = await loadMarketplaceSettings();
+    const [r, promos] = await Promise.all([loadMarketplaceSettings(), loadPromotions()]);
     return (
       <>
         <MarketplaceSettingsPanel settings={r.settings} connected={r.connected} />
+        <MarketplacePromotionsPanel coupons={promos.coupons} placements={promos.placements} connected={promos.connected} />
         <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
       </>
     );

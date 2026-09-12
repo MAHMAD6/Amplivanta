@@ -7,6 +7,7 @@ import { toast } from "@/lib/toast";
 import { Field, FormGrid, inputClass } from "./site-ui";
 import { btnPrimary } from "./site-buttons";
 import { TurnstileWidget } from "./turnstile-widget";
+import { trackSite } from "./site-analytics";
 
 const TOPICS = ["Product question", "Demo", "Partnership", "Affiliate Program", "Other"];
 
@@ -35,6 +36,7 @@ export function SiteContactForm() {
         });
         if (!res.ok) throw new Error(String(res.status));
         setSent(true);
+        trackSite("contact_submitted");
         form.reset();
         toast.success("Message sent", { description: "Our team will reply to the address you gave." });
       } catch {

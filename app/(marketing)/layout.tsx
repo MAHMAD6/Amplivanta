@@ -1,5 +1,6 @@
 import { Toaster } from "sonner";
 import { SiteHeader, SiteFooter } from "@/components/marketing/site-shell";
+import { SiteAnalytics } from "@/components/marketing/site-analytics";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,6 +11,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       {/* Public pages have write flows too — sharing, contact — so toasts need
           somewhere to land. */}
       <Toaster position="top-right" richColors closeButton />
+      <SiteAnalytics />
     </div>
   );
 }

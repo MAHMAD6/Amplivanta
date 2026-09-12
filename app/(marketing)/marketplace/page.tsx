@@ -3,9 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, CircleCheck, Image as ImageIcon, PlaySquare, Repeat, Search, ShoppingBag, ShoppingCart } from "lucide-react";
 import { btn, btnPrimary } from "@/components/marketing/site-buttons";
-import { CollectionIcon, IconTile, ProductGrid, StoreSearchBar } from "@/components/marketing/storefront";
+import { CollectionIcon, IconTile, ProductGrid, ProductTile, StoreSearchBar } from "@/components/marketing/storefront";
 import { STORE_COLLECTIONS } from "@/lib/marketplace/storefront";
-import { loadPublicCatalogue } from "@/lib/server/public-marketplace";
+import { loadPublicCatalogue, loadSponsoredProducts } from "@/lib/server/public-marketplace";
 
 export const metadata: Metadata = {
   title: "Marketplace",
@@ -31,7 +31,7 @@ export default async function MarketplaceHomePage({
   const { category } = await searchParams;
   if (category) redirect(`/marketplace/products?category=${encodeURIComponent(category)}`);
 
-  const { products } = await loadPublicCatalogue({ take: 8 });
+  const [{ products }, sponsored] = await Promise.all([loadPublicCatalogue({ take: 8 }), loadSponsoredProducts()]);
 
   return (
     <>
@@ -107,6 +107,22 @@ export default async function MarketplaceHomePage({
           </div>
         ))}
       </section>
+
+      {sponsored.length > 0 && (
+        <section className="mt-12">
+          <h2 className="m-0 mb-4 text-[24px] font-extrabold text-site-ink">Featured listings</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {sponsored.map(({ product, label }) => (
+              <div key={product.id} className="relative">
+                <span className="absolute right-3 top-3 z-10 rounded-full bg-site-navy/90 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-white">
+                  {label}
+                </span>
+                <ProductTile p={product} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {products.length > 0 && (
         <section className="mt-12">

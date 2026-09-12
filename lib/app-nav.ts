@@ -112,6 +112,7 @@ export const APP_NAV: AppNavSection[] = [
       { label: "My Purchases", href: "/app/marketplace/purchases", icon: "bag", visibility: "myPurchases" },
       { label: "Sell on Amplivanta", href: "/app/marketplace/sell", icon: "tag", visibility: "sellOnAmplivanta" },
       { label: "Seller Dashboard", href: "/app/marketplace/seller", icon: "store", visibility: "sellerDashboard" },
+      { label: "Affiliate Links", href: "/app/marketplace/affiliate", icon: "tag", visibility: "marketplace" },
     ],
   },
   {

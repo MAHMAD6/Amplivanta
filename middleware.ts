@@ -7,8 +7,32 @@ import { NextRequest, NextResponse } from "next/server";
  */
 const PROTECTED = ["/admin", "/app"];
 
+/** Affiliate referral codes: letters, digits, dash, underscore. */
+const REF_PATTERN = /^[A-Za-z0-9_-]{3,40}$/;
+const REF_COOKIE = "av_ref";
+
+/**
+ * Remembers an affiliate `?ref=` code from a Marketplace link for 30 days.
+ * The code is only a claim; attribution is decided server-side at purchase,
+ * against an approved affiliate and the affiliate-promotion flag.
+ */
+function withReferral(req: NextRequest, res: NextResponse): NextResponse {
+  const ref = req.nextUrl.searchParams.get("ref");
+  if (ref && REF_PATTERN.test(ref) && req.nextUrl.pathname.startsWith("/marketplace")) {
+    res.cookies.set(REF_COOKIE, ref, {
+      maxAge: 60 * 60 * 24 * 30,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+  }
+  return res;
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  if (pathname.startsWith("/marketplace")) return withReferral(req, NextResponse.next());
 
   // Dev keeps the demo surfaces open without login (matches the layout guards).
   if (process.env.NODE_ENV === "development") return NextResponse.next();
@@ -41,5 +65,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/app/:path*"],
+  matcher: ["/admin/:path*", "/app/:path*", "/marketplace/:path*"],
 };

@@ -53,6 +53,7 @@ export const MARKETPLACE_FLAGS = {
   sponsoredListings: "marketplace.sponsored_listings",
   payouts: "marketplace.payouts",
   withdrawalRequests: "marketplace.withdrawal_requests",
+  storeFollows: "marketplace.store_follows",
 } as const;
 
 export type MarketplaceFlag = (typeof MARKETPLACE_FLAGS)[keyof typeof MARKETPLACE_FLAGS];
@@ -76,12 +77,13 @@ export const MARKETPLACE_FLAG_REGISTRY: {
   { key: MARKETPLACE_FLAGS.videoProducts, name: "Video products", purpose: "Allow video product type", surface: ["buyer", "seller", "admin"], implemented: true },
   { key: MARKETPLACE_FLAGS.reviews, name: "Reviews", purpose: "Enable verified-purchase review features", surface: ["buyer", "seller", "admin"], implemented: true },
   { key: MARKETPLACE_FLAGS.favorites, name: "Favorites", purpose: "Enable favorites/wishlist behavior", surface: ["buyer"], implemented: true },
-  { key: MARKETPLACE_FLAGS.coupons, name: "Coupons", purpose: "Enable seller/marketplace coupon functionality", surface: ["buyer", "seller", "admin"], implemented: false },
-  { key: MARKETPLACE_FLAGS.bundles, name: "Bundles", purpose: "Enable multi-product bundles", surface: ["buyer", "seller", "admin"], implemented: false },
+  { key: MARKETPLACE_FLAGS.coupons, name: "Coupons", purpose: "Enable seller/marketplace coupon functionality", surface: ["buyer", "seller", "admin"], implemented: true },
+  { key: MARKETPLACE_FLAGS.bundles, name: "Bundles", purpose: "Enable multi-product bundles", surface: ["buyer", "seller", "admin"], implemented: true },
   { key: MARKETPLACE_FLAGS.sellerPromotion, name: "Seller promotion", purpose: "Connect seller products to Amplivanta promotion tools", surface: ["seller"], implemented: true },
-  { key: MARKETPLACE_FLAGS.affiliatePromotion, name: "Affiliate promotion", purpose: "Allow affiliate promotion of Marketplace products", surface: ["seller", "affiliate", "admin"], implemented: false },
-  { key: MARKETPLACE_FLAGS.sponsoredListings, name: "Sponsored listings", purpose: "Allow clearly labeled paid/curated placement", surface: ["buyer", "seller", "admin"], implemented: false },
+  { key: MARKETPLACE_FLAGS.affiliatePromotion, name: "Affiliate promotion", purpose: "Allow affiliate promotion of Marketplace products", surface: ["seller", "affiliate", "admin"], implemented: true },
+  { key: MARKETPLACE_FLAGS.sponsoredListings, name: "Sponsored listings", purpose: "Allow clearly labeled paid/curated placement", surface: ["buyer", "seller", "admin"], implemented: true },
   { key: MARKETPLACE_FLAGS.payouts, name: "Payouts", purpose: "Enable seller payout processing", surface: ["seller", "admin"], implemented: true },
+  { key: MARKETPLACE_FLAGS.storeFollows, name: "Store follows", purpose: "Let buyers follow seller stores", surface: ["buyer", "seller"], implemented: true },
   { key: MARKETPLACE_FLAGS.withdrawalRequests, name: "Withdrawal requests", purpose: "Allow sellers to request withdrawals", surface: ["seller", "admin"], implemented: true },
 ];
 
