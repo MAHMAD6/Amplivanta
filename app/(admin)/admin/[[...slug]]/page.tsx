@@ -50,7 +50,7 @@ import {
   loadSellers,
 } from "@/lib/server/marketplace-admin-data";
 import { SuperStatCard } from "@/components/admin/primitives";
-import { Building2, Handshake, Package, ShieldAlert, ShoppingBag, Wallet } from "lucide-react";
+import { Building2, Handshake, Package, ShieldAlert, ShoppingBag, Star, Wallet } from "lucide-react";
 import { JobOpeningForm } from "@/components/admin/job-opening-form";
 import { SuperFilterBar, SuperPagination } from "@/components/admin/filters";
 import {
@@ -379,14 +379,33 @@ export default async function SuperCatchAllPage({
     const o = await loadMarketplaceOverview();
     return (
       <>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <SuperStatCard icon={Wallet} label="Total sales" value={o.totalSales} />
           <SuperStatCard icon={ShoppingBag} label="Total orders" value={o.orders} />
           <SuperStatCard icon={Handshake} label="Active sellers" value={o.sellers} />
           <SuperStatCard icon={Package} label="Active products" value={o.products} />
           <SuperStatCard icon={Building2} label="Pending payouts" value={o.pendingPayouts} tone="warning" />
+          <SuperStatCard icon={Wallet} label="Total commissions" value={o.totalCommissions} />
+          <SuperStatCard icon={Star} label="Reviews" value={o.reviews} />
           <SuperStatCard icon={ShieldAlert} label="Open disputes" value={o.openDisputes} tone="warning" />
         </div>
+        <SuperCard className="mt-4">
+          <div className="border-b border-line px-6 py-4 text-[14px] font-bold text-admin-navy">Top product types</div>
+          {o.topTypes.length === 0 ? (
+            <div className="px-6 py-8 text-center text-[13px] text-ink-muted">
+              {o.connected ? "No published products yet." : "The platform database could not be reached."}
+            </div>
+          ) : (
+            <div className="divide-y divide-line">
+              {o.topTypes.map((r) => (
+                <div key={r.type} className="flex items-center justify-between px-6 py-3">
+                  <span className="text-[13px] text-ink-soft">{r.type.toLowerCase().replace(/_/g, " ")}</span>
+                  <span className="text-[13.5px] font-bold text-admin-navy">{r.count.toLocaleString("en-US")}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </SuperCard>
         <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
       </>
     );

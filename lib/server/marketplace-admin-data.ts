@@ -133,13 +133,22 @@ export async function loadPayouts() {
 /** Marketplace Overview tiles. Null means no connected source. */
 export async function loadMarketplaceOverview() {
   try {
-    const [orders, sellers, products, payouts, disputes, revenue] = await Promise.all([
+    const [orders, sellers, products, payouts, disputes, revenue, commissions, reviews, byType] = await Promise.all([
       prisma.marketplaceOrder.count(),
       prisma.marketplaceSeller.count({ where: { status: "APPROVED" } }),
       prisma.marketplaceProduct.count({ where: { status: "PUBLISHED" } }),
       prisma.marketplacePayout.count({ where: { status: { in: ["REQUESTED", "PENDING", "PROCESSING"] } } }),
       prisma.marketplaceDispute.count({ where: { status: "open" } }),
       prisma.marketplaceOrder.aggregate({ where: { status: { in: ["PAID", "ACCESS_READY"] } }, _sum: { totalCents: true } }),
+      // Platform commission is the fee side of the seller ledger.
+      prisma.marketplaceLedgerEntry.aggregate({ _sum: { feeCents: true } }),
+      prisma.marketplaceReview.count(),
+      prisma.marketplaceProduct.groupBy({
+        by: ["type"],
+        where: { status: "PUBLISHED" },
+        _count: { _all: true },
+        orderBy: { _count: { type: "desc" } },
+      }),
     ]);
     return {
       connected: true,
@@ -149,6 +158,9 @@ export async function loadMarketplaceOverview() {
       products: products.toLocaleString("en-US"),
       pendingPayouts: payouts.toLocaleString("en-US"),
       openDisputes: disputes.toLocaleString("en-US"),
+      totalCommissions: money(commissions._sum.feeCents ?? 0),
+      reviews: reviews.toLocaleString("en-US"),
+      topTypes: byType.map((r) => ({ type: r.type as string, count: r._count._all })),
     };
   } catch {
     return {
@@ -159,6 +171,9 @@ export async function loadMarketplaceOverview() {
       products: null,
       pendingPayouts: null,
       openDisputes: null,
+      totalCommissions: null,
+      reviews: null,
+      topTypes: [] as { type: string; count: number }[],
     };
   }
 }

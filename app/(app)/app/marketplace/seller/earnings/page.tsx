@@ -17,21 +17,38 @@ export default async function SellerEarningsPage() {
   if (!gate.ok) return <MpDenied denial={gate} />;
 
   const sellerId = viewer.seller!.id;
-  let ledger: { availableCents: number; lifetimeCents: number; entries: number } | null = null;
+  let ledger:
+    | { availableCents: number; pendingCents: number; lifetimeCents: number; paidOutCents: number; entries: number }
+    | null = null;
+  let seller: { payoutProvider: string | null; payoutAccountRef: string | null } | null = null;
+  let lastPayoutAt: Date | null = null;
   try {
-    const [avail, lifetime, entries] = await Promise.all([
+    const now = new Date();
+    const [avail, pending, lifetime, paid, entries, sellerRow, lastPayout] = await Promise.all([
       prisma.marketplaceLedgerEntry.aggregate({
-        where: { sellerId, payoutId: null, availableAt: { lte: new Date() } },
+        where: { sellerId, payoutId: null, availableAt: { lte: now } },
+        _sum: { netCents: true },
+      }),
+      // Earned but not yet eligible: no payout, and either unscheduled or future.
+      prisma.marketplaceLedgerEntry.aggregate({
+        where: { sellerId, payoutId: null, OR: [{ availableAt: null }, { availableAt: { gt: now } }] },
         _sum: { netCents: true },
       }),
       prisma.marketplaceLedgerEntry.aggregate({ where: { sellerId }, _sum: { netCents: true } }),
+      prisma.marketplacePayout.aggregate({ where: { sellerId, status: "PAID" }, _sum: { amountCents: true } }),
       prisma.marketplaceLedgerEntry.count({ where: { sellerId } }),
+      prisma.marketplaceSeller.findUnique({ where: { id: sellerId }, select: { payoutProvider: true, payoutAccountRef: true } }),
+      prisma.marketplacePayout.findFirst({ where: { sellerId, status: "PAID" }, orderBy: { requestedAt: "desc" }, select: { requestedAt: true } }),
     ]);
     ledger = {
       availableCents: avail._sum.netCents ?? 0,
+      pendingCents: pending._sum.netCents ?? 0,
       lifetimeCents: lifetime._sum.netCents ?? 0,
+      paidOutCents: paid._sum.amountCents ?? 0,
       entries,
     };
+    seller = sellerRow;
+    lastPayoutAt = lastPayout?.requestedAt ?? null;
   } catch {
     ledger = null;
   }
@@ -42,7 +59,8 @@ export default async function SellerEarningsPage() {
   // Payout eligibility is calculated, never assumed by the UI.
   const payoutsEnabled = flagEnabled(viewer, MARKETPLACE_FLAGS.payouts);
   const withdrawalsEnabled = flagEnabled(viewer, MARKETPLACE_FLAGS.withdrawalRequests);
-  const providerConfigured = Boolean(viewer.seller && false); // no payout provider connected yet
+  // A payout account counts as configured only when the provider returned a reference.
+  const providerConfigured = Boolean(seller?.payoutProvider && seller?.payoutAccountRef);
   const hasBalance = (ledger?.availableCents ?? 0) > 0;
   const canRequest = payoutsEnabled && withdrawalsEnabled && providerConfigured && hasBalance;
 
@@ -73,10 +91,11 @@ export default async function SellerEarningsPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <MpStat label="Available balance" value={money(ledger?.availableCents)} />
-        <MpStat label="Lifetime earnings" value={money(ledger?.lifetimeCents)} />
-        <MpStat label="Ledger entries" value={ledger ? ledger.entries.toLocaleString("en-US") : null} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MpStat label="Eligible balance" value={money(ledger?.availableCents)} hint="Available to withdraw" />
+        <MpStat label="Pending balance" value={money(ledger?.pendingCents)} hint="Not yet eligible" />
+        <MpStat label="Total earned" value={money(ledger?.lifetimeCents)} hint="All time" />
+        <MpStat label="Total paid out" value={money(ledger?.paidOutCents)} hint="Completed payouts" />
       </div>
 
       <MpCard className="mt-6">
@@ -90,6 +109,35 @@ export default async function SellerEarningsPage() {
           }
         />
       </MpCard>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <MpCard className="p-6">
+          <div className="text-[14px] font-bold text-deep-navy">Payout information</div>
+          <dl className="mt-4 space-y-3">
+            {([
+              ["Payout method", providerConfigured ? (seller?.payoutProvider ?? "").replace(/_/g, " ") : "Not configured"],
+              ["Payout account", providerConfigured ? "Connected" : "Not connected"],
+              ["Minimum payout", "From Marketplace settings"],
+              ["Payout schedule", "From Marketplace settings"],
+              ["Last payout", lastPayoutAt ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(lastPayoutAt) : "None yet"],
+            ] as [string, string][]).map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between gap-4 text-[12.5px]">
+                <dt className="text-ink-muted">{k}</dt>
+                <dd className="m-0 font-semibold capitalize text-deep-navy">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </MpCard>
+
+        <MpCard className="p-6">
+          <div className="text-[14px] font-bold text-deep-navy">How payouts work</div>
+          <ul className="mt-4 space-y-2.5 text-[12.5px] leading-relaxed text-ink-soft">
+            <li>Each paid order writes an entry to your earnings ledger; eligibility is calculated from it.</li>
+            <li>Thresholds, schedule, fees and currencies come from Marketplace settings, not from this page.</li>
+            <li>Payout account details are held by the payout provider; Amplivanta stores only a reference.</li>
+          </ul>
+        </MpCard>
+      </div>
 
       <MpNote title="How payout eligibility is decided">
         Request Payout only appears when the Marketplace module and payout flags are on, your seller
