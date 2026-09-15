@@ -353,3 +353,43 @@ and unit tests; admin screens render under `next dev` and were checked directly.
 
 **Not built:** nothing further from the API document's V1 set. Remaining items
 there are provider accounts and approvals, not code.
+
+## Provider guideline conformance (September 2026 PDFs)
+
+**DataForSEO — Competitor Watch.** Discovery uses Competitors Domain and SERP
+Competitors, scored with shared-keyword evidence and stored as suggestions
+until a user adds them (5 active competitors in V1). Tracked competitors are
+refreshed on demand (once per 24h) or weekly via `POST /api/cron/competitors`
+with ranked keywords (top 20), domain intersection gaps and relevant pages.
+Signals come only from real position changes and new pages. Every call and its
+cost is written to `ProviderUsage`. Tabs read the database only.
+
+**fal.ai — Creative Studio.** The browser names a task
+(`lib/media/fal-tasks.ts`); the model and credit price come from server env,
+and a task without both stays disabled. Jobs (`MediaGenerationJob`) are
+debited at submission, refunded on failure, and settled once from a
+token- and signature-verified webhook (`/api/webhooks/fal`) or polling
+(`/api/cron/media`), re-reading results from fal. Outputs are copied to
+object storage as draft assets. Images and Video screens rebuilt to the
+design on real library data.
+
+**OpenAI — AI Gateway.** `runAiTask` in `lib/ai.ts`: task registry with model
+tiers, versioned prompts, moderation of user text, strict JSON-schema outputs
+validated with zod, credits checked before and charged after success,
+bounded retries, `store: false`, and an `AiRequestLog` row per request. The
+placeholder responses and invented recommendations used without a provider
+were removed.
+
+**Google — service connections.** GA4, Search Console, Google Ads and YouTube
+are separate read-only connections on the integrations Cloud project, with
+signed expiring state bound to workspace, user, provider, return path and a
+browser nonce; granted-scope checks; a validation call listing reachable
+resources; resource selection only from that list; `reauth_required` on
+refresh failure; revoke on disconnect; audit events. Integrations Home and
+Connected Apps rebuilt to the design; seeded rows without credentials are not
+shown as connections.
+
+**Operator setup required:** `DATAFORSEO_LOGIN`/`DATAFORSEO_PASSWORD`,
+`CRON_SECRET` plus crontab entries for the two cron routes, `FAL_KEY` with
+per-task `FAL_MODEL_*`/`FAL_CREDITS_*`, `OPENAI_API_KEY`,
+`GOOGLE_INTEGRATIONS_CLIENT_ID/SECRET` with the four redirect URIs.
