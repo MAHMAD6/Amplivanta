@@ -1,82 +1,67 @@
 import type { Metadata } from "next";
-import { Download, DollarSign, TrendingUp, Zap, Sparkles } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { AnalyticsSubnav } from "@/components/amplivanta/analytics-subnav";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { ATTRIBUTION_MODELS, ATTRIBUTION_CHANNELS } from "@/lib/analytics-data";
+import Link from "next/link";
+import { ArrowLeftRight, BarChart3, DollarSign, Filter, PieChart, Plug, Route, Scale, Split, TrendingUp, Users, Crosshair } from "lucide-react";
+import { EmptyState, Panel, ScreenHeader, StatGrid, fmtMoney, kitPrimary } from "@/components/amplivanta/screen-kit";
+import { analyticsContext, campaignPerformance, crmFunnel, parseRange, sum } from "@/lib/server/analytics-screens";
 
 export const metadata: Metadata = { title: "Revenue Attribution" };
+export const dynamic = "force-dynamic";
 
-export default function AttributionPage() {
-  const totalRev = ATTRIBUTION_CHANNELS.reduce((s, c) => s + c.revenue, 0);
-  const totalSpend = ATTRIBUTION_CHANNELS.reduce((s, c) => s + c.spend, 0);
+/**
+ * Attribution needs touchpoint-level journeys joined to revenue, which no
+ * connected source provides yet. The screen shows campaign ROI/ROAS where
+ * recorded, and says so plainly for everything that would require a model.
+ */
+export default async function RevenueAttributionPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  const { days } = await searchParams;
+  const range = parseRange(days);
+  const c = await analyticsContext();
+  let spend = 0;
+  let revenue = 0;
+  let won: number | null = null;
+  if (c) {
+    try {
+      const [rows, crm] = await Promise.all([campaignPerformance(c.workspaceId, range), crmFunnel(c.workspaceId, range)]);
+      spend = sum(rows, "spend");
+      revenue = sum(rows, "revenue");
+      won = crm.revenue;
+    } catch {
+      spend = 0;
+    }
+  }
+  const body = "Configure your data sources and attribution model to see insights here.";
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["Analytics & Reports", "/app/analytics"], ["Revenue Attribution"]]}
         title="Revenue Attribution"
-        subtitle="Attribute revenue and conversions to campaigns, channels, touchpoints."
+        subtitle="Understand channel and campaign attribution once data sources and models are configured."
         actions={
-          <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet">
-            <Download className="h-3.5 w-3.5" /> Export
-          </button>
+          <>
+            <span className="inline-flex h-11 items-center gap-2 rounded-md border border-line bg-white px-5 text-[13.5px] font-semibold text-ink-muted" title="Attribution models become available once touchpoint data is tracked"><Split className="h-4 w-4" /> Attribution Model: Not configured</span>
+            <Link href="/app/integrations#catalog" className={`${kitPrimary} h-11`}><Plug className="h-4 w-4" /> Connect Data Sources</Link>
+          </>
         }
       />
-      <AnalyticsSubnav />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={DollarSign} label="Attributed Revenue" value={`$${(totalRev / 1000).toFixed(0)}K`} tone="green" />
-        <KpiCard icon={DollarSign} label="Total Spend" value={`$${(totalSpend / 1000).toFixed(0)}K`} tone="pink" />
-        <KpiCard icon={TrendingUp} label="Blended ROAS" value={`${(totalRev / totalSpend).toFixed(1)}×`} tone="violet" />
-        <KpiCard icon={Zap} label="Assisted Conv." value={null} tone="blue" />
+      <StatGrid
+        stats={[
+          { label: "Attributed Revenue", icon: DollarSign, value: null },
+          { label: "Influenced Revenue", icon: Users, value: null, hint: won != null ? `${fmtMoney(won)} won in CRM, not yet attributed` : undefined },
+          { label: "ROI", icon: TrendingUp, value: spend > 0 && revenue > 0 ? `${Math.round(((revenue - spend) / spend) * 100)}%` : null },
+          { label: "ROAS", icon: Crosshair, value: spend > 0 && revenue > 0 ? `${(revenue / spend).toFixed(2)}x` : null },
+          { label: "Average Touchpoints", icon: Route, value: null },
+        ]}
+      />
+      <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <Panel title="Attribution Overview"><EmptyState icon={BarChart3} title="No attribution data yet" body={body} /></Panel>
+        <Panel title="Channel Contribution"><EmptyState icon={PieChart} title="No attribution data yet" body="Channel contribution insights will appear here once data is available." /></Panel>
+        <Panel title="Campaign Contribution"><EmptyState icon={Filter} title="No attribution data yet" body="Campaign contribution insights will appear here once data is available." /></Panel>
       </div>
-
-      <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="text-[14px] font-bold text-ink">Attribution Model</div>
-          <span className="text-[11px] text-ink-muted">Compare models to see channel contribution shift</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {ATTRIBUTION_MODELS.map((m, i) => (
-            <button key={m} className={`rounded-xl border px-3 py-2 text-[12px] font-semibold ${i === 5 ? "border-violet/40 bg-violet/10 text-violet" : "border-line bg-white text-ink-soft"}`}>{m}{i === 5 && <Sparkles className="ml-1 inline h-3 w-3" />}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[720px]">
-            <thead>
-              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="px-4 py-3">Channel</th>
-                <th className="px-4 py-3 text-right">Revenue</th>
-                <th className="px-4 py-3 text-right">Spend</th>
-                <th className="px-4 py-3 text-right">ROAS</th>
-                <th className="px-4 py-3 text-right">Assisted</th>
-                <th className="px-4 py-3">Share of Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ATTRIBUTION_CHANNELS.map((c) => {
-                const share = Math.round((c.revenue / totalRev) * 100);
-                return (
-                  <tr key={c.channel} className="border-b border-line last:border-0">
-                    <td className="px-4 py-3 text-[13px] font-semibold text-ink">{c.channel}</td>
-                    <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">${(c.revenue / 1000).toFixed(0)}K</td>
-                    <td className="px-4 py-3 text-right text-[12.5px]">${(c.spend / 1000).toFixed(0)}K</td>
-                    <td className="px-4 py-3 text-right text-[12.5px] font-bold text-violet">{c.roas > 0 ? `${c.roas}×` : "—"}</td>
-                    <td className="px-4 py-3 text-right text-[12.5px]">{c.assisted.toLocaleString()}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-32 overflow-hidden rounded-full bg-bg-soft"><div className="h-full rounded-full bg-grad-brand" style={{ width: `${share}%` }} /></div>
-                        <span className="text-[11.5px] font-bold text-ink">{share}%</span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <Panel title="Top Touchpoints"><EmptyState icon={Route} title="No attribution data yet" body="Top touchpoints across the customer journey will appear here once data is available." /></Panel>
+        <Panel title="Assisted Conversions"><EmptyState icon={ArrowLeftRight} title="No attribution data yet" body="Assisted conversion insights will appear here once data is available." /></Panel>
+        <Panel title="Model Comparison"><EmptyState icon={Scale} title="No attribution data yet" body="Compare attribution models side by side once data is available." /></Panel>
       </div>
     </div>
   );

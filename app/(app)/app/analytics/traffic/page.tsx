@@ -1,109 +1,93 @@
 import type { Metadata } from "next";
-import { Download, Eye, Users, MousePointer, Clock, Smartphone, Monitor, Tablet } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { AnalyticsSubnav } from "@/components/amplivanta/analytics-subnav";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { TRAFFIC_KPIS, TRAFFIC_SOURCES, TRAFFIC_DEVICES, TRAFFIC_GEO, TRAFFIC_TOP_PAGES } from "@/lib/analytics-data";
+import Link from "next/link";
+import { Clock, FileText, Globe, Heart, MonitorSmartphone, Plug, Share2, TrendingUp, UserPlus, Users, Activity } from "lucide-react";
+import { BarList, EmptyState, KeyList, Panel, RangeSelect, ScreenHeader, StatGrid, TrendColumns, fmtInt, kitPrimary } from "@/components/amplivanta/screen-kit";
+import { analyticsContext, parseRange, providerAverage, providerMetric } from "@/lib/server/analytics-screens";
 
 export const metadata: Metadata = { title: "Traffic Analytics" };
+export const dynamic = "force-dynamic";
 
-const ICONS = [Eye, Users, MousePointer, Clock];
-const TONES: any[] = ["violet", "blue", "pink", "green"];
-const DEVICE_ICONS = { Desktop: Monitor, Mobile: Smartphone, Tablet: Tablet } as const;
+export default async function TrafficAnalyticsPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  const { days } = await searchParams;
+  const range = parseRange(days);
+  const c = await analyticsContext();
+  let d = null as null | {
+    sessions: Awaited<ReturnType<typeof providerMetric>>;
+    users: Awaited<ReturnType<typeof providerMetric>>;
+    clicks: Awaited<ReturnType<typeof providerMetric>>;
+    impressions: Awaited<ReturnType<typeof providerMetric>>;
+    position: number | null;
+    ctr: number | null;
+  };
+  if (c) {
+    try {
+      const [sessions, users, clicks, impressions, position, ctr] = await Promise.all([
+        providerMetric(c.workspaceId, "google_analytics", "sessions", range),
+        providerMetric(c.workspaceId, "google_analytics", "totalUsers", range),
+        providerMetric(c.workspaceId, "google_search_console", "clicks", range),
+        providerMetric(c.workspaceId, "google_search_console", "impressions", range),
+        providerAverage(c.workspaceId, "google_search_console", "position", range),
+        providerAverage(c.workspaceId, "google_search_console", "ctr", range),
+      ]);
+      d = { sessions, users, clicks, impressions, position, ctr };
+    } catch {
+      d = null;
+    }
+  }
+  const n = (v: number | null | undefined) => (v == null ? null : fmtInt(Math.round(v)));
+  const connect = "Connect Google Analytics 4 and choose a property to see this.";
 
-export default function TrafficAnalyticsPage() {
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["Analytics & Reports", "/app/analytics"], ["Traffic Analytics"]]}
         title="Traffic Analytics"
-        subtitle="Volume, sources, devices, geography, engagement."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink">📅 Last 30 Days</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Download className="h-3.5 w-3.5" /> Export</button>
-          </>
-        }
+        subtitle="Review acquisition and engagement once your data sources are connected."
+        actions={<><RangeSelect days={range.days} /><Link href="/app/integrations#catalog" className={`${kitPrimary} h-11`}><Plug className="h-4 w-4" /> Connect Data Sources</Link></>}
       />
-      <AnalyticsSubnav />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {TRAFFIC_KPIS.map((k, i) => <KpiCard key={k.label} icon={ICONS[i]} label={k.label} value={k.value} delta={k.delta} tone={TONES[i]} />)}
+      <StatGrid
+        cols={6}
+        stats={[
+          { label: "Sessions", icon: Users, value: n(d?.sessions.total) },
+          { label: "Users", icon: UserPlus, value: n(d?.users.total) },
+          { label: "New Users", icon: UserPlus, value: null },
+          { label: "Session Duration", icon: Clock, value: null },
+          { label: "Bounce Rate", icon: Activity, value: null },
+          { label: "Pages / Session", icon: FileText, value: null },
+        ]}
+      />
+      <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <Panel title="Traffic Over Time">
+          {d?.sessions.byDay.length ? <TrendColumns points={d.sessions.byDay} label="Sessions" /> : <EmptyState icon={TrendingUp} title="No traffic data yet" body="Your traffic trends will appear here once data sources are connected." />}
+        </Panel>
+        <Panel title="Source / Medium" subtitle={d?.sessions.byDimension.length ? "Sessions by default channel group" : undefined}>
+          {d?.sessions.byDimension.length ? <BarList rows={d.sessions.byDimension} /> : <EmptyState icon={Share2} title="No traffic data yet" body="Traffic by source and medium will appear once connected." />}
+        </Panel>
+        <Panel title="Device Mix">
+          <EmptyState icon={MonitorSmartphone} title="No traffic data yet" body="Device breakdown will appear once device reporting is synced from your analytics source." />
+        </Panel>
       </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
-          <div className="mb-3 text-[14px] font-bold text-ink">Traffic Sources</div>
-          <div className="space-y-2">
-            {TRAFFIC_SOURCES.map((s) => (
-              <div key={s.name}>
-                <div className="mb-1 flex justify-between text-[12px]">
-                  <span className="text-ink-soft">{s.name}</span>
-                  <span><span className="font-bold text-ink">{s.sessions.toLocaleString()}</span> <span className="ml-1 text-emerald-600 font-semibold">↑ {s.delta}%</span></span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-bg-soft"><div className="h-full rounded-full bg-grad-brand" style={{ width: `${s.share}%` }} /></div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 text-[14px] font-bold text-ink">Devices</div>
-          <div className="space-y-3">
-            {TRAFFIC_DEVICES.map((d) => {
-              const Icon = DEVICE_ICONS[d.name as keyof typeof DEVICE_ICONS];
-              return (
-                <div key={d.name} className="flex items-center gap-3 rounded-xl border border-line p-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet/10 text-violet"><Icon className="h-4 w-4" /></div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[12.5px] font-bold text-ink">{d.name}</div>
-                    <div className="text-[10.5px] text-ink-muted">{d.sessions.toLocaleString()} sessions</div>
-                  </div>
-                  <span className="text-[15px] font-extrabold text-ink">{d.share}%</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 text-[14px] font-bold text-ink">Top Landing Pages</div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[720px]">
-              <thead>
-                <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
-                  <th className="pb-2">Path</th>
-                  <th className="pb-2 text-right">Sessions</th>
-                  <th className="pb-2 text-right">Bounce</th>
-                  <th className="pb-2 text-right">Avg Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {TRAFFIC_TOP_PAGES.map((p) => (
-                  <tr key={p.path} className="border-b border-line last:border-0">
-                    <td className="py-2.5 font-mono text-[11.5px] text-ink">{p.path}</td>
-                    <td className="py-2.5 text-right text-[12px] font-bold">{p.sessions.toLocaleString()}</td>
-                    <td className="py-2.5 text-right text-[12px]">{p.bounce}%</td>
-                    <td className="py-2.5 text-right text-[12px]">{p.avgTime}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 text-[14px] font-bold text-ink">Geography</div>
-          <div className="space-y-2">
-            {TRAFFIC_GEO.map((g) => (
-              <div key={g.country}>
-                <div className="mb-1 flex justify-between text-[11.5px]"><span className="text-ink-soft">{g.country}</span><span><span className="font-bold text-ink">{g.sessions.toLocaleString()}</span> <span className="ml-1 text-ink-muted">({g.share}%)</span></span></div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-bg-soft"><div className="h-full rounded-full bg-orange-brand" style={{ width: `${g.share}%` }} /></div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <Panel title="Geography">
+          <EmptyState icon={Globe} title="No traffic data yet" body="Geographic distribution will appear once location reporting is synced." />
+        </Panel>
+        <Panel title="Entry Pages">
+          <EmptyState icon={FileText} title="No traffic data yet" body="Top entry pages will appear once page reporting is synced." />
+        </Panel>
+        <Panel title="Engagement Summary" subtitle={d?.clicks.total != null ? "Organic search (Google Search Console)" : undefined}>
+          {d?.clicks.total != null ? (
+            <KeyList
+              rows={[
+                ["Search clicks", n(d.clicks.total)],
+                ["Search impressions", n(d.impressions.total)],
+                ["Average CTR", d.ctr != null ? `${(d.ctr * 100).toFixed(1)}%` : "—"],
+                ["Average position", d.position != null ? d.position.toFixed(1) : "—"],
+              ]}
+            />
+          ) : (
+            <EmptyState icon={Heart} title="No traffic data yet" body={d?.sessions.total != null ? "Connect Google Search Console to add organic search engagement." : connect} />
+          )}
+        </Panel>
       </div>
     </div>
   );

@@ -306,3 +306,60 @@ export const fmtDateTime = (d: Date | null | undefined) =>
   d ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(d) : "—";
 /** A count as a figure only when there is something to count. */
 export const figure = (n: number | null | undefined) => (n ? n.toLocaleString("en-US") : null);
+
+/** Horizontal bars for a ranked breakdown (channels, sources, campaigns). */
+export function BarList({ rows, format = (n) => n.toLocaleString("en-US", { maximumFractionDigits: 0 }), max = 8 }: { rows: [string, number][]; format?: (n: number) => string; max?: number }) {
+  const top = rows.slice(0, max);
+  const peak = Math.max(1, ...top.map(([, v]) => v));
+  return (
+    <ul className="space-y-2.5">
+      {top.map(([label, value]) => (
+        <li key={label}>
+          <div className="mb-1 flex justify-between gap-3 text-[12.5px]">
+            <span className="truncate text-deep-navy">{label}</span>
+            <span className="shrink-0 font-semibold tabular-nums text-deep-navy">{format(value)}</span>
+          </div>
+          <div className="h-2 rounded-full bg-bg-soft">
+            <div className="h-2 rounded-full bg-[#0B5CFF]" style={{ width: `${Math.max(2, (value / peak) * 100)}%` }} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Daily column chart with first/last date labels. */
+export function TrendColumns({ points, label }: { points: [string, number][]; label: string }) {
+  const peak = Math.max(1, ...points.map(([, v]) => v));
+  const fmt = (d: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${d}T00:00:00Z`));
+  return (
+    <figure>
+      <div className="flex h-44 items-end gap-[3px]" role="img" aria-label={`${label} per day`}>
+        {points.map(([d, v]) => (
+          <div key={d} title={`${fmt(d)}: ${v.toLocaleString("en-US", { maximumFractionDigits: 0 })}`} className="min-w-[3px] flex-1 rounded-t bg-[#0B5CFF]/80 hover:bg-[#0B5CFF]" style={{ height: `${Math.max(2, (v / peak) * 100)}%` }} />
+        ))}
+      </div>
+      {points.length > 0 && (
+        <figcaption className="mt-2 flex justify-between text-[11.5px] text-ink-muted">
+          <span>{fmt(points[0][0])}</span>
+          <span>{label}</span>
+          <span>{fmt(points[points.length - 1][0])}</span>
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
+export function RangeSelect({ days, extra }: { days: number; extra?: Record<string, string | undefined> }) {
+  return (
+    <form method="get" className="flex items-center gap-2">
+      {Object.entries(extra ?? {}).map(([k, v]) => (v ? <input key={k} type="hidden" name={k} value={v} /> : null))}
+      <select name="days" defaultValue={String(days)} aria-label="Date range" className="h-11 rounded-md border border-line bg-white px-3 text-[13.5px] font-semibold text-deep-navy">
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <button type="submit" className="h-11 rounded-md border border-line bg-white px-5 text-[13.5px] font-semibold text-deep-navy hover:bg-bg-soft">Apply</button>
+    </form>
+  );
+}

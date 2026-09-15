@@ -135,9 +135,25 @@ export const APP_NAV: AppNavSection[] = [
   {
     label: "Analytics",
     items: [
-      { label: "Performance Overview", href: "/app/analytics", icon: "bar-chart" },
+      {
+        label: "Performance Overview",
+        href: "/app/analytics",
+        icon: "bar-chart",
+        children: [
+          { label: "Analytics Dashboard", href: "/app/analytics" },
+          { label: "Traffic Analytics", href: "/app/analytics/traffic" },
+        ],
+      },
       { label: "Campaign Analytics", href: "/app/analytics/campaigns", icon: "bar-chart" },
-      { label: "Conversion & Attribution", href: "/app/analytics/attribution", icon: "target" },
+      {
+        label: "Conversion & Attribution",
+        href: "/app/analytics/attribution",
+        icon: "target",
+        children: [
+          { label: "Conversion Funnel", href: "/app/analytics/funnel" },
+          { label: "Revenue Attribution", href: "/app/analytics/attribution" },
+        ],
+      },
       { label: "Reports", href: "/app/analytics/report-builder", icon: "scroll" },
     ],
   },

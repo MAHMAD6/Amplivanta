@@ -1,78 +1,81 @@
 import type { Metadata } from "next";
-import { Sparkles, Download, Plus, TrendingDown } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { AnalyticsSubnav } from "@/components/amplivanta/analytics-subnav";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { CONVERSION_FUNNEL } from "@/lib/analytics-data";
-import { Target, MousePointer, Users, DollarSign } from "lucide-react";
+import Link from "next/link";
+import { Compass, Crosshair, Filter, GitBranch, Hand, PieChart, Plug, TrendingDown, TrendingUp, UserCheck, UserPlus, Users } from "lucide-react";
+import { BarList, DataTable, EmptyState, Panel, RangeSelect, ScreenHeader, StatGrid, fmtInt, kitPrimary } from "@/components/amplivanta/screen-kit";
+import { analyticsContext, crmFunnel, parseRange, providerMetric } from "@/lib/server/analytics-screens";
 
 export const metadata: Metadata = { title: "Conversion Funnel" };
+export const dynamic = "force-dynamic";
 
-export default function FunnelPage() {
-  const top = CONVERSION_FUNNEL[0].value;
+export default async function ConversionFunnelPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  const { days } = await searchParams;
+  const range = parseRange(days);
+  const c = await analyticsContext();
+  let visitors: number | null = null;
+  let funnel: Awaited<ReturnType<typeof crmFunnel>> | null = null;
+  if (c) {
+    try {
+      const [users, crm] = await Promise.all([providerMetric(c.workspaceId, "google_analytics", "totalUsers", range), crmFunnel(c.workspaceId, range)]);
+      visitors = users.total != null ? Math.round(users.total) : null;
+      funnel = crm;
+    } catch {
+      funnel = null;
+    }
+  }
+  const stages: [string, number | null][] = [
+    ["Visitors", visitors],
+    ["Leads", funnel?.leads ?? null],
+    ["Opportunities", funnel?.opportunities ?? null],
+    ["Customers", funnel?.customers ?? null],
+  ];
+  const hasCrm = Boolean(funnel && funnel.leads + funnel.opportunities + funnel.customers > 0);
+  const known = stages.filter((s): s is [string, number] => s[1] != null && s[1] > 0);
+  const drops = known.slice(1).map(([label, v], i) => [`${known[i][0]} → ${label}`, known[i][1] ? `${((v / known[i][1]) * 100).toFixed(1)}% continue` : "—", known[i][1] - v] as const);
+  const top = visitors ?? funnel?.leads ?? 0;
+  const overall = funnel && top > 0 && funnel.customers > 0 ? `${((funnel.customers / top) * 100).toFixed(2)}%` : null;
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["Analytics & Reports", "/app/analytics"], ["Conversion Funnel"]]}
         title="Conversion Funnel"
-        subtitle="Visualize stages and identify drop-off from visit through customer."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink"><Plus className="h-3.5 w-3.5" /> Add Stage</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Download className="h-3.5 w-3.5" /> Export</button>
-          </>
-        }
+        subtitle="Visualize conversion flow and identify drop-off points once tracking is connected."
+        actions={<><RangeSelect days={range.days} /><Link href="/app/integrations#catalog" className={`${kitPrimary} h-11`}><Plug className="h-4 w-4" /> Connect Data Sources</Link></>}
       />
-      <AnalyticsSubnav />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Users} label="Top of Funnel" value={top.toLocaleString()} tone="violet" />
-        <KpiCard icon={MousePointer} label="Overall Conv." value={null} deltaTone="down" tone="pink" />
-        <KpiCard icon={Target} label="Biggest Drop" value={null} tone="red" />
-        <KpiCard icon={DollarSign} label="Revenue per Customer" value={null} tone="green" />
+      <StatGrid
+        stats={[
+          { label: "Visitors", icon: Users, value: visitors ? fmtInt(visitors) : null, hint: visitors ? "GA4 users" : undefined },
+          { label: "Leads", icon: UserPlus, value: hasCrm ? fmtInt(funnel!.leads) : null, hint: hasCrm ? "New contacts" : undefined },
+          { label: "Opportunities", icon: Crosshair, value: hasCrm ? fmtInt(funnel!.opportunities) : null, hint: hasCrm ? "New deals" : undefined },
+          { label: "Customers", icon: UserCheck, value: hasCrm ? fmtInt(funnel!.customers) : null, hint: hasCrm ? "Deals won" : undefined },
+          { label: "Overall Conversion Rate", icon: TrendingUp, value: overall, hint: overall ? (visitors ? "Customers ÷ visitors" : "Customers ÷ leads") : undefined },
+        ]}
+      />
+      <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <Panel title="Funnel Stages">
+          {known.length ? <BarList rows={known} /> : <EmptyState icon={Filter} title="No funnel data yet" body="Connect data sources to build and visualize your conversion funnel." />}
+        </Panel>
+        <Panel title="Drop-off Analysis">
+          {drops.length ? (
+            <DataTable minWidth={320} columns={["Step", "Continue", "Drop-off"]} rows={drops.map(([step, rate, lost]) => [step, rate, fmtInt(Math.max(0, lost))])} />
+          ) : (
+            <EmptyState icon={TrendingDown} title="No drop-off data yet" body="Identify where prospects drop off in your funnel once data is available." />
+          )}
+        </Panel>
+        <Panel title="Source Contribution">
+          <EmptyState icon={PieChart} title="No source data yet" body="See which sources contribute to conversions once lead sources are tracked." />
+        </Panel>
       </div>
-
-      <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-4 text-[14px] font-bold text-ink">Funnel Stages</div>
-        <div className="space-y-2">
-          {CONVERSION_FUNNEL.map((s, i) => {
-            const pct = (s.value / top) * 100;
-            const prevPct = i > 0 ? (CONVERSION_FUNNEL[i - 1].value / top) * 100 : 100;
-            const drop = prevPct - pct;
-            return (
-              <div key={s.stage} className="rounded-xl border border-line p-3">
-                <div className="flex items-center justify-between text-[12.5px]">
-                  <span className="font-semibold text-ink">{s.stage}</span>
-                  <div className="flex items-center gap-3">
-                    {i > 0 && drop > 0 && <span className="text-[10.5px] font-bold text-red-600"><TrendingDown className="mr-0.5 inline h-3 w-3" />−{drop.toFixed(1)} pts</span>}
-                    <span className="font-bold text-ink">{s.value.toLocaleString()}</span>
-                    <span className="text-ink-muted">{s.pct}%</span>
-                  </div>
-                </div>
-                <div className="mt-2 h-8 overflow-hidden rounded-lg bg-bg-soft">
-                  <div className="flex h-full items-center justify-end rounded-lg bg-grad-brand pr-3 text-[10.5px] font-bold text-white" style={{ width: `${Math.max(pct, 8)}%` }}>
-                    {pct.toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
-        <div className="mb-3 flex items-center gap-1.5 text-[14px] font-bold text-ink"><Sparkles className="h-4 w-4 text-violet" /> Drop-off Insights</div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {[
-            { stage: "Engaged → Form Views (−38 pts)", body: "Add form CTA above the fold on top 3 landing pages." },
-            { stage: "Form Views → Submits (−14 pts)", body: "Shorten form to 4 fields; test password-less signup." },
-            { stage: "MQL → SQL (−1.3 pts)", body: "Update PQL scoring; route hot leads to Sales within 15 min." },
-          ].map((r, i) => (
-            <div key={i} className="rounded-xl border border-line bg-white p-3">
-              <div className="text-[12.5px] font-semibold text-ink">{r.stage}</div>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-ink-soft">{r.body}</p>
-            </div>
-          ))}
-        </div>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <Panel title="Conversion Paths">
+          <EmptyState icon={GitBranch} title="No conversion paths yet" body="Visualize how users move through your funnel once tracking is connected." />
+        </Panel>
+        <Panel title="Assisted Touchpoints">
+          <EmptyState icon={Hand} title="No touchpoint data yet" body="Discover assisted interactions that influence conversions once data is available." />
+        </Panel>
+        <Panel title="Recommended Next Steps">
+          <EmptyState icon={Compass} title="No recommendations yet" body="Recommendations will appear when sufficient conversion data is available." />
+        </Panel>
       </div>
     </div>
   );

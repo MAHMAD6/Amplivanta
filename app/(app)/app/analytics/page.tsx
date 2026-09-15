@@ -1,123 +1,113 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Eye, Users, DollarSign, TrendingUp, Target, Sparkles, Share2 } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { ChartPlaceholder } from "@/components/amplivanta/chart-placeholder";
-import { AnalyticsSubnav } from "@/components/amplivanta/analytics-subnav";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { TRAFFIC_GEO, ATTRIBUTION_CHANNELS, AI_ANALYTICS_INSIGHTS, CAMPAIGN_ANALYTICS } from "@/lib/analytics-data";
-import { StatusPill } from "@/components/amplivanta/status-pill";
+import { Activity, BarChart3, ChevronRight, Crosshair, DollarSign, FileText, Megaphone, PieChart, Plug, Share2, SlidersHorizontal, TrendingUp, Users, Filter } from "lucide-react";
+import { db } from "@/lib/db";
+import { BarList, DataTable, EmptyState, Panel, RangeSelect, ScreenHeader, StatGrid, TrendColumns, fmtDate, fmtInt, fmtMoney, kitPrimary } from "@/components/amplivanta/screen-kit";
+import { analyticsContext, campaignPerformance, crmFunnel, parseRange, providerMetric, sum } from "@/lib/server/analytics-screens";
 
-export const metadata: Metadata = { title: "Analytics" };
+export const metadata: Metadata = { title: "Analytics Dashboard" };
+export const dynamic = "force-dynamic";
 
-export default function AnalyticsDashboardPage() {
-  const totalRev = ATTRIBUTION_CHANNELS.reduce((s, c) => s + c.revenue, 0);
+export default async function AnalyticsDashboardPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  const { days } = await searchParams;
+  const range = parseRange(days);
+  const c = await analyticsContext();
+  let d = null as null | {
+    sessions: Awaited<ReturnType<typeof providerMetric>>;
+    users: Awaited<ReturnType<typeof providerMetric>>;
+    conversions: Awaited<ReturnType<typeof providerMetric>>;
+    campaigns: Awaited<ReturnType<typeof campaignPerformance>>;
+    crm: Awaited<ReturnType<typeof crmFunnel>>;
+    reports: { id: string; name: string; type: string; createdAt: Date }[];
+  };
+  if (c) {
+    try {
+      const [sessions, users, conversions, campaigns, crm, reports] = await Promise.all([
+        providerMetric(c.workspaceId, "google_analytics", "sessions", range),
+        providerMetric(c.workspaceId, "google_analytics", "totalUsers", range),
+        providerMetric(c.workspaceId, "google_analytics", "conversions", range),
+        campaignPerformance(c.workspaceId, range),
+        crmFunnel(c.workspaceId, range),
+        db.report.findMany({ where: { workspaceId: c.workspaceId }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, name: true, type: true, createdAt: true } }),
+      ]);
+      d = { sessions, users, conversions, campaigns, crm, reports };
+    } catch {
+      d = null;
+    }
+  }
+  const spend = d ? sum(d.campaigns, "spend") : 0;
+  const campaignRevenue = d ? sum(d.campaigns, "revenue") : 0;
+  const conversions = d ? (d.conversions.total ?? 0) + sum(d.campaigns, "conversions") : 0;
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
-        title="Analytics & Reports"
-        subtitle="Traffic, conversions, campaign performance, attribution and revenue analysis."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink">📅 Last 30 Days · vs prev</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink"><Share2 className="h-3.5 w-3.5" /> Share</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Download className="h-3.5 w-3.5" /> Export Report</button>
-          </>
-        }
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["Analytics & Reports", "/app/analytics"], ["Performance Overview"]]}
+        title="Analytics Dashboard"
+        subtitle="Platform-wide performance overview for your workspace."
+        actions={<><RangeSelect days={range.days} /><Link href="/app/integrations#catalog" className={`${kitPrimary} h-11`}><Plug className="h-4 w-4" /> Connect Data Sources</Link></>}
       />
-      <AnalyticsSubnav />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <KpiCard icon={Eye} label="Sessions" value={null} tone="violet" />
-        <KpiCard icon={Users} label="Leads" value={null} tone="blue" />
-        <KpiCard icon={Target} label="Conv. Rate" value={null} tone="pink" />
-        <KpiCard icon={DollarSign} label="Revenue" value={`$${(totalRev / 1000).toFixed(0)}K`} tone="green" />
-        <KpiCard icon={TrendingUp} label="ROAS" value={null} tone="orange" />
+      <StatGrid
+        stats={[
+          { label: "Traffic", icon: Users, value: fmtInt(d?.sessions.total != null ? Math.round(d.sessions.total) : null), hint: d?.sessions.total != null ? "GA4 sessions" : undefined },
+          { label: "Engagement", icon: Activity, value: fmtInt(d?.users.total != null ? Math.round(d.users.total) : null), hint: d?.users.total != null ? "GA4 users" : undefined },
+          { label: "Conversions", icon: Crosshair, value: conversions ? fmtInt(Math.round(conversions)) : null },
+          { label: "Revenue", icon: DollarSign, value: d?.crm.revenue != null ? fmtMoney(d.crm.revenue) : null, hint: d?.crm.revenue != null ? "Won deals" : undefined },
+          { label: "ROI", icon: TrendingUp, value: spend > 0 && campaignRevenue > 0 ? `${Math.round(((campaignRevenue - spend) / spend) * 100)}%` : null, hint: spend > 0 && campaignRevenue > 0 ? "Recorded campaign revenue vs spend" : undefined },
+        ]}
+      />
+      <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_1fr_1fr]">
+        <Panel title="Performance Trend">
+          {d?.sessions.byDay.length ? <TrendColumns points={d.sessions.byDay} label="Sessions" /> : <EmptyState icon={BarChart3} compact title="No performance data yet" body="Connect data sources to view performance trends over time." />}
+        </Panel>
+        <Panel title="Traffic Summary" subtitle={d?.sessions.byDimension.length ? "Sessions by channel" : undefined}>
+          {d?.sessions.byDimension.length ? <BarList rows={d.sessions.byDimension} /> : <EmptyState icon={PieChart} compact title="No traffic data yet" body="Traffic distribution appears here once data is available." />}
+        </Panel>
+        <Panel title="Conversion Summary" subtitle={d?.conversions.byDimension.length ? "Conversions by channel" : undefined}>
+          {d?.conversions.byDimension.length ? <BarList rows={d.conversions.byDimension} /> : <EmptyState icon={Filter} compact title="No conversion data yet" body="Conversion breakdown will appear here once data is available." />}
+        </Panel>
       </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
-          <div className="mb-3 text-[14px] font-bold text-ink">Traffic Over Time</div>
-          <ChartPlaceholder />
-        </div>
-
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 text-[14px] font-bold text-ink">Channel Attribution</div>
-          <div className="space-y-2">
-            {ATTRIBUTION_CHANNELS.slice(0, 5).map((c) => {
-              const pct = Math.round((c.revenue / totalRev) * 100);
-              return (
-                <div key={c.channel}>
-                  <div className="mb-1 flex justify-between text-[11.5px]"><span className="text-ink-soft">{c.channel}</span><span className="font-bold text-ink">${(c.revenue / 1000).toFixed(0)}K</span></div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-bg-soft"><div className="h-full rounded-full bg-grad-brand" style={{ width: `${pct}%` }} /></div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_1fr_1fr]">
+        <Panel title="Attribution Overview">
+          <EmptyState icon={Share2} compact title="No attribution data yet" body="Set up attribution and connect data sources to see channel impact." action={<Link href="/app/analytics/attribution" className="text-[13px] font-semibold text-[#0B5CFF]">Open Revenue Attribution</Link>} />
+        </Panel>
+        <Panel title="Top Campaigns">
+          {d?.campaigns.length ? (
+            <DataTable minWidth={360} columns={["Campaign", "Clicks", "Conv."]} rows={d.campaigns.slice(0, 5).map((r) => [r.name, fmtInt(Math.round(r.clicks)), fmtInt(Math.round(r.conversions))])} />
+          ) : (
+            <EmptyState icon={Megaphone} compact title="No campaigns yet" body="Campaign performance will appear here once data is available." />
+          )}
+        </Panel>
+        <Panel title="Saved Reports">
+          {d?.reports.length ? (
+            <ul className="divide-y divide-line">
+              {d.reports.map((r) => (
+                <li key={r.id} className="py-2.5"><Link href={`/app/analytics/report-builder?report=${r.id}`} className="text-[13.5px] font-semibold text-deep-navy hover:text-[#0B5CFF]">{r.name}</Link><div className="text-[12px] capitalize text-ink-muted">{r.type} · {fmtDate(r.createdAt)}</div></li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState icon={FileText} compact title="No saved reports yet" body="Create and save reports to access them here." action={<Link href="/app/analytics/report-builder" className="text-[13px] font-semibold text-[#0B5CFF]">Open Report Builder</Link>} />
+          )}
+        </Panel>
       </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-[14px] font-bold text-ink">Top Campaigns</div>
-            <Link href="/app/analytics/campaigns" className="text-[12px] font-semibold text-violet">Details →</Link>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[720px]">
-              <thead>
-                <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
-                  <th className="pb-2">Campaign</th>
-                  <th className="pb-2 text-right">Conv.</th>
-                  <th className="pb-2 text-right">Revenue</th>
-                  <th className="pb-2 text-right">ROAS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CAMPAIGN_ANALYTICS.slice(0, 5).map((c) => (
-                  <tr key={c.name} className="border-b border-line last:border-0">
-                    <td className="py-2.5 text-[12.5px] font-semibold text-ink">{c.name}</td>
-                    <td className="py-2.5 text-right text-[12px]">{c.conversions}</td>
-                    <td className="py-2.5 text-right text-[12px] font-bold">${(c.revenue / 1000).toFixed(0)}K</td>
-                    <td className="py-2.5 text-right text-[12px] font-bold text-emerald-600">{c.roas}×</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-[14px] font-bold text-ink">Geographic Breakdown</div>
-            <Link href="/app/analytics/traffic" className="text-[12px] font-semibold text-violet">Details →</Link>
-          </div>
-          <div className="space-y-2">
-            {TRAFFIC_GEO.map((g) => (
-              <div key={g.country}>
-                <div className="mb-1 flex justify-between text-[11.5px]"><span className="text-ink-soft">{g.country}</span><span><span className="font-bold text-ink">{g.sessions.toLocaleString()}</span> <span className="ml-1 text-ink-muted">({g.share}%)</span></span></div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-bg-soft"><div className="h-full rounded-full bg-orange-brand" style={{ width: `${g.share}%` }} /></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
-        <div className="mb-3 flex items-center gap-1.5 text-[14px] font-bold text-ink"><Sparkles className="h-4 w-4 text-violet" /> AI Insights & Recommendations</div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-          {AI_ANALYTICS_INSIGHTS.map((i) => {
-            const tone = { green: "bg-emerald-500/10 text-emerald-600", amber: "bg-amber-500/10 text-amber-700", violet: "bg-violet/10 text-violet", red: "bg-red-500/10 text-red-600" }[i.tone as string];
-            return (
-              <div key={i.title} className="rounded-xl border border-line bg-white p-3">
-                <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ${tone}`}>{i.tag}</span>
-                <div className="mt-1.5 text-[12.5px] font-semibold text-ink">{i.title}</div>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-ink-soft">{i.body}</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <Panel title="Recommended Next Steps">
+        <ol className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {([
+            [Plug, "1. Connect Data Sources", "Integrate your platforms to unlock analytics and reporting.", "/app/integrations#catalog"],
+            [SlidersHorizontal, "2. Configure Tracking", "Choose which property, site or ad account each connection syncs.", "/app/integrations/connected"],
+            [BarChart3, "3. Explore Dashboards", "Review dashboards and insights as data becomes available.", "/app/analytics/traffic"],
+            [FileText, "4. Create Custom Reports", "Build and save reports tailored to your goals.", "/app/analytics/report-builder"],
+          ] as const).map(([Icon, title, body, href], i) => (
+            <li key={title}>
+              <Link href={href} className="flex items-center gap-4 rounded-lg p-2 hover:bg-bg-soft/60">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><Icon className="h-6 w-6" /></span>
+                <span className="flex-1"><span className="block text-[13.5px] font-semibold text-deep-navy">{title}</span><span className="block text-[12.5px] text-ink-soft">{body}</span></span>
+                {i < 3 && <ChevronRight className="hidden h-5 w-5 text-ink-muted xl:block" />}
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </Panel>
     </div>
   );
 }
