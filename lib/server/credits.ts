@@ -112,6 +112,29 @@ export async function consumeCredits(
   }
 }
 
+/**
+ * Returns the credits a usage debit took, to the buckets they came from.
+ * Keyed to the original source so a retried refund cannot post twice.
+ */
+export async function refundUsage(workspaceId: string, source: { type: string; id: string; note?: string }): Promise<CreditResult> {
+  try {
+    return await db.$transaction(async (tx) => {
+      const debits = await tx.creditLedgerEntry.findMany({
+        where: { workspaceId, kind: "USAGE", sourceType: source.type, sourceId: source.id },
+        select: { bucket: true, amount: true },
+      });
+      if (debits.length === 0) return { ok: true, duplicate: true } as const;
+      for (const d of debits) {
+        await post(tx, { workspaceId, kind: "REFUND", bucket: d.bucket, amount: -d.amount, sourceType: source.type, sourceId: source.id, note: source.note });
+      }
+      return { ok: true } as const;
+    });
+  } catch (e) {
+    if (isUniqueViolation(e)) return { ok: true, duplicate: true };
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
 /** Sets the plan bucket for a billing period (e.g. on subscription renewal). */
 export async function allocatePlanCredits(workspaceId: string, credits: number, periodKey: string): Promise<CreditResult> {
   try {

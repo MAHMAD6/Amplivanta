@@ -1,88 +1,120 @@
 import "server-only";
+import { createHash, createPublicKey, verify as verifySignature } from "node:crypto";
+import { resolveTask, type FalTaskCode } from "@/lib/media/fal-tasks";
 
 /**
- * fal.ai generative-media gateway (External API Master Revision: required
- * before AI video generation is enabled).
+ * fal.ai media-generation provider (fal.ai Integration Guidelines).
  *
- * Off unless FAL_KEY is set. Only models on the server-side allowlist
- * (FAL_MODELS) may be requested, so the browser cannot pick an arbitrary or
- * unbudgeted model. Jobs are queued and polled; nothing blocks a request.
+ * FAL_KEY stays on the server. Callers pass an Amplivanta task; the model is
+ * resolved from server configuration. Jobs go through the fal queue with a
+ * webhook, and results are always re-read from fal by request id rather than
+ * trusted from a webhook body.
  */
 
-export function isFalConfigured(): boolean {
-  return Boolean(process.env.FAL_KEY) && falModels().length > 0;
-}
-
-/** Approved models, e.g. FAL_MODELS=fal-ai/ltx-video,fal-ai/kling-video */
-export function falModels(): string[] {
-  return (process.env.FAL_MODELS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => /^[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._/-]*$/i.test(s));
-}
-
-/** Credits charged per video job; unset means no metering is configured. */
-export function falCreditCost(): number | null {
-  const n = Number(process.env.FAL_VIDEO_CREDIT_COST);
-  return Number.isInteger(n) && n > 0 ? n : null;
-}
-
 const QUEUE = "https://queue.fal.run";
+const JWKS_URL = "https://rest.alpha.fal.ai/.well-known/jwks.json";
 
-export type FalJob = { ok: true; jobId: string; statusUrl: string } | { ok: false; error: string };
+export const isFalKeySet = () => Boolean(process.env.FAL_KEY);
 
-export async function submitVideoJob(opts: {
-  model: string;
-  prompt: string;
-  imageUrl?: string;
-}): Promise<FalJob> {
-  if (!isFalConfigured()) return { ok: false, error: "Video generation is not configured." };
-  if (!falModels().includes(opts.model)) return { ok: false, error: "That model is not on the approved list." };
+/** The task's approved model and price, or null when the task is not enabled. */
+export function falTask(code: FalTaskCode) {
+  if (!isFalKeySet()) return null;
+  return resolveTask(code, process.env);
+}
+
+const headers = () => ({ authorization: `Key ${process.env.FAL_KEY}`, "content-type": "application/json" });
+
+export type FalSubmit = { ok: true; requestId: string; statusUrl: string; responseUrl: string } | { ok: false; error: string };
+
+export async function submitFalJob(model: string, body: Record<string, unknown>, webhookUrl: string | null): Promise<FalSubmit> {
+  if (!isFalKeySet()) return { ok: false, error: "Media generation is not configured." };
+  const qs = webhookUrl ? `?fal_webhook=${encodeURIComponent(webhookUrl)}` : "";
   try {
-    const res = await fetch(`${QUEUE}/${opts.model}`, {
+    const res = await fetch(`${QUEUE}/${model}${qs}`, {
       method: "POST",
-      headers: { authorization: `Key ${process.env.FAL_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({ prompt: opts.prompt, ...(opts.imageUrl ? { image_url: opts.imageUrl } : {}) }),
+      headers: headers(),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(Number(process.env.FAL_TIMEOUT_MS ?? 20000)),
     });
-    const body = await res.text();
-    if (!res.ok) return { ok: false, error: `Provider refused the job (${res.status}).` };
-    const data = JSON.parse(body) as { request_id?: string; status_url?: string };
-    if (!data.request_id) return { ok: false, error: "The provider did not return a job id." };
+    if (!res.ok) return { ok: false, error: `The media provider refused the job (${res.status}).` };
+    const data = (await res.json()) as { request_id?: string; status_url?: string; response_url?: string };
+    if (!data.request_id) return { ok: false, error: "The media provider did not return a job id." };
     return {
       ok: true,
-      jobId: data.request_id,
-      statusUrl: data.status_url ?? `${QUEUE}/${opts.model}/requests/${data.request_id}/status`,
+      requestId: data.request_id,
+      statusUrl: data.status_url ?? `${QUEUE}/${model}/requests/${data.request_id}/status`,
+      responseUrl: data.response_url ?? `${QUEUE}/${model}/requests/${data.request_id}`,
     };
   } catch {
-    return { ok: false, error: "The video provider did not respond. Please try again." };
+    return { ok: false, error: "The media provider did not respond. Please try again." };
   }
 }
 
-export type FalStatus =
-  | { ok: true; status: string; done: boolean; videoUrl: string | null }
+const QUEUE_URL = /^https:\/\/queue\.fal\.run\//;
+
+export type FalPoll =
+  | { ok: true; state: "IN_QUEUE" | "IN_PROGRESS" }
+  | { ok: true; state: "COMPLETED"; payload: unknown }
+  | { ok: true; state: "FAILED"; error: string }
   | { ok: false; error: string };
 
-export async function getVideoJob(model: string, jobId: string): Promise<FalStatus> {
-  if (!isFalConfigured()) return { ok: false, error: "Video generation is not configured." };
-  if (!falModels().includes(model)) return { ok: false, error: "That model is not on the approved list." };
-  if (!/^[A-Za-z0-9_-]{6,80}$/.test(jobId)) return { ok: false, error: "Invalid job id." };
+/** Reads job status and, when complete, the result — only from fal's own queue URLs. */
+export async function pollFalJob(statusUrl: string, responseUrl: string): Promise<FalPoll> {
+  if (!isFalKeySet()) return { ok: false, error: "Media generation is not configured." };
+  if (!QUEUE_URL.test(statusUrl) || !QUEUE_URL.test(responseUrl)) return { ok: false, error: "Invalid job reference." };
   try {
-    const headers = { authorization: `Key ${process.env.FAL_KEY}` };
-    const s = await fetch(`${QUEUE}/${model}/requests/${jobId}/status`, { headers, signal: AbortSignal.timeout(15000) });
+    const s = await fetch(statusUrl, { headers: headers(), signal: AbortSignal.timeout(15000) });
     if (!s.ok) return { ok: false, error: `Could not read job status (${s.status}).` };
-    const status = (await s.json()) as { status?: string };
-    const done = status.status === "COMPLETED";
-    let videoUrl: string | null = null;
-    if (done) {
-      const r = await fetch(`${QUEUE}/${model}/requests/${jobId}`, { headers, signal: AbortSignal.timeout(15000) });
-      if (r.ok) {
-        const out = (await r.json()) as { video?: { url?: string }; videos?: { url?: string }[] };
-        videoUrl = out.video?.url ?? out.videos?.[0]?.url ?? null;
-      }
+    const status = ((await s.json()) as { status?: string }).status;
+    if (status === "IN_QUEUE" || status === "IN_PROGRESS") return { ok: true, state: status };
+    if (status !== "COMPLETED") return { ok: false, error: `Unknown job status ${status ?? ""}`.trim() };
+    const r = await fetch(responseUrl, { headers: headers(), signal: AbortSignal.timeout(20000) });
+    if (!r.ok) {
+      // fal returns 4xx/5xx with a detail body for failed generations.
+      const detail = await r.text().catch(() => "");
+      return { ok: true, state: "FAILED", error: detail.slice(0, 300) || `Generation failed (${r.status}).` };
     }
-    return { ok: true, status: status.status ?? "UNKNOWN", done, videoUrl };
+    return { ok: true, state: "COMPLETED", payload: await r.json() };
   } catch {
-    return { ok: false, error: "The video provider did not respond." };
+    return { ok: false, error: "The media provider did not respond." };
   }
+}
+
+/* ---------------------------------------------------------- webhooks */
+
+let jwksCache: { keys: { x: string }[]; at: number } | null = null;
+
+async function falPublicKeys(): Promise<{ x: string }[]> {
+  if (jwksCache && Date.now() - jwksCache.at < 24 * 60 * 60 * 1000) return jwksCache.keys;
+  const res = await fetch(JWKS_URL, { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`JWKS fetch failed (${res.status})`);
+  const keys = (((await res.json()) as { keys?: { x?: string }[] }).keys ?? []).filter((k): k is { x: string } => typeof k.x === "string");
+  jwksCache = { keys, at: Date.now() };
+  return keys;
+}
+
+/**
+ * Verifies fal's ED25519 webhook signature over
+ * request-id, user-id, timestamp and the SHA-256 of the raw body.
+ */
+export async function verifyFalWebhook(h: Headers, rawBody: string): Promise<boolean> {
+  const requestId = h.get("x-fal-webhook-request-id");
+  const userId = h.get("x-fal-webhook-user-id");
+  const timestamp = h.get("x-fal-webhook-timestamp");
+  const signature = h.get("x-fal-webhook-signature");
+  if (!requestId || !userId || !timestamp || !signature || !/^[0-9a-f]+$/i.test(signature)) return false;
+  const ts = Number(timestamp);
+  if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > 300) return false;
+
+  const message = Buffer.from([requestId, userId, timestamp, createHash("sha256").update(rawBody).digest("hex")].join("\n"), "utf8");
+  const sig = Buffer.from(signature, "hex");
+  try {
+    for (const k of await falPublicKeys()) {
+      const key = createPublicKey({ key: { kty: "OKP", crv: "Ed25519", x: k.x }, format: "jwk" });
+      if (verifySignature(null, message, key, sig)) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }

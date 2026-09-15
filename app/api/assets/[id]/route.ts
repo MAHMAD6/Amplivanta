@@ -24,13 +24,19 @@ const patchSchema = z.object({
   folderId: z.string().nullable().optional(),
   // Client calls this after a successful upload to record the final byte size.
   fileSize: z.number().int().min(0).optional(),
+  favorite: z.boolean().optional(),
+  // Marks an AI-generated draft as reviewed and approved for use.
+  approve: z.literal(true).optional(),
 });
 
 export const PATCH = route<Params>(async (ctx, req, { id }) => {
   requireRole(ctx, "EDITOR");
-  await loadOwned(ctx.workspaceId, id);
-  const data = await parseBody(req, patchSchema);
-  const updated = await db.asset.update({ where: { id }, data });
+  const asset = await loadOwned(ctx.workspaceId, id);
+  const { favorite, approve, ...data } = await parseBody(req, patchSchema);
+  let tags = asset.tags;
+  if (favorite !== undefined) tags = favorite ? [...new Set([...tags, "favorite"])] : tags.filter((t) => t !== "favorite");
+  if (approve) tags = tags.filter((t) => t !== "draft");
+  const updated = await db.asset.update({ where: { id }, data: { ...data, tags } });
   return NextResponse.json(updated);
 });
 

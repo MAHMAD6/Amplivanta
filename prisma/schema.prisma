@@ -2494,3 +2494,33 @@ model ProviderUsage {
   @@index([workspaceId, createdAt])
   @@index([provider, createdAt])
 }
+
+/// One fal.ai generation job (fal.ai Integration Guidelines): who asked, which
+/// approved task/model, provider request id, lifecycle, credits and the draft
+/// assets it produced in Amplivanta storage.
+model MediaGenerationJob {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  userId          String?
+  provider        String    @default("fal")
+  task            String
+  kind            String
+  model           String
+  /// queued | processing | finalizing | completed | failed
+  status          String    @default("queued")
+  requestId       String?   @unique
+  statusUrl       String?
+  responseUrl     String?
+  prompt          String?
+  input           Json
+  creditsCharged  Int       @default(0)
+  creditsRefunded Boolean   @default(false)
+  assetIds        String[]  @default([])
+  error           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  completedAt     DateTime?
+
+  @@index([workspaceId, createdAt])
+  @@index([status, updatedAt])
+}

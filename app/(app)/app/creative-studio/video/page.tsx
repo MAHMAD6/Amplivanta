@@ -1,104 +1,97 @@
 import type { Metadata } from "next";
-import { Sparkles, Video, Play, Wand2, RotateCw, Upload, MoreHorizontal } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { CreativeSubnav } from "@/components/amplivanta/creative-subnav";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { VIDEOS } from "@/lib/creative-data";
+import Link from "next/link";
+import { Loader2, Play } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { crmContext } from "@/lib/server/crm-screens";
+import { formatBytes, loadMediaLibrary } from "@/lib/server/media-library";
+import { AssetMenu, GenerateButton, VideoWorkspace } from "@/components/amplivanta/media-studio";
 
 export const metadata: Metadata = { title: "Video — Creative Studio" };
+export const dynamic = "force-dynamic";
 
-const MODES = [
-  { icon: Wand2, label: "Text-to-Video", desc: "Prompt → 30–60s clip" },
-  { icon: Video, label: "Script-to-Video", desc: "Multi-scene from script" },
-  { icon: Play, label: "Image-to-Video", desc: "Animate a still" },
-  { icon: RotateCw, label: "URL-to-Video", desc: "Repurpose a blog / page" },
-  { icon: Upload, label: "Upload & Edit", desc: "Bring your own footage" },
-];
+const BASE = "/app/creative-studio/video";
+const VIEWS = [
+  ["create", "Create New"],
+  ["mine", "My Videos"],
+  ["templates", "Templates"],
+  ["library", "Media Library"],
+] as const;
 
-const VIDEO_STATUS_TONE = { Ready: "blue", Rendering: "violet", Published: "green", Failed: "red" } as const;
+export default async function VideoPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const { view: rawView } = await searchParams;
+  const view = VIEWS.some(([k]) => k === rawView) ? rawView! : "create";
+  const ctx = await crmContext();
+  const lib = await loadMediaLibrary(ctx?.workspaceId ?? null, "video", view);
+  const videoTasks = lib.tasks;
+  const createBtn = (className: string) => (
+    <GenerateButton kind="video" tasks={videoTasks} images={lib.images} brandKits={lib.brandKits} label="Create Video" className={className} />
+  );
 
-export default function VideoPage() {
-  return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
-        title="Video"
-        subtitle="AI-assisted video production and management."
-        actions={
-          <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet">
-            <Sparkles className="h-3.5 w-3.5" /> New Video
-          </button>
-        }
-      />
-      <CreativeSubnav />
+  const empty =
+    view === "templates"
+      ? ["No video templates yet", "Video templates appear here once they are published to your workspace."]
+      : view === "library"
+        ? ["No media yet", "Upload footage or images in Creative Studio to reuse them in videos."]
+        : ["No videos yet", "Choose a creation method to start a video project."];
 
-      {/* Modes */}
-      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
-        {MODES.map((m) => (
-          <button key={m.label} className="flex flex-col items-start gap-2 rounded-xl border border-line bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-violet/30 hover:shadow-card">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet/10 text-violet">
-              <m.icon className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="text-[12.5px] font-bold text-ink">{m.label}</div>
-              <div className="text-[10.5px] text-ink-muted">{m.desc}</div>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {/* AI generator */}
-      <div className="mb-6 rounded-2xl border border-violet/25 bg-gradient-to-br from-violet/[0.05] via-white to-orange-brand/[0.05] p-5 shadow-card">
-        <div className="mb-3 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-violet" />
-          <div className="text-[14px] font-bold text-ink">AI Video Studio</div>
+  const library = (
+    <section className="min-h-[502px] rounded-xl border border-line bg-white p-6">
+      {lib.jobs.map((j) => (
+        <div key={j.id} className="mb-3 flex items-center gap-2.5 rounded-lg bg-royal-tint/60 px-3.5 py-2.5 text-[13px] text-deep-navy">
+          <Loader2 className="h-4 w-4 animate-spin text-[#0B5CFF]" /> Generating a video… it appears here as a draft when ready. Refresh to check.
         </div>
-        <textarea rows={3} defaultValue="60-second product tour of Amplivanta CRM: contact list → drawer → activity timeline. Warm voiceover, brand music." className="w-full resize-none rounded-xl border border-line bg-white p-3 text-[13px]" />
-        <div className="mt-3 flex flex-wrap gap-2">
-          <select className="rounded-lg border border-line bg-white px-2 py-1.5 text-[12px]"><option>Platform: LinkedIn</option><option>YouTube</option><option>TikTok</option><option>Instagram Reels</option></select>
-          <select className="rounded-lg border border-line bg-white px-2 py-1.5 text-[12px]"><option>Format: 16:9</option><option>9:16</option><option>1:1</option></select>
-          <select className="rounded-lg border border-line bg-white px-2 py-1.5 text-[12px]"><option>Duration: 60s</option><option>30s</option><option>2 min</option></select>
-          <select className="rounded-lg border border-line bg-white px-2 py-1.5 text-[12px]"><option>Tone: Warm</option><option>Bold</option><option>Educational</option></select>
-          <button className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-grad-cta px-4 py-2 text-[12.5px] font-bold text-white shadow-violet">
-            <Wand2 className="h-3.5 w-3.5" /> Generate
-          </button>
+      ))}
+      {lib.assets.length === 0 ? (
+        <div className="flex flex-col items-center py-16 text-center">
+          <span className="flex h-[68px] w-[68px] items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><Play className="h-6 w-6 fill-current" /></span>
+          <h2 className="mt-7 text-[17px] font-semibold text-deep-navy">{lib.reachable ? empty[0] : "Videos unavailable"}</h2>
+          <p className="mt-2 max-w-[460px] text-[14px] text-ink-soft">{lib.reachable ? empty[1] : "The library could not be loaded right now."}</p>
+          {lib.reachable && view !== "templates" && view !== "library" && createBtn("mt-5 inline-flex h-10 items-center rounded-md bg-[#0B5CFF] px-8 text-[13.5px] font-semibold text-white hover:bg-[#0A4FE0]")}
         </div>
-      </div>
-
-      {/* Library */}
-      <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="text-[14px] font-bold text-ink">Video Library</div>
-          <span className="text-[11px] text-ink-muted">{VIDEOS.length} videos</span>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {VIDEOS.map((v) => (
-            <div key={v.id} className="overflow-hidden rounded-xl border border-line bg-white shadow-card">
-              <div className={`relative aspect-video bg-gradient-to-br ${v.thumb}`}>
-                <StatusPill tone={VIDEO_STATUS_TONE[v.status]} className="absolute left-2 top-2">{v.status}</StatusPill>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/70 backdrop-blur">
-                    <Play className="h-5 w-5 fill-ink text-ink" />
-                  </div>
-                </div>
-                <span className="absolute bottom-2 right-2 rounded bg-ink/70 px-1.5 py-0.5 text-[10px] font-bold text-white">{v.duration}</span>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {lib.assets.map((a) => (
+            <figure key={a.id} className="overflow-hidden rounded-lg border border-line">
+              <div className="relative aspect-video bg-deep-navy">
+                {a.url && <video src={a.url} controls preload="metadata" className="h-full w-full object-contain" />}
+                {a.draft && <span className="absolute left-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10.5px] font-bold text-amber-800">Draft</span>}
               </div>
-              <div className="p-3">
-                <div className="mb-1 flex items-start justify-between">
-                  <div className="text-[12.5px] font-semibold text-ink">{v.name}</div>
-                  <button className="text-ink-muted"><MoreHorizontal className="h-3.5 w-3.5" /></button>
+              <figcaption className="flex items-center justify-between gap-2 px-3 py-2.5">
+                <div className="min-w-0">
+                  <div className="truncate text-[12.5px] font-semibold text-deep-navy">{a.name}</div>
+                  <div className="text-[11px] text-ink-muted">{a.ai ? "AI generated · " : ""}{formatBytes(a.size)}</div>
                 </div>
-                <div className="text-[10.5px] text-ink-muted">{v.platform} · {v.createdAt}</div>
-                {v.views && (
-                  <div className="mt-2 flex gap-3 border-t border-line pt-2 text-[10.5px]">
-                    <span className="text-ink-muted">Views <span className="font-bold text-ink">{v.views.toLocaleString()}</span></span>
-                    <span className="text-ink-muted">Eng. <span className="font-bold text-emerald-600">{v.engagement}%</span></span>
-                  </div>
-                )}
-              </div>
-            </div>
+                <AssetMenu id={a.id} favorite={a.favorite} draft={a.draft} />
+              </figcaption>
+            </figure>
           ))}
         </div>
+      )}
+    </section>
+  );
+
+  return (
+    <div className="mx-auto max-w-[1600px]">
+      <h1 className="font-display text-[32px] font-bold leading-tight text-deep-navy">Video</h1>
+      <p className="mt-1 text-[14.5px] text-ink-soft">Create and manage AI-assisted video projects and reusable video assets.</p>
+
+      <div className="mt-6 mb-6 flex flex-wrap items-center gap-2.5 rounded-xl border border-line bg-white px-6 py-3.5">
+        {VIEWS.map(([key, label]) => (
+          <Link
+            key={key}
+            href={key === "create" ? BASE : `${BASE}?view=${key}`}
+            className={cn(
+              "rounded-full border px-3.5 py-1.5 text-[12.5px]",
+              key === view ? "border-[#0B5CFF] bg-royal-tint font-semibold text-[#0B5CFF]" : "border-line bg-bg-soft/60 text-ink-soft hover:text-deep-navy",
+            )}
+          >
+            {label}
+          </Link>
+        ))}
+        <div className="ml-auto">{createBtn("inline-flex h-[52px] items-center rounded-md bg-[#0B5CFF] px-12 text-[13.5px] font-semibold text-white hover:bg-[#0A4FE0]")}</div>
       </div>
+
+      <VideoWorkspace library={library} tasks={videoTasks} images={lib.images} brandKits={lib.brandKits} />
     </div>
   );
 }

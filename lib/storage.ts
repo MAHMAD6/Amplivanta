@@ -125,3 +125,9 @@ export async function deleteObject(key: string, opts: { private?: boolean } = {}
   const { client, config } = getClient();
   await client.send(new DeleteObjectCommand({ Bucket: opts.private ? config.privateBucket : config.bucket, Key: key }));
 }
+
+/** Server-side write (e.g. copying a generated asset into Amplivanta storage). */
+export async function putObject(key: string, body: Uint8Array, contentType: string): Promise<void> {
+  const { client, config } = getClient();
+  await client.send(new PutObjectCommand({ Bucket: config.bucket, Key: key, Body: body, ContentType: contentType }));
+}
