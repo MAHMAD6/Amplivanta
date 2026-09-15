@@ -34,7 +34,8 @@ export const POST = route(async (ctx, req) => {
     {
       mode: "payment",
       line_items: [{ price: pack.priceId, quantity: 1 }],
-      success_url: `${APP_URL()}/app/usage-credits?purchase=processing`,
+      // The session id lets the page read the verified outcome from our own records.
+      success_url: `${APP_URL()}/app/usage-credits?purchase=returned&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${APP_URL()}/app/usage-credits?purchase=cancelled`,
       client_reference_id: ctx.workspaceId,
       metadata: { kind: "credit_pack", workspaceId: ctx.workspaceId, packCode: pack.code },

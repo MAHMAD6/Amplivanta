@@ -24,7 +24,8 @@ import {
   Zap,
 } from "lucide-react";
 import { MpCard, MpHeader } from "@/components/marketplace/ui";
-import { BuyCredits } from "@/components/amplivanta/buy-credits";
+import { BuyCreditsDrawer } from "@/components/amplivanta/buy-credits-drawer";
+import { loadCreditPackOptions, loadPurchaseOutcome } from "@/lib/server/credit-purchase";
 import { loadUsageOverview, type UsageMetric } from "@/lib/server/loaders";
 import { cn } from "@/lib/utils";
 
@@ -106,8 +107,17 @@ function RailCard({
   );
 }
 
-export default async function UsageCreditsPage() {
-  const usage = await loadUsageOverview();
+export default async function UsageCreditsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ purchase?: string; session_id?: string }>;
+}) {
+  const { purchase, session_id } = await searchParams;
+  const [usage, packs, outcome] = await Promise.all([
+    loadUsageOverview(),
+    loadCreditPackOptions(),
+    loadPurchaseOutcome(session_id, purchase),
+  ]);
   const anyUsage = Object.values(usage.used).some((v) => v != null);
   const w = usage.wallet;
   const available = w ? w.planCredits + w.purchasedCredits : null;
@@ -180,12 +190,15 @@ export default async function UsageCreditsPage() {
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             {/* Credits */}
             <MpCard className="p-5">
-              <h2 className="flex items-center gap-3 text-[16px] font-extrabold text-deep-navy">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet text-white">
-                  <Sparkles aria-hidden className="h-4 w-4" />
-                </span>
-                Credits
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="flex items-center gap-3 text-[16px] font-extrabold text-deep-navy">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet text-white">
+                    <Sparkles aria-hidden className="h-4 w-4" />
+                  </span>
+                  Credits
+                </h2>
+                <BuyCreditsDrawer packs={packs} outcome={outcome} />
+              </div>
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-line bg-bg-soft p-4">
                   <div className="text-[13.5px] font-bold text-deep-navy">Credits Available</div>
@@ -203,7 +216,6 @@ export default async function UsageCreditsPage() {
                   ))}
                 </dl>
               </div>
-              {usage.creditPacks.length > 0 && <BuyCredits packs={usage.creditPacks} />}
               {!w && (
                 <div className="mt-4">
                   <Banner action={<TextLink href={BILLING}>View credit details</TextLink>}>
