@@ -9,7 +9,7 @@ import { getPaymentProvider, getStorageProvider, issueSignedUrl, malwareScanRequ
 import { canSellerEdit, canSellerTransition, canSubmit, type ProductStatus } from "@/lib/marketplace/product-policy";
 import { fulfilOrder } from "@/lib/server/marketplace-fulfilment";
 import { nextOrderStatusOnPlace } from "@/lib/marketplace/order-policy";
-import { complete } from "@/lib/ai";
+import { runAiTask } from "@/lib/ai";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { cookies } from "next/headers";
 import { COUPON_COOKIE, applyBundles, applyCoupon, type PricedLine } from "@/lib/marketplace/pricing";
@@ -1274,29 +1274,19 @@ export async function suggestProductSeo(input: {
     .join("\n");
 
   try {
-    const { text, stubbed, model, tokensIn, tokensOut } = await complete({
-      system:
-        "You write marketplace listing SEO copy. Return strict JSON only, no prose: " +
-        '{"seoTitle": string (max 60 chars), "metaDescription": string (max 160 chars), "keywords": string[] (5-8 lowercase search terms)}. ' +
-        "Describe only what the provided product information supports. Never invent features, statistics, guarantees or awards.",
-      prompt: context,
-      maxTokens: 500,
-    });
-
-    const parsed = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as Partial<SeoSuggestion>;
-    const suggestion: SeoSuggestion = {
-      seoTitle: String(parsed.seoTitle ?? "").slice(0, 60),
-      metaDescription: String(parsed.metaDescription ?? "").slice(0, 160),
-      keywords: Array.isArray(parsed.keywords)
-        ? parsed.keywords.map((k) => String(k).trim().toLowerCase()).filter(Boolean).slice(0, 8)
-        : [],
-    };
-    if (!suggestion.seoTitle && !suggestion.metaDescription) {
-      return { ok: false, error: "The assistant did not return usable copy. Edit the fields yourself." };
+    const res = await runAiTask({ workspaceId: null, userId: viewer.userId }, "listing_seo", { prompt: context });
+    if (!res.ok) {
+      return { ok: false, error: res.errorClass === "not_configured" ? "SEO assistance is not available yet. Write the fields yourself and continue." : res.error };
     }
+    const suggestion: SeoSuggestion = {
+      seoTitle: res.value.seoTitle.slice(0, 60),
+      metaDescription: res.value.metaDescription.slice(0, 160),
+      keywords: res.value.keywords.map((k) => k.trim().toLowerCase()).filter(Boolean).slice(0, 8),
+    };
+    const stubbed = false;
 
     await audit(viewer.userId, "marketplace.seo.suggested", "MarketplaceProduct", undefined, {
-      model, tokensIn, tokensOut, stubbed,
+      model: res.model, requestId: res.requestId,
     });
     return { ok: true, suggestion, stubbed };
   } catch {

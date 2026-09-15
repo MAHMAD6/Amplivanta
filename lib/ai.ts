@@ -1,16 +1,32 @@
+import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { db } from "@/lib/db";
+import {
+  AI_ERROR_MESSAGES,
+  AI_TASKS,
+  classifyStatus,
+  modelForTier,
+  RETRYABLE,
+  taskCredits,
+  validateOutput,
+  type AiErrorClass,
+  type AiTaskCode,
+  type AiTaskDef,
+  type AiTaskOutput,
+  type ModelTier,
+} from "@/lib/ai/tasks";
+import { consumeCredits, getWallet } from "@/lib/server/credits";
 
 /**
- * AI gateway. Every model call in the product goes through here, so provider
- * credentials never reach the browser and usage is recorded for the caller.
+ * Amplivanta AI Gateway (OpenAI API Integration Guidelines §6, §12).
  *
- * Provider is chosen by AI_PROVIDER ("anthropic" | "openai"), else by whichever
- * key is present. With no key at all, a deterministic local stub keeps AI
- * features usable in development.
+ * Every model call goes through runAiTask: provider credentials stay on the
+ * server, the task chooses the model tier and versioned prompt, user text is
+ * moderated where the task requires it, output is validated against the task
+ * contract, credits are checked before and charged after a successful call,
+ * and each request is recorded in AiRequestLog. With no provider configured
+ * the gateway says so — it never returns placeholder content.
  */
-
-const MODEL = process.env.AI_MODEL || "claude-sonnet-5";
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5";
 
 export type AiProvider = "anthropic" | "openai" | "stub";
 
@@ -18,8 +34,8 @@ export function aiProvider(): AiProvider {
   const pick = (process.env.AI_PROVIDER ?? "").toLowerCase();
   if (pick === "openai" && process.env.OPENAI_API_KEY) return "openai";
   if (pick === "anthropic" && process.env.ANTHROPIC_API_KEY) return "anthropic";
-  if (process.env.ANTHROPIC_API_KEY) return "anthropic";
   if (process.env.OPENAI_API_KEY) return "openai";
+  if (process.env.ANTHROPIC_API_KEY) return "anthropic";
   return "stub";
 }
 
@@ -27,24 +43,45 @@ export function isAiConfigured(): boolean {
   return aiProvider() !== "stub";
 }
 
-/** OpenAI Responses API, per the approved provider inventory. */
-async function completeOpenAi(opts: { system?: string; prompt: string; maxTokens?: number }): Promise<AiResult> {
-  const res = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      ...(opts.system ? { instructions: opts.system } : {}),
-      input: opts.prompt,
-      max_output_tokens: opts.maxTokens ?? 1024,
-    }),
-    signal: AbortSignal.timeout(Number(process.env.AI_TIMEOUT_MS ?? 60000)),
-  });
-  if (!res.ok) throw new Error(`OpenAI request failed (${res.status})`);
+export type AiTaskResult<T extends AiTaskCode> =
+  | { ok: true; value: AiTaskOutput<T>; model: string; requestId: string; creditsCharged: number }
+  | { ok: false; errorClass: AiErrorClass; error: string };
+
+type CallResult = { text: string; tokensIn: number; tokensOut: number; providerRequestId: string | null };
+
+class ProviderError extends Error {
+  constructor(public errorClass: AiErrorClass) {
+    super(errorClass);
+  }
+}
+
+const timeoutMs = () => Number(process.env.AI_TIMEOUT_MS ?? 60000);
+
+async function callOpenAi(def: AiTaskDef, model: string, prompt: string): Promise<CallResult> {
+  let res: Response;
+  try {
+    res = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: { authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        instructions: def.system,
+        input: prompt,
+        max_output_tokens: def.maxOutputTokens,
+        // Provider-side response state is not needed; Amplivanta stores what it keeps.
+        store: false,
+        ...(def.jsonSchema
+          ? { text: { format: { type: "json_schema", name: def.code, schema: def.jsonSchema, strict: true } } }
+          : {}),
+      }),
+      signal: AbortSignal.timeout(timeoutMs()),
+    });
+  } catch (e) {
+    throw new ProviderError((e as Error).name === "TimeoutError" ? "timeout" : "provider_unavailable");
+  }
+  if (!res.ok) throw new ProviderError(classifyStatus(res.status));
   const data = (await res.json()) as {
+    id?: string;
     output_text?: string;
     output?: { content?: { type?: string; text?: string }[] }[];
     usage?: { input_tokens?: number; output_tokens?: number };
@@ -56,90 +93,136 @@ async function completeOpenAi(opts: { system?: string; prompt: string; maxTokens
       .filter((c) => c.type === "output_text" && typeof c.text === "string")
       .map((c) => c.text as string)
       .join("\n");
-  return {
-    text: text ?? "",
-    model: OPENAI_MODEL,
-    tokensIn: data.usage?.input_tokens ?? 0,
-    tokensOut: data.usage?.output_tokens ?? 0,
-    stubbed: false,
-  };
+  return { text: text ?? "", tokensIn: data.usage?.input_tokens ?? 0, tokensOut: data.usage?.output_tokens ?? 0, providerRequestId: data.id ?? null };
 }
 
-let client: Anthropic | null = null;
-function getClient(): Anthropic {
-  if (!client) client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  return client;
-}
+let anthropic: Anthropic | null = null;
 
-export interface AiResult {
-  text: string;
-  model: string;
-  tokensIn: number;
-  tokensOut: number;
-  stubbed: boolean;
-}
-
-export async function complete(opts: {
-  system?: string;
-  prompt: string;
-  maxTokens?: number;
-}): Promise<AiResult> {
-  const provider = aiProvider();
-  if (provider === "stub") return stub(opts.prompt);
-  if (provider === "openai") return completeOpenAi(opts);
-  const res = await getClient().messages.create({
-    model: MODEL,
-    max_tokens: opts.maxTokens ?? 1024,
-    system: opts.system,
-    messages: [{ role: "user", content: opts.prompt }],
-  });
-  const text = res.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("\n");
-  return {
-    text,
-    model: MODEL,
-    tokensIn: res.usage.input_tokens,
-    tokensOut: res.usage.output_tokens,
-    stubbed: false,
-  };
-}
-
-/** Structured growth recommendations (used by the AI Advisor). */
-export async function generateRecommendations(context: string): Promise<
-  { title: string; body: string; category: string; impact: string; confidence: number }[]
-> {
-  const system =
-    "You are Amplivanta's growth advisor. Return 3-5 prioritized, specific growth recommendations as strict JSON: " +
-    '[{"title":string,"body":string,"category":string,"impact":"High|Medium|Low","confidence":0-1}]. No prose.';
-  const { text, stubbed } = await complete({ system, prompt: context, maxTokens: 900 });
-  if (stubbed) return stubRecommendations();
+async function callAnthropic(def: AiTaskDef, model: string, prompt: string): Promise<CallResult> {
+  if (!anthropic) anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: timeoutMs(), maxRetries: 0 });
+  const system = def.jsonSchema
+    ? `${def.system}\nReturn only JSON matching this JSON Schema, with no prose:\n${JSON.stringify(def.jsonSchema)}`
+    : def.system;
   try {
-    const json = JSON.parse(text.slice(text.indexOf("["), text.lastIndexOf("]") + 1));
-    if (Array.isArray(json)) return json;
-  } catch {
-    /* fall through */
+    const res = await anthropic.messages.create({ model, max_tokens: def.maxOutputTokens, system, messages: [{ role: "user", content: prompt }] });
+    const text = res.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join("\n");
+    return { text, tokensIn: res.usage.input_tokens, tokensOut: res.usage.output_tokens, providerRequestId: res.id };
+  } catch (e) {
+    const status = (e as { status?: number }).status;
+    throw new ProviderError(typeof status === "number" ? classifyStatus(status) : "provider_unavailable");
   }
-  return stubRecommendations();
 }
 
-/* ------------------------------------------------------------------ stubs */
-
-function stub(prompt: string): AiResult {
-  const text =
-    `Here's a data-informed take on "${prompt.slice(0, 80)}":\n\n` +
-    "• Prioritize the highest-intent segment first — response speed compounds conversion.\n" +
-    "• Reallocate spend from low-ROAS channels to your top two performers.\n" +
-    "• Ship one experiment this week and measure against a clear baseline.\n\n" +
-    "(Set ANTHROPIC_API_KEY to enable live AI responses.)";
-  return { text, model: "stub", tokensIn: 0, tokensOut: 0, stubbed: true };
+/** OpenAI moderation of user-authored text. Returns true when flagged. */
+async function isFlagged(text: string): Promise<boolean | null> {
+  if (aiProvider() !== "openai") return null;
+  try {
+    const res = await fetch("https://api.openai.com/v1/moderations", {
+      method: "POST",
+      headers: { authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({ model: process.env.OPENAI_MODERATION_MODEL || "omni-moderation-latest", input: text.slice(0, 20000) }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { results?: { flagged?: boolean }[] };
+    return Boolean(data.results?.[0]?.flagged);
+  } catch {
+    return null;
+  }
 }
 
-function stubRecommendations() {
-  return [
-    { title: "Improve Conversion Rate", body: "A/B test landing-page headlines and CTAs to lift conversion up to 14%.", category: "Analytics", impact: "High", confidence: 0.92 },
-    { title: "Speed Up Lead Follow-up", body: "Contact high-intent leads within 5 minutes to convert 3.6x more.", category: "CRM", impact: "High", confidence: 0.88 },
-    { title: "Optimize Email Send Time", body: "Send campaigns Tuesday 10am for ~18% higher open rates.", category: "Email Marketing", impact: "Medium", confidence: 0.8 },
-  ];
+function estimateCost(tier: ModelTier, tokensIn: number, tokensOut: number): number | null {
+  const inPrice = Number(process.env[`AI_PRICE_${tier.toUpperCase()}_INPUT_PER_MTOK`]);
+  const outPrice = Number(process.env[`AI_PRICE_${tier.toUpperCase()}_OUTPUT_PER_MTOK`]);
+  if (!(inPrice >= 0 && outPrice >= 0) || Number.isNaN(inPrice) || Number.isNaN(outPrice)) return null;
+  return (tokensIn * inPrice + tokensOut * outPrice) / 1_000_000;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export async function runAiTask<T extends AiTaskCode>(
+  ctx: { workspaceId: string | null; userId: string | null },
+  code: T,
+  input: { prompt: string; moderationText?: string },
+): Promise<AiTaskResult<T>> {
+  const def = AI_TASKS[code] as AiTaskDef;
+  const provider = aiProvider();
+  const started = Date.now();
+  const log = async (data: Partial<{ model: string; tokensIn: number; tokensOut: number; creditsCharged: number; status: string; errorClass: AiErrorClass; attempts: number; providerRequestId: string | null; estimatedCostUsd: number | null }>) =>
+    db.aiRequestLog
+      .create({
+        data: {
+          workspaceId: ctx.workspaceId,
+          userId: ctx.userId,
+          feature: def.feature,
+          task: def.code,
+          provider,
+          promptVersion: `${def.promptId}@v${def.promptVersion}`,
+          latencyMs: Date.now() - started,
+          status: "error",
+          ...data,
+        },
+      })
+      .catch(() => null);
+  const fail = async (errorClass: AiErrorClass, extra: Parameters<typeof log>[0] = {}): Promise<AiTaskResult<T>> => {
+    await log({ errorClass, ...extra });
+    return { ok: false, errorClass, error: AI_ERROR_MESSAGES[errorClass] };
+  };
+
+  if (provider === "stub") return { ok: false, errorClass: "not_configured", error: AI_ERROR_MESSAGES.not_configured };
+
+  // Credits are checked before the provider call and charged only on success.
+  const credits = taskCredits(code, process.env);
+  if (credits > 0) {
+    if (!ctx.workspaceId) return fail("insufficient_credits");
+    const wallet = await getWallet(ctx.workspaceId).catch(() => null);
+    if ((wallet?.planCredits ?? 0) + (wallet?.purchasedCredits ?? 0) < credits) return fail("insufficient_credits");
+  }
+
+  if (def.moderateInput) {
+    const flagged = await isFlagged(input.moderationText ?? input.prompt);
+    if (flagged) return fail("moderation_block");
+  }
+
+  const model = modelForTier(def.tier, provider, process.env);
+  let result: CallResult | null = null;
+  let attempts = 0;
+  let lastError: AiErrorClass = "provider_unavailable";
+  while (attempts < 3 && !result) {
+    attempts++;
+    try {
+      result = provider === "openai" ? await callOpenAi(def, model, input.prompt) : await callAnthropic(def, model, input.prompt);
+    } catch (e) {
+      lastError = e instanceof ProviderError ? e.errorClass : "provider_unavailable";
+      if (!RETRYABLE.includes(lastError)) break;
+      if (attempts < 3) await sleep(500 * 2 ** attempts);
+    }
+  }
+  if (!result) return fail(lastError, { model, attempts });
+
+  const usage = {
+    model,
+    attempts,
+    tokensIn: result.tokensIn,
+    tokensOut: result.tokensOut,
+    providerRequestId: result.providerRequestId,
+    estimatedCostUsd: estimateCost(def.tier, result.tokensIn, result.tokensOut),
+  };
+  if (ctx.workspaceId) {
+    await db.aiUsage.create({ data: { workspaceId: ctx.workspaceId, model, tokensIn: result.tokensIn, tokensOut: result.tokensOut, tokens: result.tokensIn + result.tokensOut } }).catch(() => null);
+  }
+
+  const validated = validateOutput(code, result.text);
+  if (!validated.ok) return fail("invalid_output", usage);
+
+  const entry = await log({ ...usage, status: "ok" });
+  let charged = 0;
+  if (credits > 0 && ctx.workspaceId && entry) {
+    const debit = await consumeCredits(ctx.workspaceId, credits, { type: "ai_request", id: entry.id, note: def.code, actorUserId: ctx.userId ?? undefined });
+    if (debit.ok) {
+      charged = credits;
+      await db.aiRequestLog.update({ where: { id: entry.id }, data: { creditsCharged: credits } }).catch(() => null);
+    }
+  }
+  return { ok: true, value: validated.value, model, requestId: entry?.id ?? "", creditsCharged: charged };
 }

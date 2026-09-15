@@ -2524,3 +2524,30 @@ model MediaGenerationJob {
   @@index([workspaceId, createdAt])
   @@index([status, updatedAt])
 }
+
+/// One AI Gateway request (OpenAI API Integration Guidelines §10, §14):
+/// feature, task, model, prompt version, tokens, cost, credits, latency, outcome.
+model AiRequestLog {
+  id                String   @id @default(cuid())
+  workspaceId       String?
+  userId            String?
+  feature           String
+  task              String
+  provider          String
+  model             String?
+  promptVersion     String
+  tokensIn          Int      @default(0)
+  tokensOut         Int      @default(0)
+  estimatedCostUsd  Float?
+  creditsCharged    Int      @default(0)
+  /// ok | error
+  status            String
+  errorClass        String?
+  latencyMs         Int      @default(0)
+  attempts          Int      @default(1)
+  providerRequestId String?
+  createdAt         DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([task, createdAt])
+}

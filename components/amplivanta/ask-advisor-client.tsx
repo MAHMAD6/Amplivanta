@@ -29,9 +29,9 @@ export function AskAdvisorClient({ suggested }: { suggested: string[] }) {
         body: JSON.stringify({ message: text, conversationId }),
       });
       const j = await res.json();
-      setConversationId(j.conversationId);
-      setLive(j.live);
-      setMessages((m) => [...m, { role: "assistant", content: j.reply ?? "Sorry, something went wrong." }]);
+      if (j.conversationId) setConversationId(j.conversationId);
+      setLive(Boolean(j.live));
+      setMessages((m) => [...m, { role: "assistant", content: j.reply ?? j.error ?? "Something went wrong. Please try again." }]);
     } catch {
       setMessages((m) => [...m, { role: "assistant", content: "Network error — please try again." }]);
     } finally {
@@ -49,8 +49,7 @@ export function AskAdvisorClient({ suggested }: { suggested: string[] }) {
             </span>
             <div className="max-w-lg rounded-2xl rounded-tl-sm bg-bg-soft p-4">
               <p className="text-[13px] leading-relaxed text-ink">
-                Hi Alex 👋 — ask me anything about your funnel, campaigns, or revenue, or pick a
-                suggested question to get started.
+                Ask about your funnel, campaigns or revenue, or pick a suggested question to get started.
               </p>
             </div>
           </div>

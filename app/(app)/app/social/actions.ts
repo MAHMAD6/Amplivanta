@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { complete } from "@/lib/ai";
+import { runAiTask } from "@/lib/ai";
 import { SITE_URL } from "@/lib/constants";
 
 /**
@@ -178,11 +178,7 @@ export async function draftProductPromotion(productId: string): Promise<
     let content = fallback;
     let stubbed = true;
     try {
-      const res = await complete({
-        system:
-          "You write short social posts promoting a digital product. Return the post text only — no quotes, no preamble, " +
-          "under 280 characters, ending with the provided link. Describe only what the product information supports; " +
-          "never invent features, results, statistics or testimonials.",
+      const res = await runAiTask({ workspaceId: v.workspaceId, userId: v.userId }, "social_post_copy", {
         prompt: [
           `Product: ${product.title}`,
           product.summary ? `Summary: ${product.summary}` : null,
@@ -193,11 +189,10 @@ export async function draftProductPromotion(productId: string): Promise<
         ]
           .filter(Boolean)
           .join("\n"),
-        maxTokens: 300,
       });
-      stubbed = res.stubbed;
-      if (!res.stubbed && res.text.trim()) {
-        content = res.text.trim();
+      stubbed = !res.ok;
+      if (res.ok) {
+        content = res.value.trim();
         if (!content.includes(link)) content = `${content}\n\n${link}`;
       }
     } catch {
