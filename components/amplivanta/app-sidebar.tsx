@@ -101,7 +101,11 @@ export function AppSidebar({
           <Layers className="h-4 w-4" /> Dashboard
         </Link>
 
-        {APP_NAV.map((section) => {
+        {(() => {
+          // A page listed as a sub-link belongs to that parent: highlight and
+          // expand it, rather than whichever top-level item shares its URL prefix.
+          const owner = APP_NAV.flatMap((s) => s.items).find((i) => i.children?.some((c) => c.href === pathname));
+          return APP_NAV.map((section) => {
           const items = section.items.filter(
             (i) => !i.visibility || navVisibility?.[i.visibility] === true,
           );
@@ -114,7 +118,9 @@ export function AppSidebar({
             <div className="space-y-0.5">
               {items.map((item) => {
                 const Icon = iconMap[item.icon as keyof typeof iconMap];
-                const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                const active = owner
+                  ? item.href === owner.href
+                  : pathname === item.href || pathname.startsWith(item.href + "/");
                 return (
                   <div key={item.href}>
                     <Link
@@ -165,7 +171,8 @@ export function AppSidebar({
             </div>
           </div>
           );
-        })}
+        });
+        })()}
       </nav>
 
       {/* AI credits: shown only once a real balance is connected. */}

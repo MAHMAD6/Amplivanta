@@ -648,13 +648,23 @@ model EventItem {
 }
 
 model Competitor {
-  id          String    @id @default(cuid())
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name        String
-  website     String?
-  metrics     Json?
-  createdAt   DateTime  @default(now())
+  id              String    @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name            String
+  website         String?
+  metrics         Json?
+  /// direct | indirect | aspirational
+  type            String    @default("direct")
+  /// manual | discovered — discovered ones were confirmed by a user, never auto-added
+  source          String    @default("manual")
+  trackingEnabled Boolean   @default(true)
+  /// Why discovery suggested it, kept for the "see why" explanation.
+  reason          String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
+
+  @@index([workspaceId])
 }
 
 model Goal {

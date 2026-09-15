@@ -4,6 +4,9 @@ import Link from "next/link";
 import { Building2, BarChart3, Crosshair, Clock, GitBranch, Database, Target, TrendingUp, Megaphone, Sparkles, Bell, Users2, ArrowRight, ChevronRight, Info } from "lucide-react";
 import { loadCommandCenter } from "@/lib/server/command-center";
 import { LiveBadge } from "@/components/amplivanta/live-badge";
+import { db } from "@/lib/db";
+import { getSessionContext } from "@/lib/tenant";
+import { Store } from "lucide-react";
 
 export const metadata: Metadata = { title: "Growth Command Center" };
 export const dynamic = "force-dynamic";
@@ -16,8 +19,22 @@ const STEPS = [
   { n: 5, title: "Optimize", desc: "Continuously improve for better results", icon: GitBranch },
 ];
 
+/** Real counts for the Competitor Watch and Marketplace entry cards; null when unknown. */
+async function loadEntryCounts(): Promise<{ competitors: number | null; products: number | null }> {
+  try {
+    const ctx = await getSessionContext();
+    const [competitors, products] = await Promise.all([
+      db.competitor.count({ where: { workspaceId: ctx.workspaceId, trackingEnabled: true } }),
+      db.marketplaceProduct.count({ where: { status: "PUBLISHED" } }),
+    ]);
+    return { competitors, products };
+  } catch {
+    return { competitors: null, products: null };
+  }
+}
+
 export default async function CommandCenterPage() {
-  const cc = await loadCommandCenter();
+  const [cc, entry] = await Promise.all([loadCommandCenter(), loadEntryCounts()]);
   const attentionCount = cc.attention.length;
 
   return (
@@ -143,6 +160,38 @@ export default async function CommandCenterPage() {
           </ul>
           <Link href="/app/onboarding" className="mt-4 block text-center text-[12px] font-semibold text-royal-blue">View onboarding guide →</Link>
         </div>
+      </div>
+
+      {/* Growth Intelligence and Marketplace entry points */}
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Link href="/app/content-intelligence/competitors" className="group flex items-center gap-4 rounded-2xl border border-line bg-white p-5 shadow-card transition hover:border-royal-blue/40">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-royal-tint text-royal-blue"><Users2 className="h-6 w-6" /></span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-bold text-ink">Competitor Watch</div>
+            <p className="mt-0.5 text-[12px] text-ink-muted">
+              {entry.competitors === null
+                ? "Discover and monitor competitors to find opportunities."
+                : entry.competitors === 0
+                  ? "No competitors tracked yet. Find or add your first competitor."
+                  : `${entry.competitors} competitor${entry.competitors === 1 ? "" : "s"} tracked.`}
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-ink-muted transition group-hover:text-royal-blue" />
+        </Link>
+        <Link href="/app/marketplace" className="group flex items-center gap-4 rounded-2xl border border-line bg-white p-5 shadow-card transition hover:border-royal-blue/40">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet/10 text-violet"><Store className="h-6 w-6" /></span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-bold text-ink">Marketplace</div>
+            <p className="mt-0.5 text-[12px] text-ink-muted">
+              {entry.products === null
+                ? "Templates, graphics, playbooks and tools from Marketplace sellers."
+                : entry.products === 0
+                  ? "No products are published yet."
+                  : `${entry.products} published product${entry.products === 1 ? "" : "s"} to browse.`}
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-ink-muted transition group-hover:text-royal-blue" />
+        </Link>
       </div>
     </div>
   );

@@ -34,6 +34,13 @@ export const APP_NAV: AppNavSection[] = [
         href: "/app/strategy",
         icon: "target",
         children: [
+          { label: "AI Advisor", href: "/app/ai-advisor" },
+          { label: "Growth Audit", href: "/app/growth-audit" },
+          { label: "Content Ideas", href: "/app/content-intelligence" },
+          { label: "Trending Topics", href: "/app/content-intelligence/trending" },
+          { label: "Industry News", href: "/app/content-intelligence/news" },
+          { label: "Events & Holidays", href: "/app/content-intelligence/events" },
+          { label: "Competitor Watch", href: "/app/content-intelligence/competitors" },
           { label: "Strategy Dashboard", href: "/app/strategy" },
           { label: "Marketing Goals", href: "/app/strategy/goals" },
           { label: "Audience & Buyer Personas", href: "/app/strategy/personas" },
@@ -107,9 +114,16 @@ export const APP_NAV: AppNavSection[] = [
   {
     label: "Marketplace",
     items: [
-      { label: "Marketplace", href: "/app/marketplace", icon: "store", visibility: "marketplace" },
-      { label: "Browse Products", href: "/app/marketplace/products", icon: "search", visibility: "browseProducts" },
-      { label: "My Purchases", href: "/app/marketplace/purchases", icon: "bag", visibility: "myPurchases" },
+      {
+        label: "Marketplace",
+        href: "/app/marketplace",
+        icon: "store",
+        visibility: "marketplace",
+        children: [
+          { label: "Browse Products", href: "/app/marketplace/products" },
+          { label: "My Purchases", href: "/app/marketplace/purchases" },
+        ],
+      },
       { label: "Sell on Amplivanta", href: "/app/marketplace/sell", icon: "tag", visibility: "sellOnAmplivanta" },
       { label: "Seller Dashboard", href: "/app/marketplace/seller", icon: "store", visibility: "sellerDashboard" },
       { label: "Affiliate Links", href: "/app/marketplace/affiliate", icon: "tag", visibility: "marketplace" },
