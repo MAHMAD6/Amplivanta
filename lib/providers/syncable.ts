@@ -3,7 +3,7 @@
  * them) and the UI (which only offers Sync where something will actually run),
  * so a connect-only provider never shows a button that does nothing.
  */
-export const SYNCABLE_PROVIDERS = ["google", "meta", "hubspot"] as const;
+export const SYNCABLE_PROVIDERS = ["google_analytics", "google_search_console", "google_ads", "youtube", "meta", "hubspot"] as const;
 
 export type SyncableProvider = (typeof SYNCABLE_PROVIDERS)[number];
 

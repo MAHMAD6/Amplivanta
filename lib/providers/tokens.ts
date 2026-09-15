@@ -64,7 +64,13 @@ export async function getProviderToken(workspaceId: string, provider: string): P
       }),
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return { ok: false, reason: "refresh_failed" };
+    if (!res.ok) {
+      // Revoked or invalid grant: stop background use until the user reconnects.
+      if (res.status === 400 || res.status === 401) {
+        await db.integration.update({ where: { id: integration.id }, data: { status: "reauth_required", isConnected: false } }).catch(() => null);
+      }
+      return { ok: false, reason: "refresh_failed" };
+    }
     const fresh = (await res.json()) as StoredTokens;
     const merged: StoredTokens = {
       ...tokens,

@@ -1,10 +1,13 @@
-import { createHmac, randomBytes } from "crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 /**
- * Minimal OAuth2 authorization-code registry for integration connect flows.
+ * OAuth2 authorization-code registry for integration connect flows.
  * Providers are configured via env; unconfigured providers are simply unavailable.
- * `state` is a signed token (HMAC over workspaceId+provider+nonce) so the callback
- * can trust it without server-side storage.
+ *
+ * `state` is a signed, expiring token binding the workspace, user, provider,
+ * post-auth return path and a random nonce; the nonce is also set as an
+ * httpOnly cookie on the browser that started the flow, so a state value
+ * cannot be replayed from another session (Google Services Manual §3.1).
  */
 export interface OAuthProvider {
   id: string;
@@ -14,7 +17,17 @@ export interface OAuthProvider {
   scopes: string[];
   clientId?: string;
   clientSecret?: string;
+  /** Google service connections: incremental auth, revocation, validation. */
+  family?: "google";
 }
+
+const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
+const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
+// Google data connections use the integrations project, not the sign-in project.
+const googleIntegrationClient = () => ({
+  clientId: process.env.GOOGLE_INTEGRATIONS_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_INTEGRATIONS_CLIENT_SECRET,
+});
 
 export const OAUTH_PROVIDERS: Record<string, OAuthProvider> = {
   google: {
@@ -25,6 +38,46 @@ export const OAUTH_PROVIDERS: Record<string, OAuthProvider> = {
     scopes: ["openid", "email", "profile"],
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  },
+  google_analytics: {
+    id: "google_analytics",
+    name: "Google Analytics 4",
+    authorizeUrl: GOOGLE_AUTH,
+    tokenUrl: GOOGLE_TOKEN,
+    scopes: ["https://www.googleapis.com/auth/analytics.readonly"],
+    family: "google",
+    ...googleIntegrationClient(),
+  },
+  google_search_console: {
+    id: "google_search_console",
+    name: "Google Search Console",
+    authorizeUrl: GOOGLE_AUTH,
+    tokenUrl: GOOGLE_TOKEN,
+    scopes: ["https://www.googleapis.com/auth/webmasters.readonly"],
+    family: "google",
+    ...googleIntegrationClient(),
+  },
+  google_ads: {
+    id: "google_ads",
+    name: "Google Ads",
+    authorizeUrl: GOOGLE_AUTH,
+    tokenUrl: GOOGLE_TOKEN,
+    scopes: ["https://www.googleapis.com/auth/adwords"],
+    family: "google",
+    // Ads uses a restricted scope, so it lives in its own Cloud project when configured.
+    clientId: process.env.GOOGLE_ADS_CLIENT_ID || process.env.GOOGLE_INTEGRATIONS_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET || process.env.GOOGLE_INTEGRATIONS_CLIENT_SECRET,
+  },
+  youtube: {
+    id: "youtube",
+    name: "YouTube",
+    authorizeUrl: GOOGLE_AUTH,
+    tokenUrl: GOOGLE_TOKEN,
+    // Read-only in V1; upload is requested only when publishing ships.
+    scopes: ["https://www.googleapis.com/auth/youtube.readonly", "https://www.googleapis.com/auth/yt-analytics.readonly"],
+    family: "google",
+    clientId: process.env.YOUTUBE_CLIENT_ID || process.env.GOOGLE_INTEGRATIONS_CLIENT_ID,
+    clientSecret: process.env.YOUTUBE_CLIENT_SECRET || process.env.GOOGLE_INTEGRATIONS_CLIENT_SECRET,
   },
   microsoft: {
     id: "microsoft",
@@ -89,15 +142,6 @@ const LATER_PHASE: OAuthProvider[] = [
     clientSecret: process.env.SHOPIFY_CLIENT_SECRET,
   },
   {
-    id: "youtube",
-    name: "YouTube",
-    authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
-    tokenUrl: "https://oauth2.googleapis.com/token",
-    scopes: ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/yt-analytics.readonly"],
-    clientId: process.env.YOUTUBE_CLIENT_ID,
-    clientSecret: process.env.YOUTUBE_CLIENT_SECRET,
-  },
-  {
     id: "tiktok",
     name: "TikTok",
     authorizeUrl: "https://www.tiktok.com/v2/auth/authorize/",
@@ -147,26 +191,43 @@ function secret() {
   return process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "dev-insecure-secret";
 }
 
-export function signState(workspaceId: string, provider: string): string {
-  const payload = Buffer.from(JSON.stringify({ w: workspaceId, p: provider, n: randomBytes(8).toString("hex") })).toString("base64url");
-  const sig = createHmac("sha256", secret()).update(payload).digest("base64url");
-  return `${payload}.${sig}`;
+export const OAUTH_NONCE_COOKIE = "av_oauth_nonce";
+const STATE_TTL_MS = 10 * 60 * 1000;
+
+export type OAuthState = { workspaceId: string; userId: string; provider: string; returnTo: string; nonce: string };
+
+/** Only same-site app paths are accepted as a post-auth destination. */
+export function safeReturnTo(raw: string | null | undefined): string {
+  const v = (raw ?? "").trim();
+  return /^\/app(\/[A-Za-z0-9._~\-/]*)?(\?[A-Za-z0-9._~\-=&%]*)?$/.test(v) && !v.includes("//") ? v : "/app/integrations/connected";
 }
 
-export function verifyState(state: string): { workspaceId: string; provider: string } | null {
+export function signState(ctx: { workspaceId: string; userId: string }, provider: string, returnTo: string): { state: string; nonce: string } {
+  const nonce = randomBytes(18).toString("base64url");
+  const payload = Buffer.from(
+    JSON.stringify({ w: ctx.workspaceId, u: ctx.userId, p: provider, r: safeReturnTo(returnTo), n: nonce, e: Date.now() + STATE_TTL_MS }),
+  ).toString("base64url");
+  const sig = createHmac("sha256", secret()).update(payload).digest("base64url");
+  return { state: `${payload}.${sig}`, nonce };
+}
+
+export function verifyState(state: string, cookieNonce: string | undefined): OAuthState | null {
   const [payload, sig] = state.split(".");
   if (!payload || !sig) return null;
-  const expected = createHmac("sha256", secret()).update(payload).digest("base64url");
-  if (expected !== sig) return null;
+  const expected = Buffer.from(createHmac("sha256", secret()).update(payload).digest("base64url"));
+  const given = Buffer.from(sig);
+  if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
   try {
-    const { w, p } = JSON.parse(Buffer.from(payload, "base64url").toString());
-    return { workspaceId: w, provider: p };
+    const { w, u, p, r, n, e } = JSON.parse(Buffer.from(payload, "base64url").toString());
+    if (typeof e !== "number" || Date.now() > e) return null;
+    if (!cookieNonce || cookieNonce !== n) return null;
+    return { workspaceId: w, userId: u, provider: p, returnTo: safeReturnTo(r), nonce: n };
   } catch {
     return null;
   }
 }
 
-export function authorizeUrl(provider: OAuthProvider, state: string): string {
+export function authorizeUrl(provider: OAuthProvider, state: string, opts: { forceConsent?: boolean } = {}): string {
   const params = new URLSearchParams({
     client_id: provider.clientId!,
     redirect_uri: redirectUri(provider.id),
@@ -174,9 +235,30 @@ export function authorizeUrl(provider: OAuthProvider, state: string): string {
     scope: provider.scopes.join(" "),
     state,
     access_type: "offline",
-    prompt: "consent",
   });
+  if (provider.family === "google") {
+    params.set("include_granted_scopes", "true");
+    // Consent is forced only when a refresh token must be re-issued.
+    if (opts.forceConsent) params.set("prompt", "consent");
+  } else {
+    params.set("prompt", "consent");
+  }
   return `${provider.authorizeUrl}?${params.toString()}`;
+}
+
+/** Revokes a Google grant on disconnect. Best effort: the local connection is removed regardless. */
+export async function revokeGoogleToken(token: string): Promise<boolean> {
+  try {
+    const res = await fetch("https://oauth2.googleapis.com/revoke", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token }),
+      signal: AbortSignal.timeout(10000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 export async function exchangeCode(provider: OAuthProvider, code: string): Promise<Record<string, unknown>> {
@@ -192,5 +274,6 @@ export async function exchangeCode(provider: OAuthProvider, code: string): Promi
     }),
   });
   if (!res.ok) throw new Error(`Token exchange failed: ${res.status}`);
-  return res.json();
+  // obtained_at lets the token helper know when the access token expires.
+  return { ...((await res.json()) as Record<string, unknown>), obtained_at: Date.now() };
 }
