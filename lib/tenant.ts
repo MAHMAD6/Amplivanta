@@ -33,6 +33,10 @@ export class ApiError extends Error {
  * Throws ApiError(401/403) when there is no session or no workspace.
  */
 export async function getSessionContext(req?: Request): Promise<SessionContext> {
+  // Workspace API keys (Authorization: Bearer amp_...) authenticate API routes.
+  const bearer = req?.headers.get("authorization")?.match(/^Bearer\s+(amp_[a-f0-9]{48})$/i)?.[1];
+  if (bearer) return apiKeyContext(bearer);
+
   const session = await auth();
   const user = session?.user as { id?: string; email?: string; role?: Role } | undefined;
   if (!user?.id) {
@@ -55,15 +59,8 @@ export async function getSessionContext(req?: Request): Promise<SessionContext> 
       where: { userId: user.id },
       orderBy: { createdAt: "asc" },
     });
-    if (memberships.length === 0) {
-      return {
-        userId: user.id,
-        email: user.email ?? "",
-        role: user.role ?? "EDITOR",
-        workspaceId: requested ?? "default-workspace",
-        workspaceRole: (user.role ?? "OWNER") as Role,
-      };
-    }
+    // Never grant a workspace the caller is not a member of.
+    if (memberships.length === 0) throw new ApiError(403, "You are not a member of any workspace.");
 
     const membership =
       (requested ? memberships.find((m) => m.workspaceId === requested) : undefined) ?? memberships[0];
@@ -75,15 +72,30 @@ export async function getSessionContext(req?: Request): Promise<SessionContext> 
       workspaceId: membership.workspaceId,
       workspaceRole: membership.role,
     };
-  } catch {
-    return {
-      userId: user.id,
-      email: user.email ?? "",
-      role: user.role ?? "EDITOR",
-      workspaceId: requested ?? "default-workspace",
-      workspaceRole: (user.role ?? "OWNER") as Role,
-    };
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    throw new ApiError(503, "Workspace access could not be verified. Please try again.");
   }
+}
+
+/**
+ * Resolves a workspace API key. Keys are stored as SHA-256 hashes; a key with
+ * the "write" scope acts with editor rights, otherwise read-only (viewer).
+ * Requests are attributed to the workspace's first owner.
+ */
+async function apiKeyContext(raw: string): Promise<SessionContext> {
+  const { createHash } = await import("node:crypto");
+  const keyHash = createHash("sha256").update(raw).digest("hex");
+  const key = await db.apiKey.findUnique({ where: { keyHash } }).catch(() => null);
+  if (!key || (key.expiresAt && key.expiresAt.getTime() < Date.now())) throw new ApiError(401, "Invalid or expired API key");
+  const owner = await db.membership.findFirst({ where: { workspaceId: key.workspaceId, role: "OWNER" }, orderBy: { createdAt: "asc" }, include: { user: { select: { email: true } } } });
+  if (!owner) throw new ApiError(403, "This API key's workspace has no owner.");
+  // Record usage at most once a minute per key.
+  if (!key.lastUsedAt || Date.now() - key.lastUsedAt.getTime() > 60_000) {
+    await db.apiKey.update({ where: { id: key.id }, data: { lastUsedAt: new Date() } }).catch(() => null);
+  }
+  const role: Role = key.scopes.includes("write") ? "EDITOR" : "VIEWER";
+  return { userId: owner.userId, email: owner.user.email, role, workspaceId: key.workspaceId, workspaceRole: role };
 }
 
 /**

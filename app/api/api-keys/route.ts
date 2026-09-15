@@ -7,7 +7,7 @@ import { writeAudit } from "@/lib/audit";
 
 const createSchema = z.object({
   name: z.string().min(1).max(120),
-  scopes: z.array(z.string()).optional(),
+  scopes: z.array(z.enum(["read", "write"])).optional(),
   expiresAt: z.coerce.date().optional(),
 });
 
@@ -33,7 +33,7 @@ export const POST = route(async (ctx, req) => {
     data: {
       name: data.name,
       prefix: raw.slice(0, 12),
-      scopes: data.scopes ?? [],
+      scopes: [...new Set(["read", ...(data.scopes ?? [])])],
       expiresAt: data.expiresAt,
       keyHash,
       workspaceId: ctx.workspaceId,

@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
-import { route, parseBody, listParams, requireRole } from "@/lib/tenant";
+import { WEBHOOK_EVENTS, assertPublicEndpoint } from "@/lib/webhook-delivery";
+import { route, parseBody, listParams, requireRole, ApiError } from "@/lib/tenant";
 import { writeAudit } from "@/lib/audit";
 
 const createSchema = z.object({
-  url: z.string().url(),
-  events: z.array(z.string().min(1)).min(1),
-  status: z.string().max(40).optional(),
+  url: z.string().url().startsWith("https://", "Webhook endpoints must use https."),
+  events: z.array(z.enum(WEBHOOK_EVENTS)).min(1),
+  status: z.enum(["active", "paused"]).optional(),
 });
 
 export const GET = route(async (ctx, req) => {
@@ -33,6 +34,7 @@ export const GET = route(async (ctx, req) => {
 export const POST = route(async (ctx, req) => {
   requireRole(ctx, "ADMIN");
   const data = await parseBody(req, createSchema);
+  await assertPublicEndpoint(data.url).catch((e: Error) => { throw new ApiError(400, e.message); });
   const signingSecret = `whsec_${randomBytes(24).toString("hex")}`;
   const webhook = await db.webhook.create({
     data: { ...data, signingSecret, workspaceId: ctx.workspaceId },

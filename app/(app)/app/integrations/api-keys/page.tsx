@@ -1,91 +1,72 @@
 import type { Metadata } from "next";
-import { Plus, Copy, MoreHorizontal, Key, Activity, AlertTriangle, BookOpen } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { IntegrationsSubnav } from "@/components/amplivanta/integrations-subnav";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { API_KEYS, API_KEY_TONE } from "@/lib/integrations-data";
-import { ApiKeyDialog } from "@/components/amplivanta/settings/api-key-dialog";
+import { ArrowUpRight, Diamond, Gauge, History } from "lucide-react";
+import { db } from "@/lib/db";
+import { CreateApiKeyButton, RevokeKeyButton } from "@/components/amplivanta/developer-ui";
+import { DataTable, EmptyState, InfoList, Pill, ScreenHeader, StatGrid, fmtDate, fmtDateTime, fmtInt } from "@/components/amplivanta/screen-kit";
+import { settingsContext } from "@/lib/server/settings-screens";
 
-export const metadata: Metadata = { title: "API Keys" };
+export const metadata: Metadata = { title: "API Keys & Developer Access" };
+export const dynamic = "force-dynamic";
 
-export default function ApiKeysPage() {
+export default async function ApiKeysPage() {
+  const c = await settingsContext();
+  let reachable = Boolean(c);
+  let keys: { id: string; name: string; prefix: string; scopes: string[]; createdAt: Date; lastUsedAt: Date | null; expiresAt: Date | null }[] = [];
+  if (c) {
+    try {
+      keys = await db.apiKey.findMany({ where: { workspaceId: c.workspaceId }, orderBy: { createdAt: "desc" }, select: { id: true, name: true, prefix: true, scopes: true, createdAt: true, lastUsedAt: true, expiresAt: true } });
+    } catch {
+      reachable = false;
+    }
+  }
+  const canEdit = Boolean(c?.isAdmin);
+  const active = keys.filter((k) => !k.expiresAt || k.expiresAt.getTime() > Date.now());
+  const last = keys.map((k) => k.lastUsedAt).filter((d): d is Date => Boolean(d)).sort((a, b) => b.getTime() - a.getTime())[0];
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["Integrations", "/app/integrations"], ["API Keys & Developer Access"]]}
         title="API Keys & Developer Access"
-        subtitle="Named-scope API keys, usage attribution, rate-limit visibility."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink"><BookOpen className="h-3.5 w-3.5" /> Docs</button>
-            <ApiKeyDialog />
-          </>
-        }
+        subtitle="Manage API keys, scopes, usage visibility, and developer access."
+        actions={<CreateApiKeyButton canEdit={canEdit} />}
       />
-      <IntegrationsSubnav />
-
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Key} label="Active Keys" value={String(API_KEYS.filter((k) => k.status === "Active").length)} tone="violet" />
-        <KpiCard icon={Activity} label="Calls (7d)" value={null} tone="blue" />
-        <KpiCard icon={Activity} label="Rate Limit Used" value={null} tone="green" />
-        <KpiCard icon={AlertTriangle} label="Revoked" value={String(API_KEYS.filter((k) => k.status === "Revoked").length)} tone="pink" />
-      </div>
-
-      <div className="rounded-2xl border border-line bg-white shadow-card">
-        <div className="border-b border-line p-4"><div className="text-[14px] font-bold text-ink">Keys</div></div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[720px]">
-            <thead>
-              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="px-4 py-3">Label</th>
-                <th className="px-4 py-3">Prefix</th>
-                <th className="px-4 py-3">Scopes</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3">Last Used</th>
-                <th className="px-4 py-3 text-right">Usage (7d)</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="w-16 px-2 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {API_KEYS.map((k) => (
-                <tr key={k.id} className="border-b border-line last:border-0">
-                  <td className="px-4 py-3 text-[13px] font-semibold text-ink">{k.label}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[11.5px] text-ink">{k.prefix}</span>
-                      <button className="text-ink-muted"><Copy className="h-3 w-3" /></button>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {k.scopes.map((s) => <span key={s} className="rounded bg-violet/10 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-violet">{s}</span>)}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{k.createdAt}</td>
-                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{k.lastUsed}</td>
-                  <td className="px-4 py-3 text-right text-[12.5px] font-bold text-ink">{k.usage7d.toLocaleString()}</td>
-                  <td className="px-4 py-3"><StatusPill tone={API_KEY_TONE[k.status]}>{k.status}</StatusPill></td>
-                  <td className="px-2 py-3 text-right">
-                    <div className="flex justify-end gap-1">
-                      {k.status === "Active" && <button className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[10.5px] font-bold text-red-600">Revoke</button>}
-                      <button className="rounded-lg p-1 text-ink-muted"><MoreHorizontal className="h-3.5 w-3.5" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
-        <div className="mb-2 flex items-center gap-1.5 text-[13px] font-bold text-ink"><BookOpen className="h-3.5 w-3.5 text-violet" /> Developer Resources</div>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 text-[12px]">
-          <a href="#" className="rounded-xl border border-line bg-white p-3 hover:border-violet/30"><div className="font-bold text-ink">REST API Reference</div><div className="text-[11px] text-ink-muted">Every endpoint · versioned</div></a>
-          <a href="#" className="rounded-xl border border-line bg-white p-3 hover:border-violet/30"><div className="font-bold text-ink">SDKs</div><div className="text-[11px] text-ink-muted">TypeScript · Python · Go</div></a>
-          <a href="#" className="rounded-xl border border-line bg-white p-3 hover:border-violet/30"><div className="font-bold text-ink">Rate limits</div><div className="text-[11px] text-ink-muted">5K req/min · burst 10K</div></a>
-        </div>
+      <StatGrid
+        stats={[
+          { label: "Active Keys", icon: Diamond, value: keys.length ? fmtInt(active.length) : null },
+          { label: "API Requests", icon: ArrowUpRight, value: null },
+          { label: "Rate Limit", icon: Gauge, value: keys.length ? "120 / min" : null, hint: keys.length ? "Default, per endpoint" : undefined },
+          { label: "Last Activity", icon: History, value: last ? fmtDateTime(last) : null },
+        ]}
+      />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.4fr)_1fr]">
+        <section className="min-h-[560px] rounded-xl border border-line bg-white p-5">
+          <DataTable
+            minWidth={760}
+            columns={["Key Name", "Scopes", "Key", "Created", "Last Used", "Actions"]}
+            rows={keys.map((k) => [
+              k.name,
+              <span key="s" className="flex gap-1">{k.scopes.map((s) => <Pill key={s} tone={s === "write" ? "amber" : "blue"}>{s}</Pill>)}</span>,
+              <code key="p" className="text-[12px]">{k.prefix}…</code>,
+              fmtDate(k.createdAt),
+              k.lastUsedAt ? fmtDateTime(k.lastUsedAt) : "Never",
+              <RevokeKeyButton key="r" id={k.id} canEdit={canEdit} />,
+            ])}
+            empty={<EmptyState icon={Diamond} title={reachable ? "No API keys yet" : "API keys unavailable"} body="Create a key when an application requires developer access." action={reachable ? <CreateApiKeyButton canEdit={canEdit} /> : undefined} />}
+          />
+        </section>
+        <section className="rounded-xl border border-line bg-white p-5">
+          <h2 className="text-[18px] font-semibold text-deep-navy">Developer Access Guidance</h2>
+          <InfoList
+            rows={[
+              { title: "Secret handling", body: "The secret value is shown only when a key is created. Store it securely; it cannot be displayed again." },
+              { title: "Authentication", body: "Send the key as Authorization: Bearer <key> to Amplivanta /api endpoints. Requests act on this workspace only." },
+              { title: "Scopes", body: "Read-only keys can list and read records; read-and-write keys can also create and update them. Administrative actions are never available to keys." },
+              { title: "Usage & limits", body: "Last-used time is recorded; requests are rate limited per endpoint." },
+              { title: "Revocation", body: "Revoked keys stop authorizing requests immediately." },
+            ]}
+          />
+        </section>
       </div>
     </div>
   );

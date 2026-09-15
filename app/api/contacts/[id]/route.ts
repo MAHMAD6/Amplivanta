@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { route, parseBody, requireRole, ApiError } from "@/lib/tenant";
+import { emitWebhookEvent } from "@/lib/webhook-delivery";
 
 const updateSchema = z.object({
   email: z.string().email().optional(),
@@ -43,6 +44,7 @@ export const PATCH = route<Params>(async (ctx, req, { id }) => {
   await loadOwned(ctx.workspaceId, id);
   const data = await parseBody(req, updateSchema);
   const updated = await db.contact.update({ where: { id }, data });
+  emitWebhookEvent(ctx.workspaceId, "contact.updated", { id: updated.id, email: updated.email, fields: Object.keys(data) });
   return NextResponse.json(updated);
 });
 

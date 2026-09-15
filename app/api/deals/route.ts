@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { route, parseBody, listParams, requireRole } from "@/lib/tenant";
+import { emitWebhookEvent } from "@/lib/webhook-delivery";
 
 const createSchema = z.object({
   name: z.string().min(1).max(160),
@@ -41,5 +42,6 @@ export const POST = route(async (ctx, req) => {
   requireRole(ctx, "EDITOR");
   const data = await parseBody(req, createSchema);
   const deal = await db.deal.create({ data: { ...data, workspaceId: ctx.workspaceId } });
+  emitWebhookEvent(ctx.workspaceId, "deal.created", { id: deal.id, name: deal.name, value: deal.value, currency: deal.currency });
   return NextResponse.json(deal, { status: 201 });
 });

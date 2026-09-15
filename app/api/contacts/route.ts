@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { route, parseBody, listParams, requireRole } from "@/lib/tenant";
-import { dispatchWebhooks } from "@/lib/webhook-delivery";
+import { emitWebhookEvent } from "@/lib/webhook-delivery";
 
 const createSchema = z.object({
   email: z.string().email().optional(),
@@ -51,6 +51,6 @@ export const POST = route(async (ctx, req) => {
     data: { ...data, workspaceId: ctx.workspaceId },
   });
   // Notify any subscribed outbound webhooks.
-  await dispatchWebhooks(ctx.workspaceId, "contact.created", { id: contact.id, email: contact.email });
+  emitWebhookEvent(ctx.workspaceId, "contact.created", { id: contact.id, email: contact.email });
   return NextResponse.json(contact, { status: 201 });
 });

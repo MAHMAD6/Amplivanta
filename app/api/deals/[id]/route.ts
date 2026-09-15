@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { route, parseBody, requireRole, ApiError } from "@/lib/tenant";
+import { emitWebhookEvent } from "@/lib/webhook-delivery";
 
 const updateSchema = z.object({
   name: z.string().min(1).max(160).optional(),
@@ -11,6 +12,7 @@ const updateSchema = z.object({
   stageId: z.string().nullable().optional(),
   closeDate: z.coerce.date().nullable().optional(),
   ownerId: z.string().nullable().optional(),
+  status: z.enum(["open", "won", "lost"]).optional(),
 });
 
 type Params = { id: string };
@@ -32,9 +34,12 @@ export const GET = route<Params>(async (ctx, _req, { id }) => {
 
 export const PATCH = route<Params>(async (ctx, req, { id }) => {
   requireRole(ctx, "EDITOR");
-  await loadOwned(ctx.workspaceId, id);
+  const before = await loadOwned(ctx.workspaceId, id);
   const data = await parseBody(req, updateSchema);
   const updated = await db.deal.update({ where: { id }, data });
+  if (data.status && data.status !== before.status && data.status !== "open") {
+    emitWebhookEvent(ctx.workspaceId, data.status === "won" ? "deal.won" : "deal.lost", { id: updated.id, name: updated.name, value: updated.value, currency: updated.currency });
+  }
   return NextResponse.json(updated);
 });
 

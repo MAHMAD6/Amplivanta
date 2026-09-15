@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
+import { WEBHOOK_EVENTS, assertPublicEndpoint } from "@/lib/webhook-delivery";
 import { route, parseBody, requireRole, ApiError } from "@/lib/tenant";
 
 type Params = { id: string };
@@ -13,9 +14,9 @@ async function loadOwned(workspaceId: string, id: string) {
 }
 
 const patchSchema = z.object({
-  url: z.string().url().optional(),
-  events: z.array(z.string().min(1)).optional(),
-  status: z.string().max(40).optional(),
+  url: z.string().url().startsWith("https://", "Webhook endpoints must use https.").optional(),
+  events: z.array(z.enum(WEBHOOK_EVENTS)).min(1).optional(),
+  status: z.enum(["active", "paused"]).optional(),
   rotateSecret: z.boolean().optional(),
 });
 
@@ -32,6 +33,7 @@ export const PATCH = route<Params>(async (ctx, req, { id }) => {
   requireRole(ctx, "ADMIN");
   await loadOwned(ctx.workspaceId, id);
   const { rotateSecret, ...data } = await parseBody(req, patchSchema);
+  if (data.url) await assertPublicEndpoint(data.url).catch((e: Error) => { throw new ApiError(400, e.message); });
   const updated = await db.webhook.update({
     where: { id },
     data: { ...data, ...(rotateSecret ? { signingSecret: `whsec_${randomBytes(24).toString("hex")}` } : {}) },
