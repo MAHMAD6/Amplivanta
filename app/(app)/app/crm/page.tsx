@@ -1,152 +1,123 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Users, UserPlus, DollarSign, CheckCircle2, TrendingUp, Plus, Filter, MoreHorizontal } from "lucide-react";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { StatusPill, Avatar, CompanyIcon } from "@/components/amplivanta/status-pill";
-import { CrmSubnav } from "@/components/amplivanta/crm-subnav";
-import { PIPELINE_STAGES, STAGE_TONE } from "@/lib/crm-data";
-import { loadDeals, loadContacts, loadActivities } from "@/lib/server/loaders";
+import { db } from "@/lib/db";
+import { CrmScreen, crmDate, crmMoney, crmPrimaryBtn, daysAgo } from "@/components/amplivanta/crm-screen";
+import { ResourceDialog } from "@/components/amplivanta/crud/resource-dialog";
+import { dealFields } from "@/components/amplivanta/crm/crm-fields";
+import { loadStageOptions } from "@/lib/server/loaders";
+import { CREATED_WINDOWS, crmContext, ownerNames, ownerOptions, since } from "@/lib/server/crm-screens";
 
-export const metadata: Metadata = { title: "CRM Dashboard" };
+export const metadata: Metadata = { title: "CRM Dashboard / Pipeline" };
+export const dynamic = "force-dynamic";
 
-export default async function CrmDashboardPage() {
-  const [{ items: DEALS }, { items: CONTACTS }, { items: ACTIVITIES }] = await Promise.all([
-    loadDeals(), loadContacts(), loadActivities()
-  ]);
+type SP = { q?: string; created?: string; owner?: string; status?: string };
 
-  const topDeals = [...DEALS].sort((a, b) => b.value - a.value).slice(0, 5);
-  const recentContacts = CONTACTS.slice(0, 5);
+export default async function CrmPipelinePage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const ctx = await crmContext();
+  const stages = await loadStageOptions();
+
+  let reachable = Boolean(ctx);
+  let rows: React.ReactNode[][] = [];
+  let stats = { pipelineValue: null as string | null, stageSpread: null as string | null, dealActivity: null as string | null, recent: null as string | null };
+  let rail = { dueSoon: null as string | null, openTasks: null as string | null, deals: 0 };
+  let owners: [string, string][] = [];
+
+  if (ctx) {
+    try {
+      const w = ctx.workspaceId;
+      const created = since(sp.created);
+      const [deals, openAgg, stageCount, usedStages, dealActs, recentActs, dueSoon, openTasks, dealTotal] = await Promise.all([
+        db.deal.findMany({
+          where: {
+            workspaceId: w,
+            ...(sp.q ? { name: { contains: sp.q, mode: "insensitive" } } : {}),
+            ...(sp.owner ? { ownerId: sp.owner } : {}),
+            ...(sp.status ? { status: sp.status } : {}),
+            ...(created ? { createdAt: { gte: created } } : {}),
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 50,
+          select: { id: true, name: true, value: true, currency: true, ownerId: true, company: { select: { name: true } }, stage: { select: { name: true } } },
+        }),
+        db.deal.aggregate({ where: { workspaceId: w, status: "open" }, _sum: { value: true }, _count: true }),
+        db.stage.count({ where: { workspaceId: w } }),
+        db.deal.groupBy({ by: ["stageId"], where: { workspaceId: w, status: "open", stageId: { not: null } } }),
+        db.activity.count({ where: { workspaceId: w, dealId: { not: null }, createdAt: { gte: daysAgo(30) } } }),
+        db.activity.count({ where: { workspaceId: w, createdAt: { gte: daysAgo(7) } } }),
+        db.task.count({ where: { workspaceId: w, isCompleted: false, dueDate: { gte: new Date(), lte: daysAgo(-7) } } }),
+        db.task.count({ where: { workspaceId: w, isCompleted: false } }),
+        db.deal.count({ where: { workspaceId: w } }),
+      ]);
+      const names = await ownerNames(deals.map((d) => d.ownerId));
+      owners = await ownerOptions(w);
+      rows = deals.map((d) => [
+        d.name,
+        d.company?.name ?? null,
+        d.stage?.name ?? null,
+        d.ownerId ? names.get(d.ownerId) ?? null : null,
+        crmMoney(d.value, d.currency),
+        <Link key={d.id} href={`/app/crm/deal-detail?id=${d.id}`} className="font-semibold text-[#0B5CFF] hover:underline">View</Link>,
+      ]);
+      stats = {
+        pipelineValue: openAgg._count > 0 ? crmMoney(openAgg._sum.value ?? 0) : null,
+        stageSpread: stageCount > 0 ? `${usedStages.length} of ${stageCount}` : null,
+        dealActivity: dealTotal > 0 ? dealActs.toLocaleString("en-US") : null,
+        recent: recentActs > 0 ? recentActs.toLocaleString("en-US") : null,
+      };
+      rail = { dueSoon: dueSoon.toLocaleString("en-US"), openTasks: openTasks.toLocaleString("en-US"), deals: dealTotal };
+    } catch {
+      reachable = false;
+    }
+  }
+
+  const addDeal = (label: string) => (
+    <ResourceDialog
+      title="New Deal"
+      description="Add a deal to this workspace's pipeline."
+      fields={dealFields(stages)}
+      endpoint="/api/deals"
+      submitLabel="Create deal"
+      successMessage="Deal created"
+      trigger={<button className={crmPrimaryBtn}>{label}</button>}
+    />
+  );
+
   return (
-    <div className="mx-auto max-w-[1400px]">
-      <PageHeader
-        title="CRM Dashboard"
-        subtitle="Pipeline, leads, deals, tasks, and activity — reconciled from every source."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink hover:border-ink/30">
-              <Filter className="h-3.5 w-3.5" /> All Pipelines
-            </button>
-            <Link href="/app/crm/contacts?new=1" className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet">
-              <Plus className="h-3.5 w-3.5" /> Add Contact
-            </Link>
-          </>
-        }
-      />
-      <CrmSubnav />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <KpiCard icon={Users} label="Total Contacts" value={null} tone="violet" />
-        <KpiCard icon={UserPlus} label="New Contacts" value={null} tone="blue" />
-        <KpiCard icon={DollarSign} label="Active Deals" value={null} tone="orange" />
-        <KpiCard icon={CheckCircle2} label="Won Deals" value={null} tone="green" />
-        <KpiCard icon={TrendingUp} label="Total Revenue" value={null} tone="pink" />
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <div className="text-[14px] font-bold text-ink">Pipeline Overview</div>
-            <div className="text-[11px] text-ink-muted">Amplivanta Sales · All owners</div>
-          </div>
-          <Link href="/app/crm/deals" className="text-[12px] font-semibold text-violet">View pipeline →</Link>
-        </div>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
-          {PIPELINE_STAGES.map((s) => (
-            <div key={s.key} className="rounded-xl border border-line bg-bg-soft/60 p-4">
-              <div className="flex items-center justify-between">
-                <StatusPill tone={STAGE_TONE[s.key]}>{s.label}</StatusPill>
-                <span className="text-[10px] text-ink-muted">↓</span>
-              </div>
-              <div className="mt-3 text-[22px] font-extrabold text-ink">{s.deals}</div>
-              <div className="text-[11px] font-semibold text-emerald-600">${s.value.toLocaleString()}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-[14px] font-bold text-ink">Top Deals</div>
-            <Link href="/app/crm/deals" className="text-[12px] font-semibold text-violet">View all →</Link>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-line text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-                  <th className="pb-2">Deal</th>
-                  <th className="pb-2">Value</th>
-                  <th className="pb-2">Stage</th>
-                  <th className="pb-2">Owner</th>
-                  <th className="pb-2">Close</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topDeals.map((d) => (
-                  <tr key={d.id} className="border-b border-line last:border-0">
-                    <td className="py-3">
-                      <Link href={`/app/crm/deals/${d.id}`} className="text-[13px] font-semibold text-ink hover:text-violet">
-                        {d.name}
-                      </Link>
-                    </td>
-                    <td className="py-3 text-[13px] font-bold text-emerald-600">${d.value.toLocaleString()}</td>
-                    <td className="py-3"><StatusPill tone={STAGE_TONE[d.stage]}>{d.stage}</StatusPill></td>
-                    <td className="py-3 text-[12.5px] text-ink-soft">{d.owner}</td>
-                    <td className="py-3 text-[12.5px] text-ink-soft">{d.expectedClose}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-[14px] font-bold text-ink">Recent Activity</div>
-            <Link href="/app/crm/activities" className="text-[12px] font-semibold text-violet">View all →</Link>
-          </div>
-          <div className="space-y-3.5">
-            {ACTIVITIES.slice(0, 5).map((a) => (
-              <div key={a.id} className="flex gap-2.5">
-                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet/10 text-[13px]">
-                  {a.type === "email" ? "✉️" : a.type === "call" ? "📞" : a.type === "meeting" ? "📅" : a.type === "note" ? "📝" : a.type === "sms" ? "💬" : "✅"}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12.5px] font-semibold leading-snug text-ink">{a.title}</div>
-                  <div className="mt-0.5 text-[11px] text-ink-muted">{a.contact} · {a.when}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="text-[14px] font-bold text-ink">Recent Leads</div>
-          <Link href="/app/crm/contacts" className="text-[12px] font-semibold text-violet">View contacts →</Link>
-        </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
-          {recentContacts.map((c) => (
-            <Link
-              key={c.id}
-              href={`/app/crm/contacts?id=${c.id}`}
-              className="flex items-center gap-3 rounded-xl border border-line bg-white p-3 transition hover:border-violet/30 hover:shadow-card"
-            >
-              <Avatar name={c.name} size={40} />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-semibold text-ink">{c.name}</div>
-                <div className="truncate text-[11px] text-ink-muted">{c.role}</div>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span className="text-[10.5px] font-bold text-ink">{c.leadScore}</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
+    <CrmScreen
+      crumb="CRM Dashboard / Pipeline"
+      title="CRM Dashboard / Pipeline"
+      subtitle="Manage your CRM pipeline, activities, and follow-up work across your workspace."
+      primaryAction={addDeal("+ Add Deal")}
+      stats={[
+        { label: "Pipeline Overview", value: stats.pipelineValue, hint: "Open pipeline value" },
+        { label: "Stage Distribution", value: stats.stageSpread, hint: "Stages with open deals" },
+        { label: "Deal Activity", value: stats.dealActivity, hint: "Deal activities, last 30 days" },
+        { label: "Recent CRM Activity", value: stats.recent, hint: "Activities, last 7 days" },
+      ]}
+      table={{
+        title: "Pipeline Board Preview",
+        action: "/app/crm",
+        q: sp.q ?? "",
+        selects: [
+          { name: "created", label: "Filters", value: sp.created ?? "", options: CREATED_WINDOWS },
+          { name: "owner", label: "Owner", value: sp.owner ?? "", options: owners },
+          { name: "status", label: "Status", value: sp.status ?? "", options: [["open", "Open"], ["won", "Won"], ["lost", "Lost"]] },
+        ],
+        columns: ["Deal", "Company", "Stage", "Owner", "Value", "Actions"],
+        rows,
+        reachable,
+        empty: {
+          title: "Your pipeline is empty",
+          body: "Deals and pipeline stages will appear here when CRM records are available.",
+          action: addDeal("Add Deal"),
+        },
+      }}
+      rail={[
+        { title: "Tasks Due", rows: [["Current", rail.dueSoon], ["Available", rail.openTasks]], manage: { href: "/app/crm/task-management" } },
+        { title: "Quick Actions", rows: [["Records", rail.deals ? rail.deals.toLocaleString("en-US") : null], ["Status", rail.deals ? "Live" : null]] },
+      ]}
+      insights={{ title: "CRM Insights" }}
+    />
   );
 }

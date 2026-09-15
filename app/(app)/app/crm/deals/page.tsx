@@ -1,108 +1,122 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus, Filter, LayoutGrid, List } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { CrmSubnav } from "@/components/amplivanta/crm-subnav";
-import { StatusPill, Avatar, CompanyIcon } from "@/components/amplivanta/status-pill";
-import { PIPELINE_STAGES, STAGE_TONE, type DealStage, type Deal } from "@/lib/crm-data";
-import { LiveBadge } from "@/components/amplivanta/live-badge";
+import { db } from "@/lib/db";
+import { CrmScreen, crmDate, crmMoney, crmPrimaryBtn, daysAgo } from "@/components/amplivanta/crm-screen";
 import { ResourceDialog } from "@/components/amplivanta/crud/resource-dialog";
 import { dealFields } from "@/components/amplivanta/crm/crm-fields";
-import { loadDeals, loadStageOptions } from "@/lib/server/loaders";
+import { loadStageOptions } from "@/lib/server/loaders";
+import { CREATED_WINDOWS, crmContext, ownerOptions, since } from "@/lib/server/crm-screens";
 
 export const metadata: Metadata = { title: "Deals" };
 export const dynamic = "force-dynamic";
 
-const STAGES_ORDER: DealStage[] = ["New", "Qualified", "Proposal", "Negotiation", "Won"];
+type SP = { q?: string; created?: string; owner?: string; status?: string };
 
-export default async function DealsBoardPage() {
-  const [{ items: allDeals, live }, stageOptions] = await Promise.all([loadDeals(), loadStageOptions()]);
-  const byStage: Record<string, Deal[]> = {};
-  for (const s of STAGES_ORDER) byStage[s] = allDeals.filter((d) => d.stage === s);
-  const DEAL_FIELDS = dealFields(stageOptions);
+export default async function DealsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const ctx = await crmContext();
+  const stages = await loadStageOptions();
+  let reachable = Boolean(ctx);
+  let rows: React.ReactNode[][] = [];
+  let total = 0;
+  let stats: (string | null)[] = [null, null, null, null];
+  let owners: [string, string][] = [];
+  let pipelines: string | null = null;
+
+  if (ctx) {
+    try {
+      const w = ctx.workspaceId;
+      const created = since(sp.created);
+      const [deals, count, openAgg, stageCount, usedStages, acts, pipelineCount] = await Promise.all([
+        db.deal.findMany({
+          where: {
+            workspaceId: w,
+            ...(sp.q ? { name: { contains: sp.q, mode: "insensitive" } } : {}),
+            ...(sp.owner ? { ownerId: sp.owner } : {}),
+            ...(sp.status ? { status: sp.status } : {}),
+            ...(created ? { createdAt: { gte: created } } : {}),
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 50,
+          select: {
+            id: true, name: true, closeDate: true,
+            company: { select: { name: true } },
+            pipeline: { select: { name: true } },
+            stage: { select: { name: true } },
+          },
+        }),
+        db.deal.count({ where: { workspaceId: w } }),
+        db.deal.aggregate({ where: { workspaceId: w, status: "open" }, _sum: { value: true }, _count: true }),
+        db.stage.count({ where: { workspaceId: w } }),
+        db.deal.groupBy({ by: ["stageId"], where: { workspaceId: w, status: "open", stageId: { not: null } } }),
+        db.activity.count({ where: { workspaceId: w, dealId: { not: null }, createdAt: { gte: daysAgo(30) } } }),
+        db.pipeline.count({ where: { workspaceId: w } }),
+      ]);
+      total = count;
+      owners = await ownerOptions(w);
+      rows = deals.map((d) => [
+        d.name,
+        d.company?.name ?? null,
+        d.pipeline?.name ?? null,
+        d.stage?.name ?? null,
+        crmDate(d.closeDate),
+        <Link key={d.id} href={`/app/crm/deal-detail?id=${d.id}`} className="font-semibold text-[#0B5CFF] hover:underline">View</Link>,
+      ]);
+      stats = [
+        count > 0 ? openAgg._count.toLocaleString("en-US") : null,
+        stageCount > 0 ? `${usedStages.length} of ${stageCount}` : null,
+        openAgg._count > 0 ? crmMoney(openAgg._sum.value ?? 0) : null,
+        count > 0 ? acts.toLocaleString("en-US") : null,
+      ];
+      pipelines = pipelineCount.toLocaleString("en-US");
+    } catch {
+      reachable = false;
+    }
+  }
+
+  const add = (label: string) => (
+    <ResourceDialog
+      title="New Deal"
+      description="Add a deal to this workspace's pipeline."
+      fields={dealFields(stages)}
+      endpoint="/api/deals"
+      submitLabel="Create deal"
+      successMessage="Deal created"
+      trigger={<button className={crmPrimaryBtn}>{label}</button>}
+    />
+  );
 
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
-        title="Deals Pipeline"
-        subtitle="Drag stages, forecast revenue, log activity — one view for the whole team."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink hover:border-ink/30">
-              <Filter className="h-3.5 w-3.5" /> All Owners
-            </button>
-            <ResourceDialog
-              title="New Deal"
-              description="Create a deal in your pipeline."
-              fields={DEAL_FIELDS}
-              endpoint="/api/deals"
-              submitLabel="Create deal"
-              successMessage="Deal created"
-              trigger={
-                <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet">
-                  <Plus className="h-3.5 w-3.5" /> New Deal
-                </button>
-              }
-            />
-          </>
-        }
-      />
-      <CrmSubnav />
-      {live && <LiveBadge label={`Live · ${allDeals.length} deals from database`} />}
-
-      <div className="grid grid-cols-1 gap-4 overflow-x-auto pb-2 md:grid-cols-2 lg:grid-cols-5">
-        {STAGES_ORDER.map((stage) => {
-          const stageMeta = PIPELINE_STAGES.find((p) => p.key === stage)!;
-          const deals = byStage[stage];
-          return (
-            <div key={stage} className="min-w-[240px] rounded-2xl border border-line bg-bg-soft/40 p-3">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <StatusPill tone={STAGE_TONE[stage]}>{stage}</StatusPill>
-                  <span className="text-[11px] font-bold text-ink">{deals.length}</span>
-                </div>
-                <span className="text-[10.5px] text-ink-muted">${stageMeta.value.toLocaleString()}</span>
-              </div>
-              <div className="space-y-2">
-                {deals.map((d) => (
-                  <Link
-                    key={d.id}
-                    href={`/app/crm/deals/${d.id}`}
-                    className="block rounded-xl border border-line bg-white p-3 shadow-card transition hover:-translate-y-0.5 hover:border-violet/30"
-                  >
-                    <div className="text-[13px] font-semibold text-ink">{d.name}</div>
-                    <div className="mt-1 flex items-center gap-2">
-                      <CompanyIcon name={d.company} size={20} />
-                      <span className="text-[11px] text-ink-soft">{d.company}</span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[13px] font-extrabold text-emerald-600">${d.value.toLocaleString()}</span>
-                      <span className="text-[10px] text-ink-muted">{d.probability}%</span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between border-t border-line pt-2">
-                      <Avatar name={d.owner} size={20} />
-                      <span className="text-[10px] text-ink-muted">Close {d.expectedClose.split(",")[0]}</span>
-                    </div>
-                  </Link>
-                ))}
-                <ResourceDialog
-                  title="New Deal"
-                  description={`Add a deal to the ${stage} stage.`}
-                  fields={DEAL_FIELDS}
-                  endpoint="/api/deals"
-                  submitLabel="Create deal"
-                  successMessage="Deal created"
-                  trigger={
-                    <button className="flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-line py-2 text-[11.5px] font-semibold text-ink-muted hover:border-violet/40 hover:text-violet">
-                      <Plus className="h-3 w-3" /> Add deal
-                    </button>
-                  }
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <CrmScreen
+      crumb="Deals"
+      title="Deals"
+      subtitle="Track opportunities and manage deal progression across your workspace."
+      primaryAction={add("+ Add Deal")}
+      stats={[
+        { label: "Open Deals", value: stats[0], hint: "Currently open" },
+        { label: "Stage Coverage", value: stats[1], hint: "Stages with open deals" },
+        { label: "Pipeline Value", value: stats[2], hint: "Open deal value" },
+        { label: "Deal Activity", value: stats[3], hint: "Activities, last 30 days" },
+      ]}
+      table={{
+        title: "Deals",
+        action: "/app/crm/deals",
+        q: sp.q ?? "",
+        selects: [
+          { name: "created", label: "Filters", value: sp.created ?? "", options: CREATED_WINDOWS },
+          { name: "owner", label: "Owner", value: sp.owner ?? "", options: owners },
+          { name: "status", label: "Status", value: sp.status ?? "", options: [["open", "Open"], ["won", "Won"], ["lost", "Lost"]] },
+        ],
+        columns: ["Deal", "Company", "Pipeline", "Stage", "Close Date", "Actions"],
+        rows,
+        reachable,
+        empty: { title: "No deals yet", body: "Create your first deal and move it through the configured pipeline.", action: add("Add Deal") },
+      }}
+      rail={[
+        { title: "Pipeline Views", rows: [["Current", pipelines], ["Available", pipelines]] },
+        { title: "Deal Summary", rows: [["Records", total ? total.toLocaleString("en-US") : null], ["Status", total ? "Live" : null]] },
+      ]}
+      insights={{ title: "Deal Insights" }}
+    />
   );
 }

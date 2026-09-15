@@ -102,10 +102,9 @@ const nextConfig: NextConfig = {
       { source: "/app/ai-workspace/approvals", destination: "/app/workspace/approvals", permanent: false },
       { source: "/app/ai-workspace/activity-history", destination: "/app/workspace/activity", permanent: false },
       { source: "/app/crm/crm-dashboard-pipeline", destination: "/app/crm", permanent: false },
-      { source: "/app/crm/deal-detail", destination: "/app/crm/deals", permanent: false },
-      { source: "/app/crm/task-management", destination: "/app/crm/tasks", permanent: false },
-      { source: "/app/crm/crm-reports", destination: "/app/crm/reports", permanent: false },
-      { source: "/app/crm/lists-imports", destination: "/app/integrations/import-export", permanent: false },
+      // The approved CRM names are real pages; the earlier short routes forward to them.
+      { source: "/app/crm/tasks", destination: "/app/crm/task-management", permanent: false },
+      { source: "/app/crm/reports", destination: "/app/crm/crm-reports", permanent: false },
       { source: "/app/marketing-automation/marketing-automation-dashboard", destination: "/app/marketing", permanent: false },
       { source: "/app/marketing-automation/campaigns", destination: "/app/marketing/campaigns", permanent: false },
       { source: "/app/marketing-automation/workflow-builder", destination: "/app/marketing/workflows", permanent: false },

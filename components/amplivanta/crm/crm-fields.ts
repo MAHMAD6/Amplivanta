@@ -77,3 +77,44 @@ export function dealFields(stages: { value: string; label: string }[]): Field[] 
     ...(stages.length ? [{ name: "stageId", label: "Stage", type: "select" as const, options: stages }] : []),
   ];
 }
+
+export const ACTIVITY_FIELDS: Field[] = [
+  {
+    name: "type",
+    label: "Type",
+    type: "select",
+    colSpan: 1,
+    required: true,
+    options: [
+      { value: "call", label: "Call" },
+      { value: "email", label: "Email" },
+      { value: "meeting", label: "Meeting" },
+      { value: "note", label: "Note" },
+      { value: "other", label: "Other" },
+    ],
+  },
+  { name: "subject", label: "Subject", required: true, placeholder: "Discovery call" },
+  { name: "description", label: "Details", type: "textarea", placeholder: "What happened and what's next" },
+];
+
+export const REPORT_FIELDS: Field[] = [
+  { name: "name", label: "Report name", required: true, placeholder: "Monthly pipeline summary" },
+  {
+    name: "type",
+    label: "Report type",
+    type: "select",
+    required: true,
+    options: [
+      { value: "pipeline", label: "Pipeline" },
+      { value: "contacts", label: "Contacts" },
+      { value: "deals", label: "Deals" },
+      { value: "activities", label: "Activities" },
+      { value: "tasks", label: "Tasks" },
+    ],
+  },
+];
+
+export const LIST_FIELDS: Field[] = [
+  { name: "name", label: "List name", required: true, placeholder: "Qualified leads" },
+  { name: "description", label: "Description", type: "textarea", placeholder: "Who belongs in this list" },
+];

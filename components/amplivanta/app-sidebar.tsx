@@ -104,7 +104,13 @@ export function AppSidebar({
         {(() => {
           // A page listed as a sub-link belongs to that parent: highlight and
           // expand it, rather than whichever top-level item shares its URL prefix.
-          const owner = APP_NAV.flatMap((s) => s.items).find((i) => i.children?.some((c) => c.href === pathname));
+          const allItems = APP_NAV.flatMap((s) => s.items);
+          const owner = allItems.find((i) => i.children?.some((c) => c.href === pathname));
+          // Otherwise the most specific match wins, so "/app/crm" does not light up
+          // alongside "/app/crm/contacts".
+          const best = allItems
+            .filter((i) => pathname === i.href || pathname.startsWith(i.href + "/"))
+            .sort((a, b) => b.href.length - a.href.length)[0];
           return APP_NAV.map((section) => {
           const items = section.items.filter(
             (i) => !i.visibility || navVisibility?.[i.visibility] === true,
@@ -118,9 +124,7 @@ export function AppSidebar({
             <div className="space-y-0.5">
               {items.map((item) => {
                 const Icon = iconMap[item.icon as keyof typeof iconMap];
-                const active = owner
-                  ? item.href === owner.href
-                  : pathname === item.href || pathname.startsWith(item.href + "/");
+                const active = owner ? item.href === owner.href : item.href === best?.href;
                 return (
                   <div key={item.href}>
                     <Link

@@ -68,11 +68,14 @@ export const APP_NAV: AppNavSection[] = [
   {
     label: "CRM",
     items: [
+      { label: "CRM Dashboard", href: "/app/crm", icon: "workflow" },
       { label: "Contacts", href: "/app/crm/contacts", icon: "users" },
       { label: "Companies", href: "/app/crm/companies", icon: "users" },
       { label: "Deals", href: "/app/crm/deals", icon: "target" },
-      { label: "Pipeline", href: "/app/crm", icon: "workflow" },
-      { label: "Activities & Tasks", href: "/app/crm/activities", icon: "scroll" },
+      { label: "Activities", href: "/app/crm/activities", icon: "scroll" },
+      { label: "Task Management", href: "/app/crm/task-management", icon: "compass" },
+      { label: "Lists & Imports", href: "/app/crm/lists-imports", icon: "folder" },
+      { label: "CRM Reports", href: "/app/crm/crm-reports", icon: "bar-chart" },
     ],
   },
   {

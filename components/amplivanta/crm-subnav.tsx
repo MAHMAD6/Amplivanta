@@ -10,8 +10,8 @@ const TABS = [
   { label: "Contacts", href: "/app/crm/contacts" },
   { label: "Deals", href: "/app/crm/deals" },
   { label: "Activities", href: "/app/crm/activities" },
-  { label: "Tasks", href: "/app/crm/tasks" },
-  { label: "Reports", href: "/app/crm/reports" },
+  { label: "Tasks", href: "/app/crm/task-management" },
+  { label: "Reports", href: "/app/crm/crm-reports" },
 ];
 
 export function CrmSubnav() {
