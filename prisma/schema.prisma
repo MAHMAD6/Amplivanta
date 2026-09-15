@@ -523,6 +523,9 @@ model HashtagSet {
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name        String
   tags        String[]
+  platform    String?
+  category    String?
+  notes       String?
   createdAt   DateTime  @default(now())
 }
 
@@ -2550,4 +2553,31 @@ model AiRequestLog {
 
   @@index([workspaceId, createdAt])
   @@index([task, createdAt])
+}
+
+/// Saved workspace preferences for one settings screen (scope), validated
+/// against the allow-listed definitions in lib/preferences.ts.
+model WorkspacePreference {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  scope           String
+  values          Json
+  updatedByUserId String?
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@unique([workspaceId, scope])
+}
+
+/// Reusable @mention handles for the social composer.
+model MentionReference {
+  id          String   @id @default(cuid())
+  workspaceId String
+  label       String
+  handle      String
+  platform    String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
 }

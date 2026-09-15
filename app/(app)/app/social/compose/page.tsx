@@ -1,27 +1,42 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { SocialSubnav } from "@/components/amplivanta/social-subnav";
-import { ComposerClient } from "@/components/amplivanta/composer-client";
-import { Save, Send, Sparkles } from "lucide-react";
+import { ScreenHeader } from "@/components/amplivanta/screen-kit";
+import { SocialComposer } from "@/components/amplivanta/social-composer";
+import { db } from "@/lib/db";
+import { socialContext } from "@/lib/server/social-screens";
+import { loadPreferences } from "@/lib/server/preferences";
+import { isStorageConfigured, objectUrl } from "@/lib/storage";
 
 export const metadata: Metadata = { title: "Create Post" };
+export const dynamic = "force-dynamic";
 
-export default function ComposePage() {
+export default async function ComposePage() {
+  const c = await socialContext();
+  let hashtagSets: { id: string; name: string; tags: string[] }[] = [];
+  let mentions: { id: string; label: string; handle: string }[] = [];
+  let images: { id: string; name: string; url: string }[] = [];
+  let approvalRequired = false;
+  if (c) {
+    try {
+      const [h, m, a, prefs] = await Promise.all([
+        db.hashtagSet.findMany({ where: { workspaceId: c.workspaceId }, orderBy: { name: "asc" }, take: 50, select: { id: true, name: true, tags: true } }),
+        db.mentionReference.findMany({ where: { workspaceId: c.workspaceId }, orderBy: { label: "asc" }, take: 50, select: { id: true, label: true, handle: true } }),
+        isStorageConfigured()
+          ? db.asset.findMany({ where: { workspaceId: c.workspaceId, mimeType: { startsWith: "image/" }, NOT: { tags: { has: "draft" } } }, orderBy: { createdAt: "desc" }, take: 12, select: { id: true, name: true, fileUrl: true } })
+          : Promise.resolve([]),
+        loadPreferences(c.workspaceId, "social.settings"),
+      ]);
+      hashtagSets = h;
+      mentions = m;
+      images = await Promise.all(a.map(async (x) => ({ id: x.id, name: x.name, url: await objectUrl(x.fileUrl) })));
+      approvalRequired = prefs.values.requireApproval === true;
+    } catch {
+      /* composer still works without library data */
+    }
+  }
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
-        title="Create Post"
-        subtitle="Compose once. Customize per platform. Preview, schedule, and publish."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink hover:border-ink/30"><Save className="h-3.5 w-3.5" /> Save Draft</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-violet/30 bg-white px-4 text-[13px] font-bold text-violet hover:bg-violet/5"><Sparkles className="h-3.5 w-3.5" /> AI Assist</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Send className="h-3.5 w-3.5" /> Schedule</button>
-          </>
-        }
-      />
-      <SocialSubnav />
-      <ComposerClient />
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader title="Create Post / Composer" subtitle="Create, customize, preview, and schedule your social media posts across multiple platforms." />
+      <SocialComposer hashtagSets={hashtagSets} mentions={mentions} images={images} approvalRequired={approvalRequired} />
     </div>
   );
 }

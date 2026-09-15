@@ -1,88 +1,118 @@
 import type { Metadata } from "next";
-import { Plus, MoreHorizontal, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { SocialSubnav } from "@/components/amplivanta/social-subnav";
-import { PlatformIcon } from "@/components/amplivanta/platform-badge";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { ACCOUNTS, PLATFORM_META } from "@/lib/social-data";
+import Link from "next/link";
+import { AlertTriangle, AtSign, FileText, HeartPulse, Link2, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { SocialGlyph } from "@/components/amplivanta/social-glyph";
+import { OAUTH_PROVIDERS, isProviderConfigured } from "@/lib/oauth";
+import { socialConnections, socialContext } from "@/lib/server/social-screens";
+import { SOCIAL_PLATFORMS } from "@/lib/social/platforms";
 
 export const metadata: Metadata = { title: "Social Accounts" };
+export const dynamic = "force-dynamic";
 
-const HEALTH_ICON = { Healthy: CheckCircle2, Warning: AlertTriangle, Expired: XCircle };
-const HEALTH_TONE = { Healthy: "green", Warning: "amber", Expired: "red" } as const;
+type SP = { status?: string; platform?: string };
 
-export default function AccountsPage() {
-  const attention = ACCOUNTS.filter((a) => a.status !== "Healthy");
+export default async function SocialAccountsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const c = await socialContext();
+  let connections: Awaited<ReturnType<typeof socialConnections>> = [];
+  if (c) {
+    try {
+      connections = await socialConnections(c.workspaceId);
+    } catch {
+      connections = [];
+    }
+  }
+  const cards = SOCIAL_PLATFORMS.map((p) => {
+    const conn = p.provider ? connections.find((x) => x.provider === p.provider) : undefined;
+    const provider = p.provider ? OAUTH_PROVIDERS[p.provider] : undefined;
+    const status = conn ? (conn.status === "connected" ? "connected" : "attention") : "not_connected";
+    return { ...p, conn, status, connectable: Boolean(provider && isProviderConfigured(provider)) };
+  }).filter((p) => (!sp.platform || p.id === sp.platform) && (!sp.status || p.status === sp.status));
+
+  const link = "inline-flex items-center gap-2 text-[13.5px] font-semibold text-[#0B5CFF] hover:underline";
+
   return (
-    <div className="mx-auto max-w-[1400px]">
-      <PageHeader
-        title="Social Accounts"
-        subtitle="Connect, manage and monitor all supported social accounts."
-        actions={
-          <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet">
-            <Plus className="h-3.5 w-3.5" /> Connect Account
-          </button>
-        }
-      />
-      <SocialSubnav />
-
-      {attention.length > 0 && (
-        <div className="mb-6 rounded-2xl border border-amber-300/50 bg-amber-50/50 p-4">
-          <div className="flex items-center gap-2 text-[13px] font-bold text-amber-700">
-            <AlertTriangle className="h-4 w-4" /> {attention.length} account{attention.length > 1 ? "s" : ""} need{attention.length === 1 ? "s" : ""} attention
-          </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {attention.map((a) => (
-              <div key={a.id} className="flex items-center gap-2 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-[12px]">
-                <PlatformIcon platform={a.platform} size={16} />
-                <span className="font-semibold text-ink">{a.handle}</span>
-                <span className="text-ink-muted">·</span>
-                <span className={a.status === "Expired" ? "text-red-600" : "text-amber-600"}>{a.status}</span>
-                <button className="rounded bg-grad-cta px-2 py-0.5 text-[10px] font-bold text-white">Reconnect</button>
-              </div>
-            ))}
-          </div>
+    <div className="mx-auto max-w-[1600px]">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-[30px] font-bold text-deep-navy">Social Accounts</h1>
+          <p className="mt-1 text-[14.5px] text-ink-soft">Connect, manage, and monitor your supported social accounts.</p>
         </div>
-      )}
+        <form method="get" className="flex flex-wrap items-end gap-3">
+          <Link href="/app/integrations#catalog" className="inline-flex h-12 items-center rounded-md bg-[#0B5CFF] px-6 text-[14px] font-semibold text-white hover:bg-[#0A4FE0]">+ Connect Account</Link>
+          <label className="flex h-14 w-[220px] flex-col justify-center rounded-md border border-line bg-white px-3">
+            <span className="text-[12px] text-ink-soft">Status</span>
+            <select name="status" defaultValue={sp.status ?? ""} className="bg-transparent text-[13.5px] text-deep-navy focus:outline-none">
+              <option value="">All Statuses</option>
+              <option value="connected">Connected</option>
+              <option value="attention">Needs attention</option>
+              <option value="not_connected">Not connected</option>
+            </select>
+          </label>
+          <label className="flex h-14 w-[220px] flex-col justify-center rounded-md border border-line bg-white px-3">
+            <span className="text-[12px] text-ink-soft">Platform</span>
+            <select name="platform" defaultValue={sp.platform ?? ""} className="bg-transparent text-[13.5px] text-deep-navy focus:outline-none">
+              <option value="">All Platforms</option>
+              {SOCIAL_PLATFORMS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+            </select>
+          </label>
+          <button type="submit" className="h-14 rounded-md border border-line bg-white px-4 text-[13px] font-semibold text-deep-navy">Apply</button>
+        </form>
+      </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {ACCOUNTS.map((a) => {
-          const Icon = HEALTH_ICON[a.status];
-          return (
-            <div key={a.id} className="rounded-2xl border border-line bg-white p-5 shadow-card">
-              <div className="mb-3 flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <PlatformIcon platform={a.platform} size={44} />
-                  <div>
-                    <div className="text-[14px] font-bold text-ink">{PLATFORM_META[a.platform].label}</div>
-                    <div className="text-[11.5px] text-ink-muted">{a.handle}</div>
-                  </div>
-                </div>
-                <button className="text-ink-muted"><MoreHorizontal className="h-4 w-4" /></button>
-              </div>
-              <div className="grid grid-cols-3 gap-2 border-y border-line py-3 text-center">
-                <div>
-                  <div className="text-[10px] text-ink-muted">Followers</div>
-                  <div className="text-[13px] font-bold text-ink">{(a.followers / 1000).toFixed(1)}K</div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-ink-muted">Engagement</div>
-                  <div className="text-[13px] font-bold text-ink">{a.engagement}%</div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-ink-muted">Impressions</div>
-                  <div className="text-[13px] font-bold text-ink">{(a.impressions / 1000).toFixed(1)}K</div>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between">
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${a.status === "Healthy" ? "bg-emerald-500/10 text-emerald-600" : a.status === "Warning" ? "bg-amber-500/10 text-amber-700" : "bg-red-500/10 text-red-600"}`}>
-                  <Icon className="h-3 w-3" /> {a.status}
-                </span>
-                <span className="text-[10.5px] text-ink-muted">{a.type} · Added {a.addedDate}</span>
-              </div>
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
+        {cards.map((p) => (
+          <div key={p.id} className="flex flex-col rounded-xl border border-line bg-white p-5">
+            <span className="h-12 w-12" style={{ color: p.color }}>{p.id === "threads" ? <AtSign className="h-11 w-11" /> : <SocialGlyph name={p.id} className="h-11 w-11" />}</span>
+            <h2 className="mt-4 text-[18px] font-semibold text-deep-navy">{p.label}</h2>
+            <div className="mt-2 flex items-center gap-2 text-[13px] text-ink-soft">
+              <span className={cn("h-2.5 w-2.5 rounded-full", p.status === "connected" ? "bg-emerald-500" : p.status === "attention" ? "bg-amber-500" : "bg-ink-muted/50")} />
+              {p.status === "connected" ? "Connected" : p.status === "attention" ? "Needs attention" : "Not connected"}
             </div>
-          );
-        })}
+            <p className="mt-3 flex-1 text-[13.5px] text-deep-navy">{p.conn?.resources.find((r) => r.id === p.conn?.selectedResource)?.label ?? p.connectDescription}</p>
+            {p.conn ? (
+              <Link href="/app/integrations/connected" className="mt-4 flex h-11 items-center justify-center rounded-md border border-[#0B5CFF] text-[14px] font-semibold text-[#0B5CFF] hover:bg-royal-tint">Manage</Link>
+            ) : p.connectable ? (
+              <a href={`/api/integrations/oauth/${p.provider}/start?returnTo=${encodeURIComponent("/app/social/accounts")}`} className="mt-4 flex h-11 items-center justify-center rounded-md border border-[#0B5CFF] text-[14px] font-semibold text-[#0B5CFF] hover:bg-royal-tint">Connect</a>
+            ) : (
+              <span className="mt-4 flex h-11 items-center justify-center rounded-md border border-line text-[13px] text-ink-muted">Not available yet</span>
+            )}
+            <div className="mt-4 space-y-2 border-t border-line pt-3 text-[13px]">
+              <Link href="/app/integrations" className={link}><FileText className="h-4 w-4" /> Requirements</Link>
+              <Link href="/app/integrations/connected" className={link}><ShieldCheck className="h-4 w-4" /> View Permissions</Link>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
+        {([
+          [Link2, "Connection Guide", "Connect accounts from the Integrations catalog, then choose which page, channel or profile to use.", "View Connection Guide", "/app/integrations#catalog"],
+          [ShieldCheck, "Permissions & Scopes", "Available connection permissions depend on the connected platform and the scopes you approve.", "Learn About Permissions", "/app/integrations/connected"],
+          [HeartPulse, "Account Health", "Connections that need reauthorization are flagged in Connected Apps.", "View Health", "/app/integrations/connected"],
+        ] as const).map(([Icon, title, body, cta, href]) => (
+          <div key={title} className="flex gap-5 rounded-xl border border-line bg-white p-5">
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><Icon className="h-7 w-7" /></span>
+            <div>
+              <h2 className="text-[16px] font-semibold text-deep-navy">{title}</h2>
+              <p className="mt-1 text-[13.5px] text-ink-soft">{body}</p>
+              <Link href={href} className={cn(link, "mt-3")}>{cta}</Link>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-6 rounded-xl border border-line bg-royal-tint/30 p-5">
+        <AlertTriangle className="h-12 w-12 text-[#3B3FD8]" />
+        <div className="flex-1">
+          <h2 className="text-[16px] font-semibold text-deep-navy">Reauthentication &amp; Disconnect</h2>
+          <ul className="mt-1 list-disc pl-5 text-[13.5px] text-deep-navy">
+            <li>Social platforms may require reauthentication periodically to maintain connection.</li>
+            <li>Disconnecting an account will stop all scheduled and future publishing for that platform.</li>
+          </ul>
+        </div>
+        <Link href="/app/integrations/connected" className="rounded-md border border-[#0B5CFF] bg-white px-6 py-3 text-[14px] font-semibold text-[#0B5CFF]">Learn More</Link>
       </div>
     </div>
   );

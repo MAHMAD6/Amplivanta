@@ -1,153 +1,78 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Inbox, Plus } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { SocialSubnav } from "@/components/amplivanta/social-subnav";
-import { PlatformIcon } from "@/components/amplivanta/platform-badge";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { PLATFORM_META } from "@/lib/social-data";
-import { DeletePostButton } from "@/components/amplivanta/social-post-actions";
-import { loadSocialPosts } from "@/app/(app)/app/social/actions";
+import { FolderOpen, Info, Search, SquarePen } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { EmptyState, fmtDateTime, kitField, kitPrimary } from "@/components/amplivanta/screen-kit";
+import { PostsLibrary } from "@/components/amplivanta/social-ui";
+import { excerpt, loadPosts, socialContext } from "@/lib/server/social-screens";
+import { POST_STATUSES, SOCIAL_PLATFORMS } from "@/lib/social/platforms";
 
 export const metadata: Metadata = { title: "Posts" };
+export const dynamic = "force-dynamic";
 
-const STATUS_TONE: Record<string, "violet" | "green" | "amber" | "gray"> = {
-  draft: "gray",
-  scheduled: "amber",
-  published: "green",
-};
+type SP = { q?: string; status?: string; platform?: string };
 
-export default async function PostsLibraryPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string }>;
-}) {
-  const { status } = await searchParams;
-  const { connected, rows } = await loadSocialPosts(status);
+export default async function PostsLibraryPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const c = await socialContext();
+  let reachable = Boolean(c);
+  let posts: Awaited<ReturnType<typeof loadPosts>> = [];
+  if (c) {
+    try {
+      posts = await loadPosts(c.workspaceId, {
+        ...(sp.status ? { status: sp.status } : { status: { not: "archived" } }),
+        ...(sp.platform ? { platforms: { has: sp.platform } } : {}),
+        ...(sp.q ? { content: { contains: sp.q, mode: "insensitive" } } : {}),
+      });
+    } catch {
+      reachable = false;
+    }
+  }
+  const filtered = Boolean(sp.q || sp.status || sp.platform);
 
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
-        title="Posts Library"
-        subtitle="Drafts and scheduled social content in this workspace."
-        actions={
-          <Link
-            href="/app/social/compose"
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"
-          >
-            <Plus className="h-3.5 w-3.5" /> New post
-          </Link>
+    <div className="mx-auto max-w-[1600px]">
+      <h1 className="font-display text-[30px] font-bold text-deep-navy">Posts / Content Library</h1>
+      <p className="mb-5 mt-1 text-[14.5px] text-ink-soft">Searchable repository of drafts, scheduled posts, and published social content.</p>
+
+      <form method="get" className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-white px-5 py-4">
+        <label className="relative w-full max-w-[440px] flex-1">
+          <span className="sr-only">Search posts</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Search posts by title or keyword..." className={cn(kitField, "h-11 pl-9")} />
+        </label>
+        <select name="status" defaultValue={sp.status ?? ""} aria-label="Status" className={cn(kitField, "h-11 w-[160px]")}>
+          <option value="">Status</option>
+          {POST_STATUSES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <select name="platform" defaultValue={sp.platform ?? ""} aria-label="Platform" className={cn(kitField, "h-11 w-[160px]")}>
+          <option value="">Platform</option>
+          {SOCIAL_PLATFORMS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+        </select>
+        <button type="submit" className="h-11 rounded-md border border-line px-4 text-[13.5px] font-semibold text-deep-navy hover:bg-bg-soft">Apply</button>
+        {filtered && <Link href="/app/social/posts" className="h-11 rounded-md bg-royal-tint px-4 py-3 text-[13.5px] font-semibold text-[#0B5CFF]">Clear Filters</Link>}
+        <Link href="/app/social/compose" className={cn(kitPrimary, "ml-auto h-11")}><SquarePen className="h-4 w-4" /> Compose Post</Link>
+      </form>
+
+      <PostsLibrary
+        posts={posts.map((p) => ({ id: p.id, title: excerpt(p.content, 70), platforms: p.platforms, status: p.status, scheduled: p.scheduledAt ? fmtDateTime(p.scheduledAt) : null, mediaUrl: p.mediaUrl }))}
+        emptyAction={
+          <EmptyState
+            icon={FolderOpen}
+            title={!reachable ? "Posts unavailable" : filtered ? "No posts match these filters" : "No social content yet"}
+            body={!reachable ? "Posts could not be loaded right now." : filtered ? "Try different filters." : "Drafted, scheduled, and published posts will appear here. Start by composing your first post."}
+            action={reachable && !filtered ? <Link href="/app/social/compose" className={kitPrimary}><SquarePen className="h-4 w-4" /> Compose Post</Link> : undefined}
+          />
         }
       />
-      <SocialSubnav />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {[
-          ["All", undefined],
-          ["Drafts", "draft"],
-          ["Scheduled", "scheduled"],
-        ].map(([label, value]) => {
-          const active = status === value || (!status && !value);
-          return (
-            <Link
-              key={label as string}
-              href={value ? `/app/social/posts?status=${value}` : "/app/social/posts"}
-              className={
-                active
-                  ? "inline-flex h-10 items-center rounded-xl bg-violet px-3.5 text-[12.5px] font-bold text-white"
-                  : "inline-flex h-10 items-center rounded-xl border border-line bg-white px-3.5 text-[12.5px] font-semibold text-ink-soft hover:border-violet/40"
-              }
-            >
-              {label as string}
-            </Link>
-          );
-        })}
+      <div className="mt-5 flex items-center gap-5 rounded-xl border border-line bg-white p-5 xl:mr-[420px]">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><Info className="h-5 w-5" /></span>
+        <div>
+          <div className="text-[14.5px] font-semibold text-deep-navy">Reuse creates a new draft, not a mutation.</div>
+          <div className="text-[13px] text-ink-soft">Reusing content creates a new draft for you to customize and publish. Your published content remains unchanged.</div>
+        </div>
       </div>
-
-      {rows.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-white px-6 py-16 text-center shadow-card">
-          <Inbox aria-hidden className="mx-auto h-7 w-7 text-ink-muted" />
-          <h2 className="mt-3 text-[15px] font-bold text-ink">
-            {connected ? "No posts yet" : "Posts unavailable"}
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-ink-soft">
-            {connected
-              ? "Compose a post, or promote a Marketplace product to create one prefilled with its image and link."
-              : "The platform database could not be reached, so your posts cannot be listed right now."}
-          </p>
-          {connected && (
-            <Link
-              href="/app/social/compose"
-              className="mt-6 inline-flex h-11 items-center rounded-xl bg-violet px-5 text-[13.5px] font-bold text-white transition hover:opacity-90"
-            >
-              Create your first post
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-2xl border border-line bg-white shadow-card">
-          <table className="w-full min-w-[760px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="px-4 py-3">Post</th>
-                <th className="px-4 py-3">Channels</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Scheduled</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="w-10 px-2 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((p) => (
-                <tr key={p.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {p.mediaUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.mediaUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
-                      ) : (
-                        <div className="h-9 w-9 shrink-0 rounded-lg bg-gradient-to-br from-violet/25 to-orange-brand/20" />
-                      )}
-                      <div className="min-w-0 max-w-[420px]">
-                        <div className="truncate text-[13px] font-semibold text-ink">{p.content}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {p.platforms.length === 0 ? (
-                      <span className="text-[12px] text-ink-muted">None selected</span>
-                    ) : (
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {p.platforms.map((pl) => (
-                          <span key={pl} className="flex items-center gap-1 text-[12px] text-ink-soft">
-                            {PLATFORM_META[pl as keyof typeof PLATFORM_META] ? (
-                              <PlatformIcon platform={pl as never} size={18} />
-                            ) : null}
-                            {PLATFORM_META[pl as keyof typeof PLATFORM_META]?.label ?? pl}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusPill tone={STATUS_TONE[p.status] ?? "gray"}>{p.status}</StatusPill>
-                  </td>
-                  <td className="px-4 py-3 text-[12px] text-ink-muted">{p.scheduledFor ?? "—"}</td>
-                  <td className="px-4 py-3 text-[12px] text-ink-muted">{p.created}</td>
-                  <td className="px-2 py-3 text-right">
-                    <DeletePostButton postId={p.id} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <p className="mt-5 rounded-xl border border-line bg-bg-soft px-4 py-3.5 text-[12.5px] leading-relaxed text-ink-soft">
-        No social channel is connected yet, so posts are drafted and scheduled here but never sent.
-        Engagement figures appear once a channel integration exists to report them.
-      </p>
     </div>
   );
 }

@@ -1,79 +1,42 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { SocialSubnav } from "@/components/amplivanta/social-subnav";
+import { AlertTriangle, Info, ShieldCheck, User } from "lucide-react";
+import { PreferencesForm } from "@/components/amplivanta/preferences-form";
+import { PREFERENCE_SCOPES } from "@/lib/preferences";
+import { loadPreferences } from "@/lib/server/preferences";
+import { isAdminRole, socialContext } from "@/lib/server/social-screens";
+import { fmtDateTime } from "@/components/amplivanta/screen-kit";
 
-export const metadata: Metadata = { title: "Social Settings" };
+export const metadata: Metadata = { title: "Social Publishing Settings" };
+export const dynamic = "force-dynamic";
 
-export default function SocialSettingsPage() {
+export default async function SocialSettingsPage() {
+  const c = await socialContext();
+  const prefs = await loadPreferences(c?.workspaceId ?? null, "social.settings");
   return (
-    <div className="mx-auto max-w-[1000px]">
-      <PageHeader title="Social Publishing Settings" subtitle="Module-scoped preferences for how your team publishes content." />
-      <SocialSubnav />
-
-      <div className="space-y-6">
-        <Section title="Publishing Defaults" desc="Applied to new posts unless overridden.">
-          <Row label="Default posting timezone" value="America/Los_Angeles (PST · UTC-8)" />
-          <Row label="URL shortening" value="Amplivanta short links (amp.li)" toggle />
-          <Row label="Default UTM medium" value="social-organic" />
-          <Row label="Auto-save drafts" value="Every 30 seconds" toggle />
-          <Row label="Auto-add tracking parameters" value="On" toggle />
-        </Section>
-
-        <Section title="Notifications" desc="Who gets notified when.">
-          <Row label="Notify me when a post publishes" value="In-app + email" toggle />
-          <Row label="Notify me when a post is approved" value="In-app" toggle />
-          <Row label="Notify me on publish failure" value="In-app + email + SMS" toggle />
-          <Row label="Weekly analytics digest" value="Monday mornings" toggle />
-        </Section>
-
-        <Section title="Content & Media" desc="Defaults for uploads and generated media.">
-          <Row label="Image compression" value="Balanced (recommended)" />
-          <Row label="Video max upload" value="500 MB" />
-          <Row label="Alt-text required" value="On for accessibility" toggle />
-          <Row label="Watermark exports" value="Off" toggle />
-        </Section>
-
-        <Section title="Security & Privacy" desc="Who can do what with your accounts.">
-          <Row label="Require approval before publishing" value="For Editors and below" toggle />
-          <Row label="Publishing lock during approval" value="On" toggle />
-          <Row label="Two-factor for account connect" value="Required" toggle />
-        </Section>
-
-        <div className="flex justify-end gap-2">
-          <button className="rounded-xl border border-line bg-white px-4 py-2 text-[13px] font-semibold text-ink">Cancel</button>
-          <button className="rounded-xl bg-grad-cta px-4 py-2 text-[13px] font-bold text-white shadow-violet">Save Changes</button>
-        </div>
+    <div className="mx-auto max-w-[1600px]">
+      <h1 className="font-display text-[30px] font-bold text-deep-navy">Social Publishing Settings</h1>
+      <p className="mb-5 mt-1 text-[14.5px] text-ink-soft">Configure your social publishing preferences and behaviors.</p>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <PreferencesForm def={PREFERENCE_SCOPES["social.settings"]} values={prefs.values} path="/app/social/settings" canEdit={prefs.reachable && isAdminRole(c?.role)} />
+        <aside className="space-y-5">
+          <section className="flex gap-4 rounded-xl border border-line bg-white p-5">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><Info className="h-5 w-5" /></span>
+            <div className="space-y-2 text-[13px] text-ink-soft">
+              <h2 className="text-[16px] font-semibold text-deep-navy">About These Settings</h2>
+              <p>These settings control default behaviors across the Social Publishing module.</p>
+              <p>Changes apply to future content unless explicitly changed at the time of posting or scheduling.</p>
+              <p>{prefs.updatedAt ? `Last saved ${fmtDateTime(prefs.updatedAt)}.` : "No settings have been saved yet; every option is unset."}</p>
+            </div>
+          </section>
+          <section className="rounded-xl border border-line bg-white p-5">
+            <h2 className="mb-3 flex items-center gap-3 text-[16px] font-semibold text-deep-navy"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><ShieldCheck className="h-5 w-5" /></span> Important Notes</h2>
+            <ul className="space-y-3 pl-14 text-[13px]">
+              <li><div className="flex items-center gap-2 font-semibold text-deep-navy"><User className="h-4 w-4" /> Admin Only</div><div className="text-ink-soft">These settings are restricted to users with admin permissions.</div></li>
+              <li><div className="flex items-center gap-2 font-semibold text-deep-navy"><AlertTriangle className="h-4 w-4" /> Unsaved Changes</div><div className="text-ink-soft">Changes are lost if you navigate away before saving.</div></li>
+            </ul>
+          </section>
+        </aside>
       </div>
-    </div>
-  );
-}
-
-function Section({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-      <div className="mb-4">
-        <div className="text-[14px] font-bold text-ink">{title}</div>
-        <div className="text-[12px] text-ink-muted">{desc}</div>
-      </div>
-      <div className="divide-y divide-line">{children}</div>
-    </div>
-  );
-}
-
-function Row({ label, value, toggle }: { label: string; value: string; toggle?: boolean }) {
-  return (
-    <div className="flex items-center justify-between py-3">
-      <div>
-        <div className="text-[13px] font-semibold text-ink">{label}</div>
-        <div className="text-[11.5px] text-ink-muted">{value}</div>
-      </div>
-      {toggle ? (
-        <div className="relative h-6 w-11 rounded-full bg-grad-brand-2 p-0.5">
-          <span className="block h-5 w-5 translate-x-5 rounded-full bg-white shadow" />
-        </div>
-      ) : (
-        <button className="rounded-lg border border-line px-3 py-1 text-[11.5px] font-semibold text-ink-soft">Edit</button>
-      )}
     </div>
   );
 }

@@ -1,100 +1,97 @@
 import type { Metadata } from "next";
-import { Eye, Heart, MessageSquare, Share2, TrendingUp, Users, Download } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { ChartPlaceholder } from "@/components/amplivanta/chart-placeholder";
-import { SocialSubnav } from "@/components/amplivanta/social-subnav";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { PlatformIcon } from "@/components/amplivanta/platform-badge";
-import { ACCOUNTS, POSTS, PLATFORM_META } from "@/lib/social-data";
+import { AlertTriangle, BarChart3, ClipboardList, Crosshair, Filter, MessageCircle, MousePointerClick, TrendingUp, Users } from "lucide-react";
+import { EmptyState, KeyList, Panel, ScreenHeader, StatGrid, fmtInt } from "@/components/amplivanta/screen-kit";
+import { db } from "@/lib/db";
+import { socialContext, socialCounts } from "@/lib/server/social-screens";
 
 export const metadata: Metadata = { title: "Social Analytics" };
+export const dynamic = "force-dynamic";
 
-export default function SocialAnalyticsPage() {
-  const topPosts = POSTS.filter((p) => p.engagement).sort((a, b) => (b.engagement!.likes) - (a.engagement!.likes)).slice(0, 5);
+/**
+ * Reach, engagement, clicks and conversions come only from connected platform
+ * metrics (ProviderMetricDaily). Without them the figures read "Unavailable",
+ * never zero.
+ */
+const METRICS: Record<string, string[]> = {
+  reach: ["reach", "impressions", "views"],
+  engagement: ["engagement", "likes", "comments", "shares"],
+  clicks: ["clicks", "link_clicks"],
+  conversions: ["conversions"],
+};
+const SOCIAL_PROVIDERS = ["meta", "linkedin", "youtube", "tiktok"];
+
+export default async function SocialAnalyticsPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  const { days: rawDays } = await searchParams;
+  const days = [7, 30, 90].includes(Number(rawDays)) ? Number(rawDays) : 7;
+  const c = await socialContext();
+  const totals: Record<string, number | null> = { reach: null, engagement: null, clicks: null, conversions: null };
+  let byProvider: [string, number][] = [];
+  let published = 0;
+  if (c) {
+    try {
+      const since = new Date(Date.now() - days * 86400000);
+      const [rows, counts] = await Promise.all([
+        db.providerMetricDaily.groupBy({ by: ["provider", "metric"], where: { workspaceId: c.workspaceId, provider: { in: SOCIAL_PROVIDERS }, date: { gte: since } }, _sum: { value: true } }),
+        socialCounts(c.workspaceId),
+      ]);
+      for (const [k, names] of Object.entries(METRICS)) {
+        const hit = rows.filter((r) => names.includes(r.metric));
+        totals[k] = hit.length ? hit.reduce((n, r) => n + (r._sum.value ?? 0), 0) : null;
+      }
+      const map = new Map<string, number>();
+      for (const r of rows.filter((r) => METRICS.reach.includes(r.metric))) map.set(r.provider, (map.get(r.provider) ?? 0) + (r._sum.value ?? 0));
+      byProvider = [...map.entries()].sort((a, b) => b[1] - a[1]);
+      published = counts.published;
+    } catch {
+      /* unavailable, not zero */
+    }
+  }
+  const stat = (v: number | null) => (v == null ? null : fmtInt(Math.round(v)));
+  const hint = "Metrics appear here when connected platforms provide data.";
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
         title="Social Analytics"
-        subtitle="Channel, content and campaign performance."
+        subtitle="Measure channel, content, and campaign performance across your connected platforms."
         actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink hover:border-ink/30">📅 Last 30 days</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Download className="h-3.5 w-3.5" /> Export</button>
-          </>
+          <form method="get" className="flex items-center gap-2">
+            <select name="days" defaultValue={String(days)} aria-label="Date range" className="h-10 rounded-md border border-line bg-white px-3 text-[13px] font-semibold text-deep-navy">
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+            <button type="submit" className="inline-flex h-10 items-center gap-1.5 rounded-md border border-line bg-white px-3 text-[13px] font-semibold text-deep-navy"><Filter className="h-4 w-4" /> Apply</button>
+          </form>
         }
       />
-      <SocialSubnav />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <KpiCard icon={Eye} label="Impressions" value={null} tone="blue" />
-        <KpiCard icon={Users} label="Reach" value={null} tone="violet" />
-        <KpiCard icon={Heart} label="Likes" value={null} tone="pink" />
-        <KpiCard icon={MessageSquare} label="Comments" value={null} tone="amber" />
-        <KpiCard icon={Share2} label="Shares" value={null} tone="teal" />
-        <KpiCard icon={TrendingUp} label="Engagement Rate" value={null} tone="green" />
+      <StatGrid
+        stats={[
+          { label: "Reach", icon: Users, value: stat(totals.reach), hint: totals.reach == null ? `Unavailable · ${hint}` : undefined },
+          { label: "Engagement", icon: MessageCircle, value: stat(totals.engagement), hint: totals.engagement == null ? `Unavailable · ${hint}` : undefined },
+          { label: "Clicks", icon: MousePointerClick, value: stat(totals.clicks), hint: totals.clicks == null ? `Unavailable · ${hint}` : undefined },
+          { label: "Conversions", icon: Filter, value: stat(totals.conversions), hint: totals.conversions == null ? `Unavailable · ${hint}` : undefined },
+        ]}
+      />
+      <Panel title="Performance Trend" className="mb-5">
+        <EmptyState icon={TrendingUp} title="No analytics data yet" body="Connect social accounts and start publishing to see performance trends here." />
+      </Panel>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+        <Panel title="Platform Comparison">
+          {byProvider.length ? <KeyList rows={byProvider.map(([p, v]) => [p, fmtInt(Math.round(v))])} /> : <EmptyState icon={BarChart3} compact title="No performance data yet" body="Connect your social accounts and start publishing to see platform performance here." />}
+        </Panel>
+        <Panel title="Top Content">
+          <EmptyState icon={ClipboardList} compact title="No content data yet" body={published ? "Post-level metrics appear once connected platforms report them." : "Publish content to see your top performing posts here."} />
+        </Panel>
+        <Panel title="Campaign & Content Drill-Down">
+          <EmptyState icon={Crosshair} compact title="No campaign data yet" body="Create campaigns and publish content to explore detail performance here." />
+        </Panel>
       </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card lg:col-span-2">
-          <div className="mb-3 text-[14px] font-bold text-ink">Engagement Trend</div>
-          <ChartPlaceholder />
-          <div className="mt-2 flex gap-3 text-[11px] text-ink-muted">
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-pink-brand" /> Engagement</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-violet" /> Reach</span>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 text-[14px] font-bold text-ink">Platform Comparison</div>
-          <div className="space-y-3">
-            {ACCOUNTS.map((a) => {
-              const pct = Math.round((a.impressions / 68700) * 100);
-              return (
-                <div key={a.id}>
-                  <div className="mb-1 flex items-center justify-between text-[12px]">
-                    <div className="flex items-center gap-2">
-                      <PlatformIcon platform={a.platform} size={18} />
-                      <span className="font-semibold text-ink">{PLATFORM_META[a.platform].label}</span>
-                    </div>
-                    <span className="font-bold text-ink">{(a.impressions / 1000).toFixed(1)}K</span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-bg-soft">
-                    <div className="h-full rounded-full bg-grad-brand" style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-3 text-[14px] font-bold text-ink">Top Performing Posts</div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[720px]">
-            <thead>
-              <tr className="border-b border-line text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="pb-2">Post</th>
-                <th className="pb-2">Platform</th>
-                <th className="pb-2 text-right">Reach</th>
-                <th className="pb-2 text-right">Likes</th>
-                <th className="pb-2 text-right">Comments</th>
-                <th className="pb-2 text-right">Shares</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topPosts.map((p) => (
-                <tr key={p.id} className="border-b border-line last:border-0">
-                  <td className="py-3 text-[13px] font-semibold text-ink">{p.content}</td>
-                  <td className="py-3"><PlatformIcon platform={p.platform} size={22} /></td>
-                  <td className="py-3 text-right text-[12.5px]">{p.engagement!.reach.toLocaleString()}</td>
-                  <td className="py-3 text-right text-[12.5px] font-bold text-emerald-600">{p.engagement!.likes.toLocaleString()}</td>
-                  <td className="py-3 text-right text-[12.5px]">{p.engagement!.comments}</td>
-                  <td className="py-3 text-right text-[12.5px]">{p.engagement!.shares}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="mt-5 flex items-center gap-4 rounded-xl border border-line bg-white p-4">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><AlertTriangle className="h-5 w-5" /></span>
+        <div>
+          <div className="text-[15px] font-semibold text-deep-navy">Unavailable metrics are shown as unavailable, not zero.</div>
+          <div className="text-[13px] text-ink-soft">Metrics are unavailable until connected platforms provide data for the selected date range.</div>
         </div>
       </div>
     </div>
