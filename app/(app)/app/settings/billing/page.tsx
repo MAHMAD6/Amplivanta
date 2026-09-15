@@ -1,133 +1,106 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download } from "lucide-react";
-import { StatusPill } from "@/components/amplivanta/status-pill";
+import { CalendarClock, CreditCard, Diamond, Gauge, Receipt } from "lucide-react";
+import { db } from "@/lib/db";
+import { SettingsHeader } from "@/components/amplivanta/settings-header";
 import { UpgradeDialog } from "@/components/amplivanta/settings/upgrade-dialog";
-import { LiveBadge } from "@/components/amplivanta/live-badge";
-import { BILLING, INVOICES, INVOICE_TONE } from "@/lib/settings-data";
-import { loadBilling } from "@/lib/server/loaders";
+import { DataTable, EmptyState, KeyList, Pill, StatGrid, fmtDate, fmtInt, fmtMoney } from "@/components/amplivanta/screen-kit";
+import { settingsContext } from "@/lib/server/settings-screens";
 
 export const metadata: Metadata = { title: "Billing & Subscription" };
 export const dynamic = "force-dynamic";
 
-function fmtDate(d: Date) {
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
 export default async function BillingPage() {
-  const billing = await loadBilling();
-  const planName = billing.planName ?? BILLING.plan;
-  const renewal = billing.renewal ? fmtDate(billing.renewal) : BILLING.nextRenewal;
-  const liveInvoices = billing.invoices.length > 0;
+  const c = await settingsContext();
+  let data = null as null | {
+    sub: { planName: string; price: number; status: string; periodEnd: Date; cancelAtPeriodEnd: boolean; stripeCustomerId: string | null; planId: string; features: string[] } | null;
+    plans: { id: string; name: string; price: number; features: string[] }[];
+    invoices: { id: string; amount: number; status: string; paidAt: Date; pdfUrl: string | null }[];
+    wallet: { planCredits: number; purchasedCredits: number } | null;
+    owner: string | null;
+  };
+  if (c) {
+    try {
+      const [sub, plans, invoices, wallet, owner] = await Promise.all([
+        db.subscription.findFirst({ where: { workspaceId: c.workspaceId }, orderBy: { createdAt: "desc" }, include: { plan: true } }),
+        db.plan.findMany({ orderBy: { price: "asc" } }),
+        db.invoice.findMany({ where: { workspaceId: c.workspaceId }, orderBy: { paidAt: "desc" }, take: 24 }),
+        db.creditWallet.findUnique({ where: { workspaceId: c.workspaceId } }),
+        db.membership.findFirst({ where: { workspaceId: c.workspaceId, role: "OWNER" }, orderBy: { createdAt: "asc" }, include: { user: { select: { email: true } } } }),
+      ]);
+      data = {
+        sub: sub
+          ? { planName: sub.plan.name, price: sub.plan.price, status: sub.status, periodEnd: sub.currentPeriodEnd, cancelAtPeriodEnd: sub.cancelAtPeriodEnd, stripeCustomerId: sub.stripeCustomerId, planId: sub.planId, features: sub.plan.features }
+          : null,
+        plans: plans.map((p) => ({ id: p.id, name: p.name, price: p.price, features: p.features })),
+        invoices: invoices.map((i) => ({ id: i.id, amount: i.amount, status: i.status, paidAt: i.paidAt, pdfUrl: i.pdfUrl })),
+        wallet: wallet ? { planCredits: wallet.planCredits, purchasedCredits: wallet.purchasedCredits } : null,
+        owner: owner?.user.email ?? null,
+      };
+    } catch {
+      data = null;
+    }
+  }
+  const sub = data?.sub;
+  const credits = data?.wallet ? data.wallet.planCredits + data.wallet.purchasedCredits : null;
 
   return (
-    <div className="space-y-5">
-      {billing.live && <LiveBadge label={`Live · plan "${planName}" from database`} />}
-      <div className="rounded-2xl border border-violet/25 bg-gradient-to-br from-violet/[0.04] to-orange-brand/[0.04] p-5 shadow-card">
-        <div className="mb-3 flex items-start justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-violet">Current Plan</div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <div className="text-2xl font-extrabold text-ink">{planName}</div>
-              <StatusPill tone="green">{BILLING.billingCycle}</StatusPill>
-            </div>
-            <div className="mt-1 text-[12px] text-ink-muted">Renews {renewal}</div>
-          </div>
-          <div className="flex gap-2">
-            <Link href="/pricing" className="rounded-xl border border-line bg-white px-4 py-2 text-[13px] font-semibold text-ink">Compare plans</Link>
-            {billing.plans.length > 0 ? (
-              <UpgradeDialog
-                plans={billing.plans}
-                currentPlanId={billing.currentPlanId ?? undefined}
-                trigger={<button className="rounded-xl bg-grad-cta px-4 py-2 text-[13px] font-bold text-white shadow-violet">Upgrade</button>}
-              />
-            ) : (
-              <Link href="/pricing" className="rounded-xl bg-grad-cta px-4 py-2 text-[13px] font-bold text-white shadow-violet">Upgrade</Link>
-            )}
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 border-t border-line pt-4 sm:grid-cols-3">
-          <div><div className="text-[10.5px] text-ink-muted">Seats</div><div className="text-[15px] font-bold text-ink">{BILLING.seatsUsed} / {BILLING.seatsIncluded}</div></div>
-          <div><div className="text-[10.5px] text-ink-muted">Payment method</div><div className="text-[13px] font-bold text-ink">{BILLING.paymentMethod}</div></div>
-          <div><div className="text-[10.5px] text-ink-muted">Billing contact</div><div className="text-[13px] font-bold text-ink">{BILLING.billingContact}</div></div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-4 text-[14px] font-bold text-ink">Usage This Month</div>
-        <div className="space-y-3">
-          {BILLING.usage.map((u) => {
-            const pct = Math.round((u.used / u.limit) * 100);
-            return (
-              <div key={u.label}>
-                <div className="mb-1 flex justify-between text-[12px]">
-                  <span className="text-ink-soft">{u.label}</span>
-                  <span className="font-bold text-ink">{u.used.toLocaleString()}{u.unit ? " " + u.unit : ""} / {u.limit.toLocaleString()}{u.unit ? " " + u.unit : ""}</span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-bg-soft">
-                  <div className={`h-full rounded-full ${pct > 85 ? "bg-amber-500" : "bg-grad-brand"}`} style={{ width: `${pct}%` }} />
-                </div>
+    <>
+      <SettingsHeader title="Billing & Subscription" subtitle="Manage workspace plan, billing profile, payment details, and invoices." />
+      <StatGrid
+        stats={[
+          { label: "Current Plan", icon: Diamond, value: sub?.planName ?? null },
+          { label: "Renewal", icon: CalendarClock, value: sub ? fmtDate(sub.periodEnd) : null, hint: sub?.cancelAtPeriodEnd ? "Cancels at period end" : undefined },
+          { label: "Usage", icon: Gauge, value: credits != null ? `${fmtInt(credits)} credits` : null, hint: credits != null ? "Available credit balance" : undefined },
+          { label: "Billing Status", icon: CreditCard, value: sub ? sub.status.replace(/_/g, " ") : null },
+        ]}
+      />
+      <div className="mb-5 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_805px]">
+        <section className="rounded-xl border border-line bg-white p-5">
+          <h2 className="text-[17px] font-semibold text-deep-navy">Plan &amp; Subscription</h2>
+          {sub ? (
+            <div className="mt-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <div className="text-[24px] font-bold text-deep-navy">{sub.planName}</div>
+                <div className="text-[15px] text-ink-soft">{fmtMoney(sub.price)} / month</div>
               </div>
-            );
-          })}
-        </div>
+              <div className="mt-2 flex gap-2"><Pill tone={sub.status === "active" ? "green" : "amber"}>{sub.status.replace(/_/g, " ")}</Pill>{sub.cancelAtPeriodEnd && <Pill tone="red">Cancels {fmtDate(sub.periodEnd)}</Pill>}</div>
+              {sub.features.length > 0 && <ul className="mt-4 grid grid-cols-1 gap-1.5 text-[13px] text-ink-soft md:grid-cols-2">{sub.features.map((f) => <li key={f}>• {f}</li>)}</ul>}
+            </div>
+          ) : (
+            <EmptyState icon={Diamond} title="Plan information is not available yet" body="Current plan, renewal, entitlement, and usage information will appear when billing data is connected." />
+          )}
+          {c?.isAdmin && data && data.plans.length > 0 && (
+            <UpgradeDialog plans={data.plans} currentPlanId={sub?.planId} trigger={<button type="button" className="mt-5 inline-flex h-10 items-center rounded-md bg-[#0B5CFF] px-5 text-[13.5px] font-semibold text-white">{sub ? "Change Plan" : "Choose a Plan"}</button>} />
+          )}
+        </section>
+        <section className="rounded-xl border border-line bg-white p-5">
+          <h2 className="text-[18px] font-semibold text-deep-navy">Billing Profile</h2>
+          <KeyList
+            rows={[
+              ["Billing contact", data?.owner ?? "Not configured"],
+              ["Payment method", sub?.stripeCustomerId ? "Managed in Stripe" : "Not available"],
+              ["Credits", credits != null ? `${fmtInt(credits)} available` : "Not available"],
+              ["Payment status", sub ? sub.status.replace(/_/g, " ") : "Not available"],
+            ]}
+          />
+          <Link href="/app/usage-credits" className="mt-3 inline-flex h-10 items-center rounded-md border border-line px-12 text-[14px] font-semibold text-deep-navy hover:bg-bg-soft">Buy Credits</Link>
+        </section>
       </div>
-
-      <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="text-[14px] font-bold text-ink">Payment Method</div>
-          <button className="text-[12px] font-semibold text-violet">+ Add card</button>
-        </div>
-        <div className="flex items-center gap-3 rounded-xl border border-line p-3">
-          <div className="flex h-10 w-14 items-center justify-center rounded-lg bg-blue-500 text-[11px] font-bold text-white">VISA</div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[13px] font-semibold text-ink">Visa ending 6411</div>
-            <div className="text-[11px] text-ink-muted">Expires 08/2028 · Default</div>
-          </div>
-          <button className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-semibold text-ink">Edit</button>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-line bg-white shadow-card">
-        <div className="border-b border-line p-4"><div className="text-[14px] font-bold text-ink">Invoices</div></div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[720px]">
-            <thead>
-              <tr className="border-b border-line bg-bg-soft/40 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="px-4 py-3">Invoice</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3 text-right">Amount</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="w-10 px-2 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {liveInvoices
-                ? billing.invoices.map((i) => {
-                    const label = i.status.charAt(0).toUpperCase() + i.status.slice(1);
-                    return (
-                      <tr key={i.id} className="border-b border-line last:border-0">
-                        <td className="px-4 py-3 font-mono text-[12.5px] font-semibold text-ink">{i.id.slice(0, 10)}</td>
-                        <td className="px-4 py-3 text-[12px] text-ink-soft">{fmtDate(i.createdAt)}</td>
-                        <td className="px-4 py-3 text-right text-[13px] font-bold text-ink">${i.amount.toLocaleString()}</td>
-                        <td className="px-4 py-3"><StatusPill tone={INVOICE_TONE[label as keyof typeof INVOICE_TONE] ?? "gray"}>{label}</StatusPill></td>
-                        <td className="px-2 py-3 text-right"><button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><Download className="h-3.5 w-3.5" /></button></td>
-                      </tr>
-                    );
-                  })
-                : INVOICES.map((i) => (
-                    <tr key={i.id} className="border-b border-line last:border-0">
-                      <td className="px-4 py-3 font-mono text-[12.5px] font-semibold text-ink">{i.id}</td>
-                      <td className="px-4 py-3 text-[12px] text-ink-soft">{i.date}</td>
-                      <td className="px-4 py-3 text-right text-[13px] font-bold text-ink">${i.amount.toLocaleString()}</td>
-                      <td className="px-4 py-3"><StatusPill tone={INVOICE_TONE[i.status as keyof typeof INVOICE_TONE]}>{i.status}</StatusPill></td>
-                      <td className="px-2 py-3 text-right"><button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><Download className="h-3.5 w-3.5" /></button></td>
-                    </tr>
-                  ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+      <section className="rounded-xl border border-line bg-white p-5">
+        <h2 className="mb-3 text-[17px] font-semibold text-deep-navy">Invoices</h2>
+        <DataTable
+          columns={["Invoice", "Date", "Amount", "Status", "Document"]}
+          rows={(data?.invoices ?? []).map((i) => [
+            i.id.slice(-8).toUpperCase(),
+            fmtDate(i.paidAt),
+            fmtMoney(i.amount) ?? "—",
+            <Pill key="s" tone={i.status === "paid" ? "green" : i.status === "open" ? "amber" : "gray"}>{i.status}</Pill>,
+            i.pdfUrl ? <a key="d" href={i.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-[#0B5CFF] hover:underline">Download</a> : "—",
+          ])}
+          empty={<EmptyState icon={Receipt} compact title="No invoices available" body="Invoices and payment records will appear after billable activity exists." />}
+        />
+      </section>
+    </>
   );
 }

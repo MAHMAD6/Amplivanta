@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { nextStatusForReview } from "@/lib/social/platforms";
 import { parsePreferences, PREFERENCE_SCOPES } from "@/lib/preferences";
+import { csvCell } from "@/lib/audit-filters";
 
 describe("nextStatusForReview", () => {
   it("only decides posts awaiting review", () => {
@@ -20,5 +21,13 @@ describe("parsePreferences", () => {
     expect(v).not.toHaveProperty("defaultVisibility");
     expect(v).not.toHaveProperty("injected");
     expect(v).not.toHaveProperty("utmMedium");
+  });
+});
+
+describe("csvCell", () => {
+  it("quotes separators and neutralizes formulas", () => {
+    expect(csvCell('a,"b"')).toBe('"a,""b"""');
+    expect(csvCell("=HYPERLINK(1)")).toBe("'=HYPERLINK(1)");
+    expect(csvCell(null)).toBe("");
   });
 });

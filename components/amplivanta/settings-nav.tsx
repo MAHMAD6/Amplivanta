@@ -2,43 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Users, Palette, CreditCard, ShieldCheck, Bell, Database, Globe, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const NAV = [
-  { label: "General", href: "/app/settings", icon: Building2 },
-  { label: "Users & Permissions", href: "/app/settings/users", icon: Users },
-  { label: "Brand Settings", href: "/app/settings/brand", icon: Palette },
-  { label: "Billing & Subscription", href: "/app/settings/billing", icon: CreditCard },
-  { label: "Security & 2FA", href: "/app/settings/security", icon: ShieldCheck },
-  { label: "Notifications", href: "/app/settings/notifications", icon: Bell },
-  { label: "Data Management", href: "/app/settings/data", icon: Database },
-  { label: "API & Domains", href: "/app/settings/api-domains", icon: Globe },
-  { label: "Audit Log", href: "/app/settings/audit", icon: ClipboardList },
-];
+const TABS = [
+  ["General Settings", "/app/settings"],
+  ["Billing & Subscription", "/app/settings/billing"],
+  ["Security & 2FA", "/app/settings/security"],
+  ["Notifications", "/app/settings/notifications"],
+  ["Roles & Permissions", "/app/settings/users"],
+  ["Data Management", "/app/settings/data"],
+  ["API & Domains", "/app/settings/api-domains"],
+  ["Audit Log", "/app/settings/audit"],
+] as const;
 
+/** Settings section tabs (boxed active tab, per the Settings designs). */
 export function SettingsNav() {
   const pathname = usePathname();
   return (
-    <aside className="rounded-2xl border border-line bg-white p-2 shadow-card lg:sticky lg:top-20 lg:h-fit">
-      <nav className="space-y-0.5">
-        {NAV.map((n) => {
-          const active = pathname === n.href;
-          return (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={cn(
-                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-semibold transition",
-                active ? "bg-violet/10 text-violet" : "text-ink-soft hover:bg-bg-soft hover:text-ink"
-              )}
-            >
-              <n.icon className="h-4 w-4" />
-              {n.label}
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+    <nav aria-label="Settings sections" className="no-scrollbar mb-5 flex gap-2 overflow-x-auto border-b border-line pb-1.5">
+      {TABS.map(([label, href]) => {
+        const on = pathname === href;
+        return (
+          <Link
+            key={href}
+            href={href}
+            aria-current={on ? "page" : undefined}
+            className={cn("shrink-0 rounded-md px-5 py-2 text-[13px] font-semibold", on ? "border border-[#0B5CFF] bg-royal-tint/40 text-[#0B5CFF]" : "border border-transparent text-deep-navy hover:bg-bg-soft")}
+          >
+            {label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

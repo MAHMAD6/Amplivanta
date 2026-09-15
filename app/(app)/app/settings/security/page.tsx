@@ -1,87 +1,84 @@
 import type { Metadata } from "next";
-import { ShieldCheck, Smartphone, Key, AlertTriangle, LogOut } from "lucide-react";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { SESSIONS } from "@/lib/settings-data";
+import { AlertCircle, Diamond, KeyRound, MonitorSmartphone } from "lucide-react";
+import { db } from "@/lib/db";
+import { SettingsHeader } from "@/components/amplivanta/settings-header";
+import { DataTable, EmptyState, StatGrid, fmtDateTime, fmtInt } from "@/components/amplivanta/screen-kit";
+import { settingsContext } from "@/lib/server/settings-screens";
 
 export const metadata: Metadata = { title: "Security & 2FA" };
+export const dynamic = "force-dynamic";
 
-export default function SecurityPage() {
+/**
+ * Multi-factor enrollment and login alerts are not implemented in the auth
+ * stack yet, so this screen states that plainly instead of offering controls
+ * that would not be enforced. Sessions are shown only from recorded rows.
+ */
+export default async function SecurityPage() {
+  const c = await settingsContext();
+  let sessions: { id: string; user: string; device: string; ip: string; lastActive: Date }[] = [];
+  let reachable = Boolean(c);
+  if (c) {
+    try {
+      const members = await db.membership.findMany({ where: { workspaceId: c.workspaceId }, select: { userId: true } });
+      const rows = await db.userSession.findMany({
+        where: { userId: { in: members.map((m) => m.userId) }, revokedAt: null },
+        orderBy: { lastActiveAt: "desc" },
+        take: 50,
+        include: { user: { select: { name: true, email: true } } },
+      });
+      sessions = rows.map((s) => ({ id: s.id, user: s.user.name || s.user.email, device: [s.browser, s.os, s.device].filter(Boolean).join(" · ") || "Unknown device", ip: s.ipAddress ?? "—", lastActive: s.lastActiveAt }));
+    } catch {
+      reachable = false;
+    }
+  }
+
   return (
-    <div className="space-y-5">
-      <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-4 flex items-center gap-2 text-[14px] font-bold text-ink"><ShieldCheck className="h-4 w-4 text-emerald-500" /> Two-Factor Authentication</div>
-        <div className="space-y-3">
-          {[
-            { icon: Smartphone, label: "Authenticator app", desc: "Time-based codes from Google Authenticator, Authy, 1Password", enabled: true },
-            { icon: Smartphone, label: "SMS backup", desc: "One-time codes via text — backup only", enabled: false },
-            { icon: Key, label: "Hardware security key", desc: "YubiKey, Titan, or any FIDO2 key", enabled: false },
-          ].map((m) => (
-            <div key={m.label} className="flex items-center gap-3 rounded-xl border border-line p-3">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${m.enabled ? "bg-emerald-500/10 text-emerald-600" : "bg-bg-soft text-ink-muted"}`}><m.icon className="h-4 w-4" /></div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-semibold text-ink">{m.label}</div>
-                <div className="text-[11px] text-ink-muted">{m.desc}</div>
-              </div>
-              {m.enabled ? (
-                <>
-                  <StatusPill tone="green">Enabled</StatusPill>
-                  <button className="rounded-lg border border-line px-3 py-1.5 text-[11.5px] font-semibold text-ink">Manage</button>
-                </>
-              ) : (
-                <button className="rounded-lg bg-grad-cta px-3 py-1.5 text-[11.5px] font-bold text-white shadow-violet">Enable</button>
-              )}
-            </div>
-          ))}
-        </div>
+    <>
+      <SettingsHeader
+        title="Security & 2FA"
+        subtitle="Configure MFA, session controls, authentication policies, and login alerts."
+        actions={<button type="button" disabled className="h-11 rounded-md border border-line bg-bg-soft px-8 text-[14px] font-semibold text-ink-muted">Save Security Policy</button>}
+      />
+      <StatGrid
+        stats={[
+          { label: "MFA Enrollment", icon: KeyRound, value: null },
+          { label: "Active Sessions", icon: MonitorSmartphone, value: sessions.length ? fmtInt(sessions.length) : null },
+          { label: "Login Alerts", icon: AlertCircle, value: null },
+          { label: "Security Policy", icon: Diamond, value: null },
+        ]}
+      />
+      <div className="mb-5 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_1.3fr]">
+        <section className="flex flex-col rounded-xl border border-line bg-white p-6">
+          <h2 className="text-[18px] font-semibold text-deep-navy">Multi-Factor Authentication</h2>
+          <dl className="mt-4 grid grid-cols-[180px_1fr] items-center gap-y-4 text-[13.5px]">
+            <dt className="font-semibold text-deep-navy">Enrollment status</dt>
+            <dd className="text-ink-soft">Not available yet</dd>
+            <dt className="font-semibold text-deep-navy">Workspace requirement</dt>
+            <dd><div className="flex h-10 max-w-[290px] items-center rounded-md border border-line bg-bg-soft/50 px-3 text-ink-muted">Not configured</div></dd>
+          </dl>
+          <p className="mt-6 flex-1 text-[13px] text-ink-soft">Authenticator setup and recovery options appear only when enrollment is available. Role-based MFA requirements are enforced by workspace policy once multi-factor sign-in is enabled for your account.</p>
+          <button type="button" disabled className="mt-6 h-11 w-fit rounded-md border border-line px-14 text-[14px] font-semibold text-ink-muted">Configure MFA</button>
+        </section>
+        <section className="rounded-xl border border-line bg-white p-6">
+          <h2 className="mb-3 text-[18px] font-semibold text-deep-navy">Sessions &amp; Devices</h2>
+          <DataTable
+            columns={["Member", "Device", "IP address", "Last active"]}
+            minWidth={560}
+            rows={sessions.map((s) => [s.user, s.device, s.ip, fmtDateTime(s.lastActive)])}
+            empty={<EmptyState icon={MonitorSmartphone} title={reachable ? "No session inventory available" : "Sessions unavailable"} body="Active sessions and revoke controls appear when session data is available." />}
+          />
+        </section>
       </div>
-
-      <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-4 text-[14px] font-bold text-ink">Security Policy</div>
-        <div className="space-y-2 text-[12.5px]">
-          {[
-            { l: "Require MFA for all users", v: "On" },
-            { l: "Minimum password length", v: "12 characters" },
-            { l: "Password rotation", v: "Every 90 days" },
-            { l: "Session timeout", v: "24 hours of inactivity" },
-            { l: "Login alerts on new device", v: "On" },
-            { l: "Allowed IP ranges", v: "Any (unrestricted)" },
-          ].map((r) => (
-            <div key={r.l} className="flex items-center justify-between border-b border-line pb-2 last:border-0">
-              <span className="text-ink-soft">{r.l}</span>
-              <span className="font-bold text-ink">{r.v}</span>
-            </div>
-          ))}
+      <section className="grid grid-cols-1 gap-6 rounded-xl border border-line bg-bg-soft/40 p-6 lg:grid-cols-[1fr_340px]">
+        <div>
+          <h2 className="text-[17px] font-semibold text-deep-navy">Security Policy &amp; Login Alerts</h2>
+          <p className="mt-2 text-[13px] text-ink-soft">Authentication requirements and alert preferences become configurable once workspace security policy is defined. Material security changes generate audit events.</p>
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-3 text-[14px] font-bold text-ink">Active Sessions</div>
-        <div className="space-y-2">
-          {SESSIONS.map((s, i) => (
-            <div key={i} className="flex items-center justify-between rounded-xl border border-line p-3">
-              <div>
-                <div className="text-[13px] font-semibold text-ink">{s.device} {s.current && <StatusPill tone="violet" className="ml-1">This device</StatusPill>}</div>
-                <div className="text-[11px] text-ink-muted">{s.location} · {s.ip} · Active {s.lastActive}</div>
-              </div>
-              {!s.current && <button className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11.5px] font-bold text-red-600"><LogOut className="h-3 w-3" /> Revoke</button>}
-            </div>
-          ))}
+        <div>
+          <div className="mb-1.5 text-[13.5px] font-semibold text-deep-navy">Login Alert Preference</div>
+          <div className="flex h-11 items-center rounded-md border border-line bg-white px-3 text-[13.5px] text-ink-muted">Not configured</div>
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-red-200 bg-red-50/40 p-5">
-        <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-red-700"><AlertTriangle className="h-4 w-4" /> Danger Zone</div>
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between rounded-xl border border-red-200 bg-white p-3">
-            <div><div className="text-[13px] font-semibold text-ink">Sign out of all sessions</div><div className="text-[11px] text-ink-muted">Ends every session except this device.</div></div>
-            <button className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-[12px] font-bold text-red-600">Sign out all</button>
-          </div>
-          <div className="flex items-center justify-between rounded-xl border border-red-200 bg-white p-3">
-            <div><div className="text-[13px] font-semibold text-ink">Reset workspace secrets</div><div className="text-[11px] text-ink-muted">Rotates API keys, webhook signing secrets, OAuth tokens.</div></div>
-            <button className="rounded-lg bg-red-500 px-3 py-1.5 text-[12px] font-bold text-white">Reset all</button>
-          </div>
-        </div>
-      </div>
-    </div>
+      </section>
+    </>
   );
 }

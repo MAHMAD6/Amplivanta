@@ -99,6 +99,58 @@ export const PREFERENCE_SCOPES: Record<string, PrefScope> = {
   },
 };
 
+const CHANNEL: [string, string][] = [["default", "Use workspace default"], ["on", "On"], ["off", "Off"]];
+const FREQUENCY: [string, string][] = [["realtime", "Real time"], ["daily", "Daily digest"], ["weekly", "Weekly digest"]];
+const LANGUAGES: [string, string][] = [["en", "English"], ["es", "Spanish"], ["fr", "French"], ["de", "German"], ["pt", "Portuguese"], ["ar", "Arabic"], ["ur", "Urdu"]];
+const CURRENCIES: [string, string][] = ["USD", "EUR", "GBP", "CAD", "AUD", "AED", "PKR", "INR"].map((c) => [c, c]);
+
+/** Notification categories on the Notification Settings screen. Security is policy-controlled. */
+export const NOTIFICATION_CATEGORIES: { key: string; label: string; policy: "configurable" | "policy" | "dependent" }[] = [
+  { key: "campaigns", label: "Campaign & publishing activity", policy: "configurable" },
+  { key: "approvals", label: "Approvals & collaboration", policy: "configurable" },
+  { key: "automation", label: "Automation & workflow events", policy: "configurable" },
+  { key: "security", label: "Security & account activity", policy: "policy" },
+  { key: "billing", label: "Billing & subscription", policy: "dependent" },
+  { key: "product", label: "Product & workspace updates", policy: "configurable" },
+];
+
+PREFERENCE_SCOPES["workspace.general"] = {
+  scope: "workspace.general",
+  sections: [
+    { id: "profile", title: "Workspace Profile", fields: [
+      { key: "timezone", label: "Default Timezone", kind: "select", options: TIMEZONES, placeholder: "Select timezone" },
+      { key: "language", label: "Default Language", kind: "select", options: LANGUAGES, placeholder: "Select language" },
+      { key: "dateFormat", label: "Date & Time Format", kind: "select", options: [["mdy", "MM/DD/YYYY, 12-hour"], ["dmy", "DD/MM/YYYY, 24-hour"], ["iso", "YYYY-MM-DD, 24-hour"]], placeholder: "Select format" },
+      { key: "currency", label: "Currency", kind: "select", options: CURRENCIES, placeholder: "Select currency" },
+    ] },
+  ],
+};
+
+PREFERENCE_SCOPES["workspace.notifications"] = {
+  scope: "workspace.notifications",
+  sections: [
+    {
+      id: "matrix",
+      title: "Notifications",
+      fields: NOTIFICATION_CATEGORIES.filter((c) => c.policy !== "policy").flatMap((c) => [
+        { key: `${c.key}.inApp`, label: `${c.label} in-app`, kind: "select" as const, options: CHANNEL },
+        { key: `${c.key}.email`, label: `${c.label} email`, kind: "select" as const, options: CHANNEL },
+        { key: `${c.key}.frequency`, label: `${c.label} frequency`, kind: "select" as const, options: FREQUENCY },
+      ]),
+    },
+  ],
+};
+
+PREFERENCE_SCOPES["workspace.data"] = {
+  scope: "workspace.data",
+  sections: [
+    { id: "retention", title: "Retention & Deletion", fields: [
+      { key: "retention", label: "Retention Policy", kind: "select", options: [["1y", "Keep records for 1 year"], ["2y", "Keep records for 2 years"], ["5y", "Keep records for 5 years"], ["indefinite", "Keep until deleted"]], placeholder: "Not configured" },
+      { key: "deletion", label: "Deletion Policy", kind: "select", options: [["manual", "Manual deletion only"], ["admin_review", "Admin review before deletion"]], placeholder: "Not configured" },
+    ] },
+  ],
+};
+
 export type PreferenceValues = Record<string, string | boolean>;
 
 /** Keeps only defined keys with valid values; unset selects and blank text are omitted. */

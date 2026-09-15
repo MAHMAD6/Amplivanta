@@ -1,98 +1,65 @@
 import type { Metadata } from "next";
-import { Download, Upload, Trash2, Database, AlertTriangle, RotateCw } from "lucide-react";
-import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
-import { DATA_JOBS, DATA_JOB_TONE } from "@/lib/settings-data";
+import Link from "next/link";
+import { FileDown, HardDrive, RefreshCw, Upload, X } from "lucide-react";
+import { db } from "@/lib/db";
+import { SettingsHeader } from "@/components/amplivanta/settings-header";
+import { PreferencesForm } from "@/components/amplivanta/preferences-form";
+import { EmptyState, StatGrid, fmtInt } from "@/components/amplivanta/screen-kit";
+import { PREFERENCE_SCOPES } from "@/lib/preferences";
+import { loadPreferences } from "@/lib/server/preferences";
+import { settingsContext } from "@/lib/server/settings-screens";
+import { formatBytes } from "@/lib/server/media-library";
 
 export const metadata: Metadata = { title: "Data Management" };
+export const dynamic = "force-dynamic";
 
-export default function DataManagementPage() {
+export default async function DataManagementPage() {
+  const c = await settingsContext();
+  const prefs = await loadPreferences(c?.workspaceId ?? null, "workspace.data");
+  let storage: { files: number; bytes: number } | null = null;
+  if (c) {
+    try {
+      const agg = await db.asset.aggregate({ where: { workspaceId: c.workspaceId }, _count: true, _sum: { fileSize: true } });
+      storage = { files: agg._count, bytes: agg._sum.fileSize ?? 0 };
+    } catch {
+      storage = null;
+    }
+  }
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <ActionCard icon={Download} label="Export Data" desc="Full workspace export as CSV or JSON" cta="Request Export" />
-        <ActionCard icon={Upload} label="Import Data" desc="Contacts, deals, activities from CSV" cta="Upload File" />
-        <ActionCard icon={Database} label="Backup" desc="Manual snapshot + auto-daily backups" cta="Trigger Backup" />
+    <>
+      <SettingsHeader title="Data Management" subtitle="Manage imports, exports, retention, deletion, and workspace data lifecycle." />
+      <StatGrid
+        stats={[
+          { label: "Import Jobs", icon: Upload, value: null },
+          { label: "Export Jobs", icon: FileDown, value: null },
+          { label: "Deletion Requests", icon: X, value: null },
+          { label: "Storage Inventory", icon: HardDrive, value: storage?.files ? `${fmtInt(storage.files)} files` : null, hint: storage?.files ? formatBytes(storage.bytes) : undefined },
+        ]}
+      />
+      <div className="mb-5 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_1.2fr]">
+        <section className="rounded-xl border border-line bg-white p-5">
+          <h2 className="text-[17px] font-semibold text-deep-navy">Import &amp; Export Jobs</h2>
+          <EmptyState
+            icon={RefreshCw}
+            title="No data jobs yet"
+            body="Import, export, and processing history will appear when workspace data jobs exist."
+            action={<Link href="/app/integrations/import-export" className="text-[13px] font-semibold text-[#0B5CFF]">Open Import / Export</Link>}
+          />
+        </section>
+        <section>
+          <PreferencesForm def={PREFERENCE_SCOPES["workspace.data"]} values={prefs.values} path="/app/settings/data" canEdit={Boolean(c?.isAdmin && prefs.reachable)} layout="flat" />
+          <p className="mt-3 text-[12.5px] text-ink-soft">
+            Retention and deletion workflows respect platform constraints, access controls, and applicable legal requirements. Saved policies are recorded for your workspace; automated enforcement is not enabled yet.
+          </p>
+        </section>
       </div>
-
-      <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-3 text-[14px] font-bold text-ink">Retention Policies</div>
-        <div className="space-y-2 text-[12.5px]">
-          {[
-            { l: "Deleted contacts", v: "Recoverable for 30 days" },
-            { l: "Activity events", v: "Retained 24 months" },
-            { l: "Audit log", v: "Retained 1 year (Growth), 7 years (Enterprise)" },
-            { l: "Media assets", v: "Retained until manually deleted" },
-            { l: "Draft posts / emails", v: "Auto-purged after 180 days idle" },
-          ].map((r) => (
-            <div key={r.l} className="flex items-center justify-between border-b border-line pb-2 last:border-0">
-              <span className="text-ink-soft">{r.l}</span>
-              <span className="font-bold text-ink">{r.v}</span>
-            </div>
-          ))}
+      <section className="flex flex-wrap items-end justify-between gap-6 rounded-xl border border-line bg-bg-soft/40 p-6">
+        <div className="max-w-[900px]">
+          <h2 className="text-[17px] font-semibold text-deep-navy">Recovery &amp; Requests</h2>
+          <p className="mt-2 text-[13px] text-ink-soft">Recovery, restore visibility, and data-request preparation appear only when those operations or requests exist. Failed jobs surface recoverable diagnostics.</p>
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-line bg-white shadow-card">
-        <div className="border-b border-line p-4"><div className="text-[14px] font-bold text-ink">Import & Export Jobs</div></div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[720px]">
-            <thead>
-              <tr className="border-b border-line bg-bg-soft/40 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="px-4 py-3">Job</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Size</th>
-                <th className="px-4 py-3">Created By</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="w-10 px-2 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {DATA_JOBS.map((j) => (
-                <tr key={j.id} className="border-b border-line last:border-0">
-                  <td className="px-4 py-3 text-[13px] font-semibold text-ink">{j.name}</td>
-                  <td className="px-4 py-3"><StatusPill tone={j.type === "Export" ? "blue" : "violet"}>{j.type}</StatusPill></td>
-                  <td className="px-4 py-3"><StatusPill tone={DATA_JOB_TONE[j.status as keyof typeof DATA_JOB_TONE]}>{j.status}</StatusPill></td>
-                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{j.size}</td>
-                  <td className="px-4 py-3"><div className="flex items-center gap-2"><Avatar name={j.createdBy} size={20} /><span className="text-[11.5px]">{j.createdBy.split(" ")[0]}</span></div></td>
-                  <td className="px-4 py-3 text-[11.5px] text-ink-muted">{j.createdAt}</td>
-                  <td className="px-2 py-3 text-right">
-                    <div className="flex justify-end gap-1">
-                      {j.status === "Completed" && <button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft"><Download className="h-3.5 w-3.5" /></button>}
-                      {j.status === "Failed" && <button className="rounded-lg p-1 text-amber-600 hover:bg-bg-soft"><RotateCw className="h-3.5 w-3.5" /></button>}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-red-200 bg-red-50/40 p-5">
-        <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-red-700"><AlertTriangle className="h-4 w-4" /> Data Deletion</div>
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between rounded-xl border border-red-200 bg-white p-3">
-            <div><div className="text-[13px] font-semibold text-ink">Delete workspace</div><div className="text-[11px] text-ink-muted">Removes all data after 30-day grace period. Cannot be undone.</div></div>
-            <button className="inline-flex items-center gap-1 rounded-lg bg-red-500 px-3 py-1.5 text-[12px] font-bold text-white"><Trash2 className="h-3 w-3" />Delete workspace</button>
-          </div>
-          <div className="flex items-center justify-between rounded-xl border border-red-200 bg-white p-3">
-            <div><div className="text-[13px] font-semibold text-ink">Purge deleted items</div><div className="text-[11px] text-ink-muted">Immediately delete anything in trash. Bypasses 30-day recovery.</div></div>
-            <button className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-[12px] font-bold text-red-600">Purge now</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ActionCard({ icon: Icon, label, desc, cta }: { icon: any; label: string; desc: string; cta: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet/10 text-violet"><Icon className="h-5 w-5" /></div>
-      <div className="mt-3 text-[13.5px] font-bold text-ink">{label}</div>
-      <div className="mt-1 text-[11.5px] text-ink-soft">{desc}</div>
-      <button className="mt-3 w-full rounded-xl bg-grad-cta py-2 text-[12px] font-bold text-white shadow-violet">{cta}</button>
-    </div>
+        <Link href="/contact" className="inline-flex h-11 items-center rounded-md border border-line bg-white px-12 text-[14px] font-semibold text-deep-navy hover:bg-bg-soft">Prepare Data Request</Link>
+      </section>
+    </>
   );
 }

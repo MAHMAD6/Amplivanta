@@ -104,6 +104,7 @@ const nextConfig: NextConfig = {
       { source: "/app/crm/crm-dashboard-pipeline", destination: "/app/crm", permanent: false },
       // The approved CRM names are real pages; the earlier short routes forward to them.
       { source: "/app/crm/tasks", destination: "/app/crm/task-management", permanent: false },
+      { source: "/app/settings/brand", destination: "/app/creative-studio/brand-kit", permanent: false },
       { source: "/app/crm/reports", destination: "/app/crm/crm-reports", permanent: false },
       { source: "/app/marketing-automation/marketing-automation-dashboard", destination: "/app/marketing", permanent: false },
       { source: "/app/marketing-automation/campaigns", destination: "/app/marketing/campaigns", permanent: false },
