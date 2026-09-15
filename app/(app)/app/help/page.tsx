@@ -1,176 +1,115 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  Bot,
-  CheckCircle2,
-  FileText,
-  Mail,
-  MessageSquare,
-  Megaphone,
-  Play,
-  Plug,
-  Search,
-  Send,
-  ShieldCheck,
-  User,
-} from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { RailCard } from "@/components/amplivanta/resource-breadcrumb";
+import { ArrowRight, ChevronRight, Diamond, FileText, Search } from "lucide-react";
+import { crmPrimaryBtn } from "@/components/amplivanta/crm-screen";
+import { HELP_ARTICLES } from "@/lib/site-resource-items";
 
-export const metadata: Metadata = { title: "Help / Support" };
+export const metadata: Metadata = { title: "Help & Support" };
 
-const POPULAR = ["AI Recommendations", "Action Plans", "Insights", "Integrations"];
-
-const TOPICS = [
-  { title: "Getting Started", desc: "Learn the basics and get up to speed fast.", icon: BookOpen, tone: "bg-violet/12 text-violet" },
-  { title: "AI Advisor", desc: "Understand AI recommendations, insights, and action plans.", icon: Bot, tone: "bg-emerald-500/12 text-emerald-600" },
-  { title: "Features", desc: "Explore Amplivanta features and how they work.", icon: Megaphone, tone: "bg-royal-blue/12 text-royal-blue" },
-  { title: "Integrations", desc: "Connect and manage your integrations.", icon: Plug, tone: "bg-orange-brand/12 text-orange-brand" },
-  { title: "Security & Privacy", desc: "Learn how we protect your data and ensure privacy.", icon: ShieldCheck, tone: "bg-violet/12 text-violet" },
-  { title: "Account & Billing", desc: "Manage your account, team and subscription.", icon: User, tone: "bg-pink-brand/12 text-pink-brand" },
+const TOPICS: [string, string, string][] = [
+  ["Getting Started", "Learn the core workspace and account basics.", "Getting started"],
+  ["AI Advisor", "Understand recommendations, insights, and action plans.", "AI Advisor"],
+  ["Marketing Automation", "Set up campaigns, workflows, email, and lead capture.", "Marketing Automation"],
+  ["CRM & Pipeline", "Manage contacts, companies, deals, tasks, and activities.", "CRM & Pipeline"],
+  ["Creative Studio", "Work with images, video, graphics, documents, and templates.", "Creative Studio"],
+  ["Integrations", "Connect supported services and manage connection settings.", "Integrations"],
+  ["Security & Privacy", "Review account security and privacy guidance.", "Security & Privacy"],
+  ["Account & Billing", "Manage workspace, plan, billing, and usage settings.", "Account & billing"],
+  ["Marketplace", "Learn how buying, downloads, seller access, and listings work.", "Marketplace"],
 ];
 
-const GUIDES = [
-  { title: "Welcome to Amplivanta", desc: "A quick overview of the platform and key capabilities.", read: "5 min read" },
-  { title: "How AI Recommendations Work", desc: "Understand how our AI analyzes data and delivers insights.", read: "7 min read" },
-  { title: "Create Your First Action Plan", desc: "Turn insights into actions that drive results.", read: "6 min read" },
-  { title: "Integrate Your Data Sources", desc: "Connect your tools and start getting smarter insights.", read: "8 min read" },
-];
+const outline = "inline-flex h-10 items-center rounded-lg border border-line bg-white px-4 text-[13.5px] font-bold text-deep-navy hover:bg-bg-soft";
 
-const TOP_ARTICLES = [
-  "How AI Recommendations Work",
-  "Understanding Insight Scores",
-  "How to Create an Action Plan",
-  "Connect Facebook Ads Account",
-  "Data Security at Amplivanta",
-];
-
+/**
+ * Help & Support, from the corrected current-shell reference. It links to the
+ * published help library and real contact channels, and asserts no system
+ * status, live chat or response times — none of those are connected.
+ */
 export default function HelpSupportPage() {
+  const articles = HELP_ARTICLES;
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <div className="text-[12px] font-semibold uppercase tracking-wide text-violet">AI Advisor</div>
-      <PageHeader title="Help / Support" subtitle="Find answers, get support, and make the most of Amplivanta." />
+    <div className="mx-auto max-w-[1680px]">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[13px] text-[#0B5CFF]">
+        <Link href="/app/settings" className="hover:underline">Workspace</Link>
+        <ChevronRight className="h-3.5 w-3.5 text-ink-muted" />
+        <span>Help &amp; Support</span>
+      </nav>
+      <h1 className="mt-1 font-display text-[32px] font-extrabold leading-tight text-deep-navy">Help &amp; Support</h1>
+      <p className="mt-0.5 text-[14.5px] text-ink-soft">Find product guidance, documentation, and support options for Amplivanta.</p>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div>
-          {/* Search */}
-          <section className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3 py-3">
-                <Search className="h-4 w-4 text-ink-muted" />
-                <input placeholder="How can we help you today?" className="min-w-0 flex-1 bg-transparent text-[13.5px] focus:outline-none" />
-              </div>
-              <button className="inline-flex h-11 items-center gap-2 rounded-xl bg-violet px-5 text-[13px] font-semibold text-white transition hover:bg-violet-hover">
-                Search
-              </button>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
-              <span className="font-semibold text-ink-soft">Popular:</span>
-              {POPULAR.map((p) => (
-                <button key={p} className="font-semibold text-violet hover:underline">{p}</button>
+      <form action="/resources/help-center" method="get" role="search" className="mt-5 flex gap-2.5 rounded-xl border border-line bg-white p-4">
+        <label className="relative flex-1">
+          <span className="sr-only">Search help</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-muted" />
+          <input name="q" placeholder="How can we help you?" className="h-12 w-full rounded-lg border border-line pl-8 pr-3 text-[13.5px] focus:border-[#0B5CFF] focus:outline-none" />
+        </label>
+        <button type="submit" className={crmPrimaryBtn}>Search</button>
+      </form>
+
+      <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="min-w-0 space-y-5">
+          <section className="rounded-xl border border-line bg-white p-4">
+            <h2 className="text-[18px] font-bold text-deep-navy">Browse Help Topics</h2>
+            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {TOPICS.map(([title, body, topic]) => (
+                <div key={title} className="rounded-xl border border-line p-4">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-royal-tint text-[#0B5CFF]"><Diamond className="h-4 w-4" /></span>
+                  <h3 className="mt-3 text-[17px] font-bold text-deep-navy">{title}</h3>
+                  <p className="mt-1 text-[13px] text-ink-soft">{body}</p>
+                  <Link href={`/resources/help-center?topic=${encodeURIComponent(topic)}#library`} className="mt-3 inline-flex items-center gap-1 text-[13px] font-bold text-[#0B5CFF] hover:underline">
+                    View articles <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
               ))}
             </div>
           </section>
 
-          {/* Topics */}
-          <h2 className="mt-6 font-display text-[18px] font-extrabold text-ink">Browse Help Topics</h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {TOPICS.map((t) => (
-              <div key={t.title} className="rounded-2xl border border-line bg-white p-5 text-center shadow-card">
-                <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${t.tone}`}>
-                  <t.icon className="h-5 w-5" />
-                </span>
-                <h3 className="mt-4 text-[14.5px] font-bold text-ink">{t.title}</h3>
-                <p className="mt-1.5 text-[12px] leading-relaxed text-ink-soft">{t.desc}</p>
-                <button className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold text-violet">
-                  View Articles <ArrowRight className="h-3.5 w-3.5" />
-                </button>
+          <section className="rounded-xl border border-line bg-white p-4">
+            <h2 className="text-[18px] font-bold text-deep-navy">Knowledge Base</h2>
+            {articles.length > 0 ? (
+              <ul className="mt-3 divide-y divide-line">
+                {articles.map((a) => (
+                  <li key={a.slug} className="py-3">
+                    <Link href={`/resources/help-center/${a.slug}`} className="text-[14px] font-semibold text-deep-navy hover:text-[#0B5CFF]">{a.title}</Link>
+                    <p className="text-[12.5px] text-ink-soft">{a.summary}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex flex-col items-center py-10 text-center">
+                <FileText className="h-7 w-7 text-deep-navy/70" />
+                <div className="mt-2 text-[14px] font-bold text-deep-navy">No published help articles yet</div>
+                <p className="mt-1 text-[13px] text-ink-soft">Articles appear here once they are published to the help library.</p>
               </div>
-            ))}
-          </div>
-
-          {/* Getting started guides */}
-          <h2 className="mt-8 font-display text-[18px] font-extrabold text-ink">Getting Started Guides</h2>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-            {GUIDES.map((g) => (
-              <div key={g.title} className="flex items-center gap-3 border-b border-line px-5 py-4 last:border-0 hover:bg-bg-soft">
-                <FileText className="h-4 w-4 text-violet" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold text-violet">{g.title}</div>
-                  <div className="text-[11.5px] text-ink-soft">{g.desc}</div>
-                </div>
-                <span className="text-[11.5px] text-ink-muted">{g.read}</span>
-              </div>
-            ))}
-            <div className="px-5 py-3">
-              <button className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-violet">
-                View all getting started guides <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Still need help */}
-          <h2 className="mt-8 font-display text-[18px] font-extrabold text-ink">Still Need Help?</h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {[
-              { title: "Contact Support", desc: "Get help from our support team.", cta: "Contact Us", icon: MessageSquare, tone: "text-violet" },
-              { title: "Live Chat", desc: "Chat with our team in real time.", cta: "Start Chat", icon: Send, tone: "text-emerald-600" },
-              { title: "Send an Email", desc: "We'll reply to your email as soon as possible.", cta: "Email Us", icon: Mail, tone: "text-royal-blue" },
-            ].map((c) => (
-              <div key={c.title} className="rounded-2xl border border-line bg-white p-5 text-center shadow-card">
-                <c.icon className={`mx-auto h-7 w-7 ${c.tone}`} />
-                <h3 className="mt-3 text-[13.5px] font-bold text-ink">{c.title}</h3>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-ink-soft">{c.desc}</p>
-                <button className="mt-3 rounded-xl border border-line px-4 py-2 text-[12px] font-semibold text-ink">{c.cta}</button>
-              </div>
-            ))}
-          </div>
+            )}
+          </section>
         </div>
 
-        {/* Right rail */}
-        <aside className="space-y-4">
-          <RailCard title="System Status">
-            <div className="flex items-center gap-2 text-[13px] font-semibold text-emerald-600">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> All Systems Operational
+        <aside className="space-y-5">
+          <div className="rounded-xl border border-line bg-white p-4">
+            <h2 className="text-[16px] font-bold text-deep-navy">System Status</h2>
+            <p className="mt-2 text-[13px] text-ink-soft">Status monitoring is not connected yet.</p>
+            <div className="mt-3 flex items-center justify-between border-t border-line py-3 text-[13px]">
+              <span className="text-deep-navy">Current status</span>
+              <span className="text-ink-soft">Not available</span>
             </div>
-            <p className="mt-2 text-[11.5px] text-ink-muted">Everything is running smoothly.</p>
-            <Link href="#" className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold text-violet">
-              View Status Page <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </RailCard>
-
-          <RailCard title="Top Help Articles">
-            <ul className="space-y-3">
-              {TOP_ARTICLES.map((a) => (
-                <li key={a} className="flex items-start gap-2.5">
-                  <FileText className="mt-0.5 h-4 w-4 text-ink-muted" />
-                  <span className="text-[12.5px] font-medium text-ink">{a}</span>
-                </li>
-              ))}
-            </ul>
-            <button className="mt-4 inline-flex items-center gap-1 text-[12.5px] font-semibold text-violet">
-              View All Articles <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </RailCard>
-
-          <RailCard title="Video Tutorials">
-            <div className="relative flex h-32 items-center justify-center rounded-xl bg-gradient-to-br from-[#2A1A6E] to-[#5B2FE0]">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-violet">
-                <Play className="h-4.5 w-4.5" />
-              </span>
-            </div>
-            <div className="mt-3 text-[12.5px] font-semibold text-ink">Amplivanta Platform Overview</div>
-            <div className="text-[11px] text-ink-muted">3:45</div>
-          </RailCard>
-
-          <RailCard title="Give Feedback">
-            <p className="text-[12px] leading-relaxed text-ink-soft">Help us improve your experience.</p>
-            <button className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-line px-4 py-2 text-[12.5px] font-semibold text-violet">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Send Feedback
-            </button>
-          </RailCard>
+            <button type="button" disabled title="A status page is not connected yet" className={`${outline} cursor-not-allowed opacity-60`}>View Status</button>
+          </div>
+          <div className="rounded-xl border border-line bg-white p-4">
+            <h2 className="text-[16px] font-bold text-deep-navy">Contact Support</h2>
+            <p className="mt-2 text-[13px] text-ink-soft">Send a support request to the Amplivanta team. We reply to the address on your request.</p>
+            <Link href="/contact" className={`${crmPrimaryBtn} mt-3`}>Contact Support</Link>
+          </div>
+          <div className="rounded-xl border border-line bg-white p-4">
+            <h2 className="text-[16px] font-bold text-deep-navy">Documentation</h2>
+            <p className="mt-2 text-[13px] text-ink-soft">Product documentation, implementation guides, and release notes appear in the help library when published.</p>
+            <Link href="/resources/help-center" className={`${outline} mt-3`}>Browse Documentation</Link>
+          </div>
+          <div className="rounded-xl border border-line bg-white p-4">
+            <h2 className="text-[16px] font-bold text-deep-navy">Feedback</h2>
+            <p className="mt-2 text-[13px] text-ink-soft">Send product feedback to the Amplivanta team.</p>
+            <Link href="/contact" className={`${outline} mt-3`}>Send Feedback</Link>
+          </div>
         </aside>
       </div>
     </div>

@@ -1,159 +1,200 @@
 import type { Metadata } from "next";
-import { CalendarDays, ChevronRight, MoreVertical, Plus, Search, Star } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { AdvisorTabs } from "@/components/amplivanta/advisor-tabs";
-import { AdvisorIcon } from "@/components/amplivanta/advisor-icon";
-import {
-  SAVED_NEXT_STEPS,
-  SAVED_OPPORTUNITY_AREAS,
-  SAVED_ROWS,
-  SAVED_STATS,
-  SAVED_SUMMARY,
-} from "@/lib/advisor-data";
+import Link from "next/link";
+import { ArrowUpRight, ChevronRight, Clock, Diamond, Search, Star, Target } from "lucide-react";
+import { db } from "@/lib/db";
+import { cn } from "@/lib/utils";
+import { crmDate, crmPrimaryBtn } from "@/components/amplivanta/crm-screen";
+import { SavedInsightActions } from "@/components/amplivanta/saved-insight-actions";
+import { crmContext, since } from "@/lib/server/crm-screens";
 
 export const metadata: Metadata = { title: "Saved Insights" };
+export const dynamic = "force-dynamic";
 
-const priorityTone: Record<string, string> = {
-  High: "bg-rose-500/10 text-rose-600",
-  Medium: "bg-amber-500/10 text-amber-600",
-  Low: "bg-emerald-500/10 text-emerald-700",
-};
+/** Recommendation statuses that mean the user deliberately kept the insight. */
+const SAVED_STATUSES = ["saved", "ready", "archived"];
 
-export default function SavedInsightsPage() {
+const TABS = [
+  ["Recommendation History", "/app/ai-advisor/history"],
+  ["Saved Insights", "/app/ai-advisor/saved"],
+  ["Action Plans", "/app/ai-advisor/action-plans"],
+] as const;
+
+type SP = { q?: string; type?: string; priority?: string; saved?: string };
+
+const selectCls = "h-10 rounded-lg border border-line bg-white px-3 text-[13px] text-ink-soft focus:border-[#0B5CFF] focus:outline-none";
+
+export default async function SavedInsightsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const ctx = await crmContext();
+  let reachable = Boolean(ctx);
+  let rows: { id: string; title: string; category: string; impact: string; status: string; createdAt: Date }[] = [];
+  let counts = { total: 0, high: 0, ready: 0, archived: 0 };
+  let categories: string[] = [];
+
+  if (ctx) {
+    try {
+      const w = ctx.workspaceId;
+      const savedSince = since(sp.saved);
+      const [list, grouped, high, cats] = await Promise.all([
+        db.recommendation.findMany({
+          where: {
+            workspaceId: w,
+            status: { in: SAVED_STATUSES },
+            ...(sp.q ? { title: { contains: sp.q, mode: "insensitive" } } : {}),
+            ...(sp.type ? { category: sp.type } : {}),
+            ...(sp.priority ? { impact: sp.priority } : {}),
+            ...(savedSince ? { createdAt: { gte: savedSince } } : {}),
+          },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+          select: { id: true, title: true, category: true, impact: true, status: true, createdAt: true },
+        }),
+        db.recommendation.groupBy({ by: ["status"], where: { workspaceId: w, status: { in: SAVED_STATUSES } }, _count: true }),
+        db.recommendation.count({ where: { workspaceId: w, status: { in: ["saved", "ready"] }, impact: "high" } }),
+        db.recommendation.groupBy({ by: ["category"], where: { workspaceId: w, status: { in: SAVED_STATUSES } } }),
+      ]);
+      rows = list;
+      const by = (s: string) => grouped.find((g) => g.status === s)?._count ?? 0;
+      counts = { total: grouped.reduce((n, g) => n + g._count, 0), high, ready: by("ready"), archived: by("archived") };
+      categories = cats.map((c) => c.category);
+    } catch {
+      reachable = false;
+    }
+  }
+
+  const has = counts.total > 0;
+  const fig = (n: number) => (has ? n.toLocaleString("en-US") : null);
+  const stats: [string, string | null, typeof Diamond][] = [
+    ["Total Saved Insights", fig(counts.total), Diamond],
+    ["High Priority", fig(counts.high), Clock],
+    ["Ready for Action", fig(counts.ready), ArrowUpRight],
+    ["Archived", fig(counts.archived), Target],
+  ];
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <div className="text-[12px] font-semibold uppercase tracking-wide text-violet">AI Advisor</div>
-      <PageHeader
-        title={<span className="inline-flex items-center gap-2">Saved Insights <Star className="h-5 w-5 text-amber-400" /></span>}
-        subtitle="Revisit high-value insights you've saved for later review, collaboration, or action."
-      />
-
-      <AdvisorTabs />
-
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="min-w-0">
-          {/* Stats */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {SAVED_STATS.map((s) => (
-              <div key={s.label} className="rounded-2xl border border-line bg-white p-4 shadow-card">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${s.tone}`}>
-                  <AdvisorIcon name={s.icon} className="h-4 w-4" />
-                </div>
-                <div className="mt-3 text-[24px] font-extrabold text-ink">{s.value}</div>
-                <div className="text-[12px] font-semibold text-ink">{s.label}</div>
-                <div className="text-[11px] text-emerald-600">{s.sub}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Toolbar */}
-          <div className="mt-6 flex flex-wrap items-center gap-2">
-            <div className="flex min-w-[200px] flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3 py-2.5">
-              <Search className="h-4 w-4 text-ink-muted" />
-              <input placeholder="Search saved insights…" className="min-w-0 flex-1 bg-transparent text-[12.5px] focus:outline-none" />
-            </div>
-            <button className="rounded-xl border border-line bg-white px-3 py-2.5 text-[12.5px] font-semibold text-ink-soft">Type</button>
-            <button className="rounded-xl border border-line bg-white px-3 py-2.5 text-[12.5px] font-semibold text-ink-soft">Team</button>
-            <button className="rounded-xl border border-line bg-white px-3 py-2.5 text-[12.5px] font-semibold text-ink-soft">Priority</button>
-            <button className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2.5 text-[12.5px] font-semibold text-ink-soft"><CalendarDays className="h-3.5 w-3.5" /> Date Saved</button>
-            <button className="inline-flex items-center gap-1.5 rounded-xl bg-violet px-4 py-2.5 text-[12.5px] font-semibold text-white"><Plus className="h-3.5 w-3.5" /> Create Action Plan</button>
-          </div>
-
-          {/* Table */}
-          <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-white shadow-card">
-            <div className="grid grid-cols-[1fr_130px_150px_120px_90px_40px] min-w-[640px] gap-3 border-b border-line bg-bg-soft px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-ink-muted">
-              <span>Insight</span>
-              <span>Source / Category</span>
-              <span>Owner / Team</span>
-              <span>Date Saved</span>
-              <span>Priority</span>
-              <span />
-            </div>
-            {SAVED_ROWS.map((r) => (
-              <div key={r.title} className="grid grid-cols-[1fr_130px_150px_120px_90px_40px] min-w-[640px] items-center gap-3 border-b border-line px-5 py-4 last:border-0 hover:bg-bg-soft">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet/10 text-violet">
-                    <AdvisorIcon name={r.icon} className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <div className="text-[13px] font-semibold text-ink">{r.title}</div>
-                    <div className="text-[11.5px] leading-relaxed text-ink-soft">{r.desc}</div>
-                  </div>
-                </div>
-                <span className={`w-fit rounded-md px-2 py-0.5 text-[10.5px] font-semibold ${r.categoryTone}`}>{r.category}</span>
-                <div className="text-[11.5px] text-ink-soft">{r.owner}</div>
-                <div className="text-[11.5px] text-ink-soft">{r.date}<br /><span className="text-ink-muted">{r.time}</span></div>
-                <span className={`w-fit rounded-md px-2 py-0.5 text-[10.5px] font-semibold ${priorityTone[r.priority]}`}>{r.priority}</span>
-                <MoreVertical className="h-4 w-4 text-ink-muted" />
-              </div>
-            ))}
-            <div className="flex items-center justify-between px-5 py-3 text-[12px] text-ink-muted">
-              <span>1–6 of 32</span>
-              <div className="flex items-center gap-1">
-                {["‹", "1", "2", "3", "4", "5", "6", "›"].map((p, i) => (
-                  <button key={i} className={`h-7 w-7 rounded-lg text-[12px] font-semibold ${p === "1" ? "bg-violet text-white" : "text-ink-soft hover:bg-bg-soft"}`}>{p}</button>
-                ))}
-              </div>
-            </div>
-          </div>
+    <div className="mx-auto max-w-[1680px]">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[13px] text-[#0B5CFF]">
+            <Link href="/app/strategy" className="hover:underline">Growth</Link>
+            <ChevronRight className="h-3.5 w-3.5 text-ink-muted" />
+            <span>Saved Insights</span>
+          </nav>
+          <h1 className="mt-1 font-display text-[32px] font-extrabold leading-tight text-deep-navy">Saved Insights</h1>
+          <p className="mt-0.5 text-[14.5px] text-ink-soft">Review AI insights you intentionally saved for later analysis, collaboration, or action.</p>
         </div>
+        <Link href="/app/ai-advisor/action-plans" className={crmPrimaryBtn}>+ Create Action Plan</Link>
+      </div>
 
-        {/* Right rail */}
-        <aside className="space-y-4">
-          <section className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <h2 className="mb-4 text-[14px] font-bold text-ink">Insight Summary</h2>
-            <div className="flex items-center gap-4">
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[conic-gradient(#E11D48_0%_37%,#0F9D77_37%_75%,#C9C7D2_75%_88%,#F5731A_88%_100%)]">
-                <div className="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white">
-                  <span className="text-[18px] font-extrabold text-ink">{SAVED_SUMMARY.total}</span>
-                  <span className="text-[9px] text-ink-muted">Total</span>
-                </div>
-              </div>
-              <ul className="space-y-1.5 text-[11px]">
-                <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-rose-500" /> High Priority <b className="ml-auto">{SAVED_SUMMARY.high} (37%)</b></li>
-                <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Ready for Action <b className="ml-auto">{SAVED_SUMMARY.ready} (56%)</b></li>
-                <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-line" /> Archived <b className="ml-auto">{SAVED_SUMMARY.archived} (19%)</b></li>
-                <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-orange-brand" /> Low Priority <b className="ml-auto">{SAVED_SUMMARY.low} (13%)</b></li>
-              </ul>
+      <nav aria-label="AI Advisor views" className="mb-4 flex gap-6 border-b border-line text-[14px]">
+        {TABS.map(([label, href]) => (
+          <Link
+            key={href}
+            href={href}
+            className={cn("pb-2.5", href === "/app/ai-advisor/saved" ? "-mb-px border-b-2 border-[#0B5CFF] font-semibold text-[#0B5CFF]" : "text-ink-soft hover:text-deep-navy")}
+          >
+            {label}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map(([label, value, Icon]) => (
+          <div key={label} className="rounded-xl border border-line bg-white p-4">
+            <div className="flex items-center gap-2.5 text-[14px] text-deep-navy">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-royal-tint text-[#0B5CFF]"><Icon className="h-4 w-4" /></span>
+              {label}
             </div>
-          </section>
+            <div className="mt-4 text-[22px] font-extrabold leading-none text-deep-navy">{value ?? "—"}</div>
+            <div className="mt-2 text-[12.5px] text-ink-muted">{value == null ? "Not available yet" : ""}</div>
+          </div>
+        ))}
+      </div>
 
-          <section className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <h2 className="mb-4 text-[14px] font-bold text-ink">Top Opportunity Areas</h2>
-            <ul className="space-y-3">
-              {SAVED_OPPORTUNITY_AREAS.map((o) => (
-                <li key={o.label}>
-                  <div className="flex justify-between text-[11.5px]">
-                    <span className="text-ink-soft">{o.label}</span>
-                    <span className="font-semibold text-ink-muted">{o.count} ({o.pct}%)</span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-bg-soft">
-                    <div className="h-full rounded-full bg-violet" style={{ width: `${o.pct * 3}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <button className="mt-4 inline-flex items-center gap-1 text-[12.5px] font-semibold text-violet">
-              View all opportunity areas <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </section>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <section className="min-w-0 rounded-xl border border-line bg-white">
+          <form method="get" className="flex flex-wrap items-center gap-2.5 px-4 py-3.5">
+            <label className="relative w-full max-w-[330px]">
+              <span className="sr-only">Search saved insights</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-muted" />
+              <input name="q" defaultValue={sp.q ?? ""} placeholder="Search saved insights..." className="h-10 w-full rounded-lg border border-line pl-8 pr-3 text-[13px] focus:border-[#0B5CFF] focus:outline-none" />
+            </label>
+            <select name="type" defaultValue={sp.type ?? ""} className={selectCls} aria-label="Type">
+              <option value="">Type</option>
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select name="priority" defaultValue={sp.priority ?? ""} className={selectCls} aria-label="Priority">
+              <option value="">Priority</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <select name="saved" defaultValue={sp.saved ?? ""} className={selectCls} aria-label="Date saved">
+              <option value="">Date Saved</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+            <button type="submit" className="h-10 rounded-lg border border-line px-4 text-[13px] font-semibold text-deep-navy hover:bg-bg-soft">Apply</button>
+          </form>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left">
+              <thead>
+                <tr className="bg-bg-soft/80 text-[12.5px] font-bold text-deep-navy">
+                  {["Insight", "Source / Category", "Owner / Team", "Date Saved", "Priority", "Actions"].map((c) => <th key={c} className="px-4 py-3.5">{c}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t border-line text-[13px] text-ink-soft">
+                    <td className="px-4 py-3 font-semibold text-deep-navy">
+                      {r.title}
+                      {r.status !== "saved" && <span className="ml-2 rounded-full bg-bg-soft px-2 py-0.5 text-[10.5px] font-bold capitalize text-ink-muted">{r.status}</span>}
+                    </td>
+                    <td className="px-4 py-3">AI Advisor · {r.category}</td>
+                    <td className="px-4 py-3">—</td>
+                    <td className="px-4 py-3">{crmDate(r.createdAt)}</td>
+                    <td className="px-4 py-3 capitalize">{r.impact}</td>
+                    <td className="px-4 py-3"><SavedInsightActions id={r.id} status={r.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {rows.length === 0 && (
+            <div className="flex flex-col items-center px-6 pb-10 pt-9 text-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-royal-tint"><Star className="h-6 w-6 text-[#0B5CFF]/80" /></span>
+              <h3 className="mt-4 text-[20px] font-bold text-deep-navy">{reachable ? "No saved insights yet" : "Saved insights unavailable"}</h3>
+              <p className="mt-1 max-w-[440px] text-[13.5px] text-ink-soft">
+                {reachable
+                  ? "Saved AI recommendations and insights will appear here when you explicitly save them."
+                  : "The database could not be reached, so saved insights cannot be shown right now."}
+              </p>
+              {reachable && <Link href="/app/ai-advisor" className={cn(crmPrimaryBtn, "mt-5")}>Go to AI Advisor</Link>}
+            </div>
+          )}
+        </section>
 
-          <section className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <h2 className="mb-4 text-[14px] font-bold text-ink">Suggested Next Steps</h2>
-            <ul className="space-y-3">
-              {SAVED_NEXT_STEPS.map((s) => (
-                <li key={s.title} className="flex gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet/10 text-violet">
-                    <AdvisorIcon name={s.icon} className="h-4 w-4" />
-                  </span>
-                  <span>
-                    <span className="block text-[12.5px] font-semibold text-ink">{s.title}</span>
-                    <span className="block text-[11px] text-ink-muted">{s.desc}</span>
-                  </span>
-                </li>
+        <aside className="space-y-5">
+          <div className="rounded-xl border border-line bg-white p-4">
+            <h2 className="text-[16px] font-bold text-deep-navy">Insight Summary</h2>
+            <p className="mt-2 text-[13px] text-ink-soft">Summary values will appear after saved insight records are available.</p>
+            <dl className="mt-3 divide-y divide-line border-t border-line">
+              {([["High Priority", stats[1][1]], ["Ready for Action", stats[2][1]], ["Archived", stats[3][1]]] as [string, string | null][]).map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between py-3 text-[13px]"><dt className="text-deep-navy">{k}</dt><dd className="m-0 text-ink-soft">{v ?? "—"}</dd></div>
               ))}
-            </ul>
-          </section>
+            </dl>
+          </div>
+          <div className="rounded-xl border border-line bg-white p-4">
+            <h2 className="text-[16px] font-bold text-deep-navy">Opportunity Areas</h2>
+            <p className="mt-2 text-[13px] text-ink-soft">
+              {categories.length ? categories.join(" · ") : "No opportunity data available yet."}
+            </p>
+          </div>
+          <div className="rounded-xl border border-line bg-white p-4">
+            <h2 className="text-[16px] font-bold text-deep-navy">Suggested Next Steps</h2>
+            <p className="mt-2 text-[13px] text-ink-soft">Recommendations will appear here when supported by production insight data.</p>
+          </div>
         </aside>
       </div>
     </div>
