@@ -24,6 +24,8 @@ import { db } from "@/lib/db";
 import { getSessionContext } from "@/lib/tenant";
 import { cn } from "@/lib/utils";
 import { AddCompetitorButton, CompetitorRowActions, FindCompetitorsButton } from "@/components/amplivanta/competitor-watch-ui";
+import { isDataForSeoConfigured } from "@/lib/providers/dataforseo";
+import { MAX_TRACKED } from "@/lib/server/competitor-intel";
 
 export const metadata: Metadata = { title: "Competitor Watch" };
 export const dynamic = "force-dynamic";
@@ -44,13 +46,9 @@ const TABS = [
 
 /** What each data tab needs before it can show anything real. */
 const TAB_SOURCES: Record<string, [string, string]> = {
-  keywords: ["No keyword data yet", "Keyword overlap appears once a search-data source is connected and competitors are tracked."],
-  content: ["No content activity yet", "New pages and articles from tracked competitors appear once content monitoring is connected."],
   ads: ["No ad activity yet", "Competitor ad activity appears once an advertising data source is connected."],
   social: ["No social activity yet", "Posting cadence and themes appear once social monitoring is connected for tracked competitors."],
-  opportunities: ["No opportunities yet", "Add competitors to discover content gaps, keyword opportunities and emerging topics."],
-  alerts: ["No alerts yet", "You'll be alerted to significant changes once tracking has activity to compare."],
-  settings: ["Tracking settings", "Choose which competitors are tracked from the Competitors tab. Channel preferences appear here once monitoring sources are connected."],
+  settings: ["Tracking settings", "Choose which competitors are tracked from the Competitors tab. Search data refreshes weekly; ads and social channels appear here once those monitoring sources are connected."],
 };
 
 const FIND_POINTS = [
@@ -68,7 +66,53 @@ const HOW: [LucideIcon, string, string, string][] = [
   [BarChart3, "Get insights and opportunities", "Monitor activity and take action across Amplivanta.", "bg-violet/10 text-violet"],
 ];
 
-type Row = { id: string; name: string; website: string | null; type: string; source: string; trackingEnabled: boolean; updatedAt: Date; reason: string | null };
+type Row = { id: string; name: string; website: string | null; type: string; source: string; trackingEnabled: boolean; updatedAt: Date; lastRefreshedAt: Date | null; reason: string | null };
+type Kw = { id: string; competitorId: string; keyword: string; position: number | null; searchVolume: number | null; url: string | null; capturedAt: Date };
+type Gap = { id: string; competitorId: string; keyword: string; ourPosition: number | null; theirPosition: number | null; kind: string; searchVolume: number | null };
+type PageRow = { id: string; competitorId: string; url: string; organicCount: number | null; etv: number | null; capturedAt: Date };
+type Signal = { id: string; competitorId: string | null; kind: string; title: string; severity: string; createdAt: Date };
+
+const num = (n: number | null | undefined) => (n == null ? "—" : n.toLocaleString("en-US"));
+const shortDate = (d: Date) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(d);
+const SEVERITY_TONE: Record<string, string> = { high: "bg-red-50 text-red-600", medium: "bg-orange-50 text-orange-600", low: "bg-bg-soft text-ink-soft" };
+
+function DataTable({ head, rows, empty }: { head: string[]; rows: React.ReactNode[][]; empty: React.ReactNode }) {
+  if (rows.length === 0) return <>{empty}</>;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[640px] text-left text-sm">
+        <thead>
+          <tr className="border-y border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+            {head.map((h, i) => <th key={h} className={cn("px-4 py-3", i > 1 && "text-right")}>{h}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((cells, r) => (
+            <tr key={r} className="border-b border-line last:border-0">
+              {cells.map((c, i) => <td key={i} className={cn("px-4 py-3 text-[12.5px] text-ink-soft", i === 0 && "font-bold text-deep-navy", i > 1 && "text-right tabular-nums")}>{c}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SignalList({ signals, names }: { signals: Signal[]; names: Map<string, string> }) {
+  return (
+    <ul className="divide-y divide-line">
+      {signals.map((s) => (
+        <li key={s.id} className="flex items-start gap-3 py-3">
+          <span className={cn("mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase", SEVERITY_TONE[s.severity] ?? SEVERITY_TONE.low)}>{s.severity}</span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] text-deep-navy">{s.title}</div>
+            <div className="mt-0.5 text-[11.5px] text-ink-muted">{s.competitorId ? names.get(s.competitorId) ?? "Removed competitor" : "Workspace"} · {shortDate(s.createdAt)}</div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function Card({ className, children }: { className?: string; children: React.ReactNode }) {
   return <div className={cn("rounded-2xl border border-line bg-white shadow-card", className)}>{children}</div>;
@@ -84,7 +128,7 @@ function Empty({ icon: Icon, title, body }: { icon: LucideIcon; title: string; b
   );
 }
 
-function CompetitorTable({ rows, reachable }: { rows: Row[]; reachable: boolean }) {
+function CompetitorTable({ rows, reachable, canRefresh }: { rows: Row[]; reachable: boolean; canRefresh: boolean }) {
   const date = (d: Date) => new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(d);
   return (
     <div className="overflow-x-auto">
@@ -95,7 +139,7 @@ function CompetitorTable({ rows, reachable }: { rows: Row[]; reachable: boolean 
             <th className="px-4 py-3">Website</th>
             <th className="px-4 py-3">Type</th>
             <th className="px-4 py-3">Tracking</th>
-            <th className="px-4 py-3">Last updated</th>
+            <th className="px-4 py-3">Search data</th>
             <th className="px-4 py-3 text-right">Actions</th>
           </tr>
         </thead>
@@ -113,8 +157,8 @@ function CompetitorTable({ rows, reachable }: { rows: Row[]; reachable: boolean 
                   {r.trackingEnabled ? "Active" : "Paused"}
                 </span>
               </td>
-              <td className="px-4 py-3 text-[12.5px] text-ink-soft">{date(r.updatedAt)}</td>
-              <td className="px-4 py-3"><CompetitorRowActions id={r.id} tracking={r.trackingEnabled} /></td>
+              <td className="px-4 py-3 text-[12.5px] text-ink-soft">{r.lastRefreshedAt ? date(r.lastRefreshedAt) : "Not collected yet"}</td>
+              <td className="px-4 py-3"><CompetitorRowActions id={r.id} tracking={r.trackingEnabled} canRefresh={canRefresh && Boolean(r.website)} /></td>
             </tr>
           ))}
         </tbody>
@@ -137,27 +181,59 @@ export default async function CompetitorWatchPage({ searchParams }: { searchPara
   const tab = TABS.some(([k]) => k === rawTab) ? rawTab : "overview";
 
   let rows: Row[] = [];
+  let keywords: Kw[] = [];
+  let gaps: Gap[] = [];
+  let pages: PageRow[] = [];
+  let signals: Signal[] = [];
   let reachable = true;
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   try {
     const ctx = await getSessionContext();
-    rows = await db.competitor.findMany({
-      where: { workspaceId: ctx.workspaceId },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      select: { id: true, name: true, website: true, type: true, source: true, trackingEnabled: true, updatedAt: true, reason: true },
-    });
+    const ws = ctx.workspaceId;
+    [rows, keywords, gaps, pages, signals] = await Promise.all([
+      db.competitor.findMany({
+        where: { workspaceId: ws },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        select: { id: true, name: true, website: true, type: true, source: true, trackingEnabled: true, updatedAt: true, lastRefreshedAt: true, reason: true },
+      }),
+      db.competitorKeyword.findMany({ where: { workspaceId: ws }, orderBy: [{ searchVolume: { sort: "desc", nulls: "last" } }], take: 200 }),
+      db.competitorKeywordGap.findMany({ where: { workspaceId: ws }, orderBy: [{ searchVolume: { sort: "desc", nulls: "last" } }], take: 300 }),
+      db.competitorPage.findMany({ where: { workspaceId: ws }, orderBy: [{ etv: { sort: "desc", nulls: "last" } }], take: 100 }),
+      db.competitorSignal.findMany({ where: { workspaceId: ws, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 100 }),
+    ]);
   } catch {
     reachable = false;
   }
   const tracked = rows.filter((r) => r.trackingEnabled).length;
+  const names = new Map(rows.map((r) => [r.id, r.name]));
+  const configured = isDataForSeoConfigured();
+  const collected = rows.some((r) => r.lastRefreshedAt);
+  const opportunities = gaps.filter((g) => g.kind === "missing" || g.kind === "disadvantage");
+  const significant = signals.filter((s) => s.severity === "high");
 
-  // Only the tracked count has a real source today; the rest stay neutral.
+  // Figures appear only once search data has actually been collected.
   const STATS: [LucideIcon, string, string | null, string, string][] = [
-    [Users, "Competitors Tracked", reachable ? String(tracked) : null, "Add or discover competitors", "bg-royal-tint text-royal-blue"],
-    [FileText, "New Signals", null, "Recent changes across channels", "bg-emerald-50 text-emerald-600"],
-    [Lightbulb, "Priority Opportunities", null, "Actionable growth opportunities", "bg-orange-50 text-orange-500"],
-    [Bell, "Significant Changes", null, "Track important updates", "bg-red-50 text-red-500"],
+    [Users, "Competitors Tracked", reachable ? `${tracked}/${MAX_TRACKED()}` : null, "Add or discover competitors", "bg-royal-tint text-royal-blue"],
+    [FileText, "New Signals", collected ? String(signals.length) : null, "Ranking and page changes, last 30 days", "bg-emerald-50 text-emerald-600"],
+    [Lightbulb, "Priority Opportunities", collected && gaps.length ? String(opportunities.length) : null, "Keywords competitors win and you don't", "bg-orange-50 text-orange-500"],
+    [Bell, "Significant Changes", collected ? String(significant.length) : null, "High-impact movements, last 30 days", "bg-red-50 text-red-500"],
   ];
+
+  const notReady = (what: string) =>
+    !configured
+      ? `${what} appears once the search-data provider is configured for this workspace.`
+      : rows.length === 0
+        ? `Add competitors to collect ${what.toLowerCase()}.`
+        : `${what} appears after the first refresh of your tracked competitors (weekly, or use refresh on the Competitors tab).`;
+
+  // Weekly signal counts for the trend card (last 8 weeks of stored signals).
+  const weeks = Array.from({ length: 5 }, (_, i) => {
+    const end = Date.now() - i * 7 * 24 * 60 * 60 * 1000;
+    const start = end - 7 * 24 * 60 * 60 * 1000;
+    return { label: shortDate(new Date(start)), count: signals.filter((s) => s.createdAt.getTime() > start && s.createdAt.getTime() <= end).length };
+  }).reverse();
+  const weekMax = Math.max(1, ...weeks.map((w) => w.count));
 
   return (
     <div className="mx-auto max-w-[1500px]">
@@ -276,12 +352,39 @@ export default async function CompetitorWatchPage({ searchParams }: { searchPara
                   <p className="text-[12.5px] text-ink-soft">Track content, social, ad and search activity across your competitors.</p>
                 </div>
               </div>
-              <Empty icon={BarChart3} title="No data yet" body="Add competitors to see activity trends across channels." />
+              {signals.length === 0 ? (
+                <Empty icon={BarChart3} title="No data yet" body={notReady("Search activity")} />
+              ) : (
+                <div className="flex h-[170px] items-end gap-4 px-2" role="img" aria-label="Signals per week">
+                  {weeks.map((w) => (
+                    <div key={w.label} className="flex flex-1 flex-col items-center gap-1.5">
+                      <span className="text-[11.5px] font-bold text-deep-navy">{w.count}</span>
+                      <div className="w-full max-w-[48px] rounded-t-lg bg-royal-blue/80" style={{ height: `${Math.max(4, (w.count / weekMax) * 120)}px` }} />
+                      <span className="text-[11px] text-ink-muted">{w.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
             <Card className="p-5">
               <h2 className="text-[18px] font-extrabold text-deep-navy">Priority Opportunities</h2>
               <p className="mb-3 text-[12.5px] text-ink-soft">Areas where you can gain an advantage.</p>
-              <Empty icon={Lightbulb} title="No opportunities yet" body="Add competitors to discover content gaps, keyword opportunities and emerging topics." />
+              {opportunities.length === 0 ? (
+                <Empty icon={Lightbulb} title="No opportunities yet" body={notReady("Keyword opportunities")} />
+              ) : (
+                <ul className="divide-y divide-line">
+                  {opportunities.slice(0, 5).map((g) => (
+                    <li key={g.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <div className="truncate text-[13px] font-bold text-deep-navy">{g.keyword}</div>
+                        <div className="text-[11.5px] text-ink-muted">{names.get(g.competitorId) ?? "Competitor"} ranks #{g.theirPosition ?? "—"} · you {g.ourPosition ? `#${g.ourPosition}` : "not in top 20"}</div>
+                      </div>
+                      <span className="shrink-0 text-[11.5px] text-ink-soft">{num(g.searchVolume)} / mo</span>
+                    </li>
+                  ))}
+                  <li className="pt-2.5"><Link href={`${BASE}?tab=opportunities`} className="inline-flex items-center gap-1 text-[12.5px] font-bold text-royal-blue hover:underline">All opportunities <ArrowRight className="h-3.5 w-3.5" /></Link></li>
+                </ul>
+              )}
             </Card>
           </div>
 
@@ -294,7 +397,7 @@ export default async function CompetitorWatchPage({ searchParams }: { searchPara
                 </div>
                 <AddCompetitorButton variant="solid" label="Add Competitor" />
               </div>
-              <CompetitorTable rows={rows.slice(0, 5)} reachable={reachable} />
+              <CompetitorTable rows={rows.slice(0, 5)} reachable={reachable} canRefresh={configured} />
               {rows.length > 5 && (
                 <Link href={`${BASE}?tab=competitors`} className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-bold text-royal-blue hover:underline">
                   View all {rows.length} competitors <ArrowRight className="h-3.5 w-3.5" />
@@ -311,7 +414,11 @@ export default async function CompetitorWatchPage({ searchParams }: { searchPara
                   View all <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
-              <Empty icon={Bell} title="No updates yet" body="We'll show important changes here once you start tracking competitors." />
+              {signals.length === 0 ? (
+                <Empty icon={Bell} title="No updates yet" body={notReady("Competitor changes")} />
+              ) : (
+                <SignalList signals={(significant.length ? significant : signals).slice(0, 5)} names={names} />
+              )}
             </Card>
           </div>
         </>
@@ -322,13 +429,75 @@ export default async function CompetitorWatchPage({ searchParams }: { searchPara
           <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-[18px] font-extrabold text-deep-navy">Tracked Competitors</h2>
-              <p className="text-[12.5px] text-ink-soft">{rows.length} in this workspace · {tracked} actively tracked</p>
+              <p className="text-[12.5px] text-ink-soft">{rows.length} in this workspace · {tracked} of {MAX_TRACKED()} actively tracked</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <AddCompetitorButton variant="solid" label="Add Competitor" />
             </div>
           </div>
-          <CompetitorTable rows={rows} reachable={reachable} />
+          <CompetitorTable rows={rows} reachable={reachable} canRefresh={configured} />
+        </Card>
+      )}
+
+      {tab === "keywords" && (
+        <Card className="p-5">
+          <h2 className="text-[18px] font-extrabold text-deep-navy">Competitor Keywords</h2>
+          <p className="mb-3 text-[12.5px] text-ink-soft">Keywords your tracked competitors rank for in the top 20, by search volume.</p>
+          <DataTable
+            head={["Keyword", "Competitor", "Position", "Search volume", "Updated"]}
+            rows={keywords.map((k) => [k.keyword, names.get(k.competitorId) ?? "—", k.position ? `#${k.position}` : "—", num(k.searchVolume), shortDate(k.capturedAt)])}
+            empty={<Empty icon={Search} title="No keyword data yet" body={notReady("Keyword data")} />}
+          />
+        </Card>
+      )}
+
+      {tab === "content" && (
+        <Card className="p-5">
+          <h2 className="text-[18px] font-extrabold text-deep-navy">Top Competitor Pages</h2>
+          <p className="mb-3 text-[12.5px] text-ink-soft">Pages bringing competitors the most organic visibility.</p>
+          <DataTable
+            head={["Page", "Competitor", "Ranking keywords", "Est. traffic value", "Updated"]}
+            rows={pages.map((pg) => [
+              <a key="u" href={pg.url} target="_blank" rel="noopener noreferrer nofollow" className="block max-w-[420px] truncate text-royal-blue hover:underline">{pg.url.replace(/^https?:\/\//, "")}</a>,
+              names.get(pg.competitorId) ?? "—",
+              num(pg.organicCount),
+              pg.etv == null ? "—" : `$${Math.round(pg.etv).toLocaleString("en-US")}`,
+              shortDate(pg.capturedAt),
+            ])}
+            empty={<Empty icon={FileText} title="No content activity yet" body={notReady("Content data")} />}
+          />
+        </Card>
+      )}
+
+      {tab === "opportunities" && (
+        <Card className="p-5">
+          <h2 className="text-[18px] font-extrabold text-deep-navy">Keyword Opportunities</h2>
+          <p className="mb-3 text-[12.5px] text-ink-soft">Where a competitor ranks in the top 20 and you are missing or behind.</p>
+          <DataTable
+            head={["Keyword", "Competitor", "Their position", "Your position", "Search volume"]}
+            rows={opportunities.map((g) => [
+              g.keyword,
+              names.get(g.competitorId) ?? "—",
+              g.theirPosition ? `#${g.theirPosition}` : "—",
+              g.ourPosition ? `#${g.ourPosition}` : "Not ranking",
+              num(g.searchVolume),
+            ])}
+            empty={
+              <Empty
+                icon={Lightbulb}
+                title="No opportunities yet"
+                body={collected && gaps.length === 0 ? "Run competitor discovery with your website so we can compare your rankings." : notReady("Keyword opportunities")}
+              />
+            }
+          />
+        </Card>
+      )}
+
+      {tab === "alerts" && (
+        <Card className="p-5">
+          <h2 className="text-[18px] font-extrabold text-deep-navy">Alerts</h2>
+          <p className="mb-2 text-[12.5px] text-ink-soft">Ranking movements of 5+ places, new top-20 rankings and newly visible pages, last 30 days.</p>
+          {signals.length === 0 ? <Empty icon={Bell} title="No alerts yet" body={notReady("Alerts")} /> : <SignalList signals={signals} names={names} />}
         </Card>
       )}
 

@@ -661,6 +661,8 @@ model Competitor {
   trackingEnabled Boolean   @default(true)
   /// Why discovery suggested it, kept for the "see why" explanation.
   reason          String?
+  /// Last successful provider refresh (keywords, gaps, pages).
+  lastRefreshedAt DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @default(now()) @updatedAt
 
@@ -2378,4 +2380,117 @@ model ProviderMetricDaily {
 
   @@unique([workspaceId, provider, metric, date, dimension])
   @@index([workspaceId, date])
+}
+
+// ---------------------------------------------------------------------------
+// Competitor intelligence (DataForSEO Implementation Guidelines, V1).
+// Every row is workspace-owned and holds provider facts only.
+// ---------------------------------------------------------------------------
+
+model CompetitorDiscoveryRun {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  domain          String?
+  location        String
+  language        String
+  keywords        String[] @default([])
+  /// running | completed | failed
+  status          String   @default("running")
+  error           String?
+  candidateCount  Int      @default(0)
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  candidates CompetitorCandidate[]
+
+  @@index([workspaceId, createdAt])
+}
+
+model CompetitorCandidate {
+  id          String                 @id @default(cuid())
+  runId       String
+  run         CompetitorDiscoveryRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  workspaceId String
+  domain      String
+  score       Float                  @default(0)
+  /// Shared keywords, average position, sources and reasons shown before approval.
+  evidence    Json
+  /// suggested | added | dismissed
+  status      String                 @default("suggested")
+  createdAt   DateTime               @default(now())
+
+  @@unique([runId, domain])
+  @@index([workspaceId, status])
+}
+
+model CompetitorKeyword {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  competitorId String
+  keyword      String
+  position     Int?
+  searchVolume Int?
+  url          String?
+  capturedAt   DateTime @default(now())
+
+  @@unique([competitorId, keyword])
+  @@index([workspaceId])
+}
+
+model CompetitorKeywordGap {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  competitorId  String
+  keyword       String
+  ourPosition   Int?
+  theirPosition Int?
+  /// shared | missing | advantage | disadvantage
+  kind          String
+  searchVolume  Int?
+  capturedAt    DateTime @default(now())
+
+  @@unique([competitorId, keyword])
+  @@index([workspaceId, kind])
+}
+
+model CompetitorPage {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  competitorId String
+  url          String
+  organicCount Int?
+  etv          Float?
+  capturedAt   DateTime @default(now())
+
+  @@unique([competitorId, url])
+  @@index([workspaceId])
+}
+
+model CompetitorSignal {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  competitorId String?
+  kind         String
+  title        String
+  /// low | medium | high
+  severity     String   @default("low")
+  detail       Json?
+  createdAt    DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+}
+
+/// Per-call provider cost accounting (endpoint, task, cost, workspace).
+model ProviderUsage {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  provider    String
+  endpoint    String
+  taskId      String?
+  cost        Float    @default(0)
+  status      String
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([provider, createdAt])
 }
