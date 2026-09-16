@@ -8,7 +8,6 @@ import {
   MOCK_TEAM,
 } from "../lib/mock-data";
 import { CONTACTS, DEALS, ACTIVITIES, CRM_TASKS } from "../lib/crm-data";
-import { CAMPAIGNS, WORKFLOWS } from "../lib/marketing-auto-data";
 import { INTEGRATIONS } from "../lib/integrations-data";
 import { COMPANIES } from "../lib/part2-data";
 
@@ -36,20 +35,6 @@ const STAGE_BY_DISPLAY: Record<string, string> = {
   Proposal: "Proposal",
   Negotiation: "Negotiation",
   Won: "Won",
-};
-
-const CAMPAIGN_STATUS_DB: Record<string, string> = {
-  Active: "active",
-  Paused: "paused",
-  Draft: "draft",
-  Scheduled: "scheduled",
-  Ended: "ended",
-};
-
-const WORKFLOW_STATUS_DB: Record<string, string> = {
-  Active: "active",
-  Paused: "paused",
-  Draft: "draft",
 };
 
 const TASK_STATUS_DB: Record<string, string> = {
@@ -167,37 +152,17 @@ async function seedAmplivantaModules(workspaceId: string, userId: string, pipeli
     });
   }
 
-  // Campaigns + one aggregated metric row each
+  // Draft campaigns and workflows only: no invented performance metrics.
+  const CAMPAIGNS = [
+    { name: "Spring Product Launch", goal: "leads", channel: "multi" },
+    { name: "Trial Nurture", goal: "conversion", channel: "email" },
+  ];
   for (const cp of CAMPAIGNS) {
-    const campaign = await db.campaign.create({
-      data: {
-        workspaceId,
-        name: cp.name,
-        objective: cp.goal,
-        status: CAMPAIGN_STATUS_DB[cp.status] ?? "draft",
-      },
-    });
-    await db.campaignMetric.create({
-      data: {
-        campaignId: campaign.id,
-        impressions: cp.reach,
-        clicks: Math.round((cp.reach * cp.ctr) / 100),
-        conversions: cp.conversions,
-        revenue: cp.revenue,
-      },
-    });
+    await db.campaign.create({ data: { workspaceId, name: cp.name, goal: cp.goal, channel: cp.channel, status: "planning" } });
   }
-
-  // Workflows
+  const WORKFLOWS = [{ name: "Welcome Series", trigger: "contact.created" }];
   for (const wf of WORKFLOWS) {
-    await db.workflow.create({
-      data: {
-        workspaceId,
-        name: wf.name,
-        trigger: wf.trigger,
-        status: WORKFLOW_STATUS_DB[wf.status] ?? "draft",
-      },
-    });
+    await db.workflow.create({ data: { workspaceId, name: wf.name, trigger: wf.trigger, status: "draft" } });
   }
 
   // Integrations

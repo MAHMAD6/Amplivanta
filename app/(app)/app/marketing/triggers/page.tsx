@@ -1,190 +1,146 @@
 import type { Metadata } from "next";
-import { Zap, Share2, CheckCircle2, XCircle, Clock, Target, Plus, Filter, Download, Play, Pencil, MoreHorizontal, AlertTriangle } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { LiveBadge } from "@/components/amplivanta/live-badge";
-import { loadTriggers, loadTriggerEvents } from "@/lib/server/loaders";
+import Link from "next/link";
+import { Braces, CalendarDays, Plug, ShieldCheck, Zap } from "lucide-react";
+import { db } from "@/lib/db";
+import { cn } from "@/lib/utils";
+import { BarList, EmptyState, Panel, Pill, ScreenHeader, fmtDate, fmtDateTime } from "@/components/amplivanta/screen-kit";
+import { headerOutline, headerPrimary, outlineSm, primarySm } from "@/components/amplivanta/growth-kit";
+import { ActButton } from "@/components/amplivanta/growth-ui";
+import { FormDialog } from "@/components/amplivanta/creative-ui";
+import { createEvent, deleteEvent, importEventSchema, validateEvent } from "@/app/(app)/app/marketing/actions";
+import { marketingContext, triggerLabel } from "@/lib/server/marketing-screens";
+import { EVENT_SOURCES, label } from "@/lib/marketing/options";
 
 export const metadata: Metadata = { title: "Trigger / Event Manager" };
 export const dynamic = "force-dynamic";
 
-const SOURCES = [["Web Forms", 38.4, "#6A35F0"], ["Email", 24.7, "#EC4899"], ["Website", 16.9, "#16A56A"], ["CRM", 10.4, "#F59E0B"], ["Webhooks", 6.7, "#F97316"], ["Other", 2.9, "#94A3B8"]] as const;
-const EXEC_STEPS = ["Event Received", "Conditions Checked", "Segment Matched", "Workflow Started", "Notification Sent", "CRM Updated"];
-const BEST = [
-  ["Define Clear Triggers", "Use specific event criteria to avoid unnecessary noise."],
-  ["Validate Conditions", "Regularly review conditions and segments to keep automations accurate."],
-  ["Monitor Performance", "Track success rates and response times for optimal performance."],
-  ["Handle Failures", "Set up retries and notifications to resolve failures fast."],
-] as const;
+const BUILT_IN = [["contact.created", "CRM"], ["form.submitted", "Forms"], ["deal.won", "CRM"], ["tag.added", "CRM"]];
 
-export default async function TriggersPage() {
-  const [{ items: triggers, live }, { items: events, live: eventsLive }] = await Promise.all([loadTriggers(), loadTriggerEvents()]);
-  const active = triggers.filter((t) => t.status === "Active").length;
+export default async function TriggerManagerPage({ searchParams }: { searchParams: Promise<{ event?: string; docs?: string }> }) {
+  const sp = await searchParams;
+  const c = await marketingContext();
+  let events: { id: string; name: string; description: string | null; source: string; properties: unknown; validationStatus: string | null; validatedAt: Date | null; updatedAt: Date }[] = [];
+  let flows: { id: string; name: string; trigger: string | null; status: string }[] = [];
+  let counts: { eventName: string; count: number }[] = [];
+  let integrations = 0;
+  if (c) {
+    try {
+      const w = c.workspaceId;
+      [events, flows, counts, integrations] = await Promise.all([
+        db.eventDefinition.findMany({ where: { workspaceId: w }, orderBy: { updatedAt: "desc" }, select: { id: true, name: true, description: true, source: true, properties: true, validationStatus: true, validatedAt: true, updatedAt: true } }),
+        db.workflow.findMany({ where: { workspaceId: w, trigger: { not: null } }, select: { id: true, name: true, trigger: true, status: true } }),
+        db.dailyEventAggregate.groupBy({ by: ["eventName"], where: { workspaceId: w, date: { gte: new Date(Date.now() - 30 * 86400000) } }, _sum: { count: true } }).then((r) => r.map((x) => ({ eventName: x.eventName, count: x._sum.count ?? 0 }))),
+        db.integration.count({ where: { workspaceId: w, status: "connected" } }),
+      ]);
+    } catch {
+      events = [];
+    }
+  }
+  const canEdit = Boolean(c?.canEdit);
+  const selected = events.find((e) => e.id === sp.event);
+  const usage = (name: string) => flows.filter((f) => f.trigger === `event:${name}`);
+  const bySource = EVENT_SOURCES.map(([k, l]): [string, number] => [l, events.filter((e) => e.source === k).length]).filter(([, n]) => n > 0);
+  const triggerUse = [...new Set(flows.map((f) => f.trigger!))].map((t): [string, number] => [triggerLabel(t), flows.filter((f) => f.trigger === t).length]);
+  const passed = events.filter((e) => e.validationStatus === "passed").length;
+  const failed = events.filter((e) => e.validationStatus === "failed").length;
+
+  const create = (cls: string, text = "+ Create Event") => <FormDialog title="Create Event" label={text} className={cls} action={createEvent} disabled={!canEdit} submitLabel="Create event" fields={[{ name: "name", label: "Event name", kind: "text", required: true, placeholder: "trial.started" }, { name: "source", label: "Source", kind: "select", options: EVENT_SOURCES, defaultValue: "custom" }, { name: "description", label: "Description", kind: "text" }, { name: "payload", label: "Sample payload (JSON)", kind: "textarea", rows: 5, placeholder: '{ "contactId": "…", "plan": "pro" }' }]} />;
+  const importDialog = (cls: string) => <FormDialog title="Import Schema" label="Import Schema" className={cls} action={importEventSchema} disabled={!canEdit} submitLabel="Import" note='JSON array, e.g. [{ "name": "trial.started", "description": "…", "source": "custom", "payload": { "plan": "pro" } }]. Existing names are skipped.' fields={[{ name: "schema", label: "Event schema JSON", kind: "textarea", rows: 10, required: true }]} />;
 
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["Home", "/app"], ["Marketing Automation", "/app/marketing"], ["Trigger / Event Manager"]]}
         title="Trigger / Event Manager"
-        subtitle="Monitor triggers, event flows, and automation actions across your ecosystem."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink hover:border-ink/30"><Filter className="h-3.5 w-3.5" /> Filter</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink hover:border-ink/30"><Download className="h-3.5 w-3.5" /> Export</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Plus className="h-3.5 w-3.5" /> Create Trigger</button>
-          </>
-        }
+        subtitle="Define events and connect them to automations when your workspace is ready."
+        actions={<><Link href="?docs=1#docs" className={headerOutline}>View Documentation</Link>{importDialog(headerOutline)}{create(headerPrimary)}</>}
       />
-      <MarketingSubnav />
-      {live && <LiveBadge label={`Live · ${triggers.length} triggers from database`} />}
-
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <KpiCard icon={Zap} tone="violet" label="Active Triggers" value={String(active)} />
-        <KpiCard icon={Share2} tone="blue" label="Events Processed" value={null} />
-        <KpiCard icon={CheckCircle2} tone="green" label="Success Rate" value={null} />
-        <KpiCard icon={XCircle} tone="red" label="Failed Events" value={null} deltaTone="down" />
-        <KpiCard icon={Clock} tone="indigo" label="Avg. Response Time" value={null} deltaTone="down" />
-        <KpiCard icon={Target} tone="teal" label="Automation Coverage" value={null} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_300px]">
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-              <div className="mb-2 text-[13px] font-bold text-ink">Event Activity Trend</div>
-              <AreaChart data={[18, 22, 16, 24, 20, 28, 23, 30, 26, 32]} />
+      {(sp.docs || !events.length) && (
+        <Panel className="mb-4" id="docs">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div>
+              <h2 className="text-[20px] font-semibold text-deep-navy">{events.length ? "Sending events" : "No event definitions yet"}</h2>
+              <p className="mt-1 text-[13.5px] text-ink-soft">Create your first event to start capturing important business moments. Built-in triggers (contact created, form submitted, deal won) fire automatically.</p>
+              <ul className="mt-3 space-y-2 text-[13px] text-deep-navy">
+                <li><b>Define custom events</b> — name and describe events that match your business.</li>
+                <li><b>Connect to sources</b> — send events from your systems with a workspace API key.</li>
+                <li><b>Trigger automations</b> — choose “Event: name” as a workflow trigger.</li>
+              </ul>
+              {!events.length && <div className="mt-4 flex gap-2">{create(primarySm, "Create Event")}{importDialog(outlineSm)}</div>}
             </div>
-            <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-              <div className="mb-2 text-[13px] font-bold text-ink">Trigger Performance by Source</div>
-              <div className="flex items-center gap-4">
-                <Donut segments={SOURCES.map(([, p, c]) => [p, c])} label="245,832" sub="Events" />
-                <ul className="space-y-1 text-[11.5px]">
-                  {SOURCES.map(([n, p, c]) => (
-                    <li key={n} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: c }} /><span className="text-ink-soft">{n}</span><span className="ml-auto font-semibold text-ink">{p}%</span></li>
+            <pre className="overflow-x-auto rounded-lg bg-[#0B1B3F] p-4 text-[12px] leading-relaxed text-white">{`POST /api/analytics-events
+Authorization: Bearer amp_<workspace API key>
+Content-Type: application/json
+
+{ "name": "trial.started",
+  "properties": { "contactId": "<CRM contact id>" } }`}</pre>
+          </div>
+          <p className="mt-3 text-[12px] text-ink-muted">Create API keys in <Link href="/app/integrations/api-keys" className="text-[#0B5CFF]">Integrations</Link>. Include a contactId so workflows can email or tag that contact. Unknown event names are registered automatically.</p>
+        </Panel>
+      )}
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <Panel title="Configured Events">
+          {events.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left text-[12.5px]">
+                <thead><tr className="border-b border-line bg-bg-soft/70 text-deep-navy">{["Event Name", "Source", "Usage", "Validation", "Last Updated", ""].map((h) => <th key={h} className="px-3 py-2.5 font-semibold">{h}</th>)}</tr></thead>
+                <tbody>
+                  {events.map((e) => (
+                    <tr key={e.id} className={cn("border-b border-line last:border-0", selected?.id === e.id && "bg-royal-tint/30")}>
+                      <td className="px-3 py-2.5"><Link href={`?event=${e.id}`} className="font-mono font-semibold text-deep-navy hover:text-[#0B5CFF]">{e.name}</Link>{e.description && <div className="text-[11.5px] text-ink-muted">{e.description}</div>}</td>
+                      <td className="px-3 py-2.5 text-ink-soft">{label(EVENT_SOURCES, e.source)}</td>
+                      <td className="px-3 py-2.5 text-ink-soft">{usage(e.name).length} workflow{usage(e.name).length === 1 ? "" : "s"} · {counts.find((x) => x.eventName === e.name)?.count ?? 0} in 30d</td>
+                      <td className="px-3 py-2.5">{e.validationStatus ? <Pill tone={e.validationStatus === "passed" ? "green" : "red"}>{e.validationStatus}</Pill> : <span className="text-ink-muted">Not run</span>}</td>
+                      <td className="px-3 py-2.5 text-ink-soft">{fmtDate(e.updatedAt)}</td>
+                      <td className="px-3 py-2.5">{canEdit && <span className="flex gap-1.5"><ActButton action={validateEvent.bind(null, e.id)}>Validate</ActButton><ActButton action={deleteEvent.bind(null, e.id)} confirm="Delete this event definition?">Delete</ActButton></span>}</td>
+                    </tr>
                   ))}
-                </ul>
-              </div>
+                </tbody>
+              </table>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-line bg-white shadow-card">
-              <div className="flex items-center justify-between border-b border-line px-4 py-3"><span className="text-[13px] font-bold text-ink">Trigger Library / Rules</span><a className="text-[11px] font-semibold text-violet">View all</a></div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-[12px]">
-                  <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Trigger</th><th className="px-2 py-2 font-semibold">Status</th><th className="px-2 py-2 font-semibold">Priority</th><th className="px-2 py-2 font-semibold">Source</th><th className="px-2 py-2 font-semibold">Last</th><th className="px-2 py-2" /></tr></thead>
-                  <tbody>
-                    {triggers.map((t) => (
-                      <tr key={t.id} className="border-b border-line/60 hover:bg-bg-soft/50">
-                        <td className="px-4 py-2 font-medium text-ink">{t.name}</td>
-                        <td className="px-2 py-2"><StatusPill tone={t.status === "Active" ? "green" : "gray"}>{t.status}</StatusPill></td>
-                        <td className="px-2 py-2"><StatusPill tone={t.priority === "High" ? "orange" : t.priority === "Medium" ? "amber" : "blue"}>{t.priority}</StatusPill></td>
-                        <td className="px-2 py-2 text-ink-soft">{t.source}</td>
-                        <td className="px-2 py-2 text-ink-muted">{t.lastFired}</td>
-                        <td className="px-2 py-2"><div className="flex gap-1 text-ink-muted"><Play className="h-3 w-3" /><Pencil className="h-3 w-3" /><MoreHorizontal className="h-3 w-3" /></div></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-line bg-white shadow-card">
-              <div className="flex items-center justify-between border-b border-line px-4 py-3"><span className="text-[13px] font-bold text-ink">Event Stream / Recent Events</span>{eventsLive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}</div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-[12px]">
-                  <thead><tr className="border-b border-line text-left text-[10.5px] uppercase tracking-wide text-ink-muted"><th className="px-4 py-2 font-semibold">Time</th><th className="px-2 py-2 font-semibold">Event</th><th className="px-2 py-2 font-semibold">Workflow</th><th className="px-2 py-2 font-semibold">Result</th></tr></thead>
-                  <tbody>
-                    {events.map((e) => (
-                      <tr key={e.id} className="border-b border-line/60 hover:bg-bg-soft/50">
-                        <td className="px-4 py-2 text-ink-muted">{e.when}</td>
-                        <td className="px-2 py-2 font-medium text-ink">{e.event}</td>
-                        <td className="px-2 py-2 text-ink-soft">{e.workflow}</td>
-                        <td className="px-2 py-2"><span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{e.result}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Execution steps */}
-          <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <div className="mb-4 text-[13px] font-bold text-ink">Workflow Execution / Logic Steps</div>
-            <div className="flex flex-wrap items-center gap-2">
-              {EXEC_STEPS.map((s, i) => (
-                <div key={s} className="flex items-center gap-2">
-                  <div className="flex flex-col items-center">
-                    <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold ${i < 5 ? "bg-emerald-500 text-white" : "border-2 border-ink/20 text-ink-muted"}`}>{i < 5 ? "✓" : i + 1}</div>
-                    <span className="mt-1 max-w-[80px] text-center text-[10px] text-ink-soft">{s}</span>
-                  </div>
-                  {i < EXEC_STEPS.length - 1 && <div className="h-px w-8 bg-line" />}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Best practices */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            {BEST.map(([t, d], i) => (
-              <div key={t} className="rounded-2xl border border-line bg-white p-4 shadow-card">
-                <div className="text-[12.5px] font-bold text-ink">{i + 1}. {t}</div>
-                <div className="mt-1 text-[11px] text-ink-muted">{d}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-            <div className="mb-1 text-[13px] font-bold text-ink">AI Insights & Operations</div>
-          </div>
-          <SideCard icon={AlertTriangle} tone="red" title="Error Alerts" value="5" hint="5 triggers have errors in the last 24 hours." cta="View Error Logs" />
-          <SideCard icon={Clock} tone="amber" title="Retry Queue" value="23" hint="23 events are queued for retry." cta="Manage Retry Queue" />
-          <SideCard icon={CheckCircle2} tone="green" title="Webhook Health" value="98.6%" hint="All systems operational · checked 2m ago" cta="View Details" />
-          <SideCard icon={Share2} tone="violet" title="Event Sources" value="18" hint="Connected sources across your ecosystem." cta="Manage Sources" />
-        </div>
+          ) : (
+            <EmptyState icon={CalendarDays} title="No events configured yet" body="Create or import an event to get started." action={<span className="flex gap-2">{create(primarySm, "Create Event")}{importDialog(outlineSm)}</span>} />
+          )}
+        </Panel>
+        <Panel title="Event Schema / Payload Preview">
+          {selected ? (
+            <>
+              <p className="mb-2 font-mono text-[13px] font-semibold text-deep-navy">{selected.name}</p>
+              <pre className="max-h-[320px] overflow-auto rounded-lg bg-bg-soft p-3 text-[12px] text-deep-navy">{selected.properties ? JSON.stringify(selected.properties, null, 2) : "No sample payload"}</pre>
+              <p className="mt-2 text-[12px] text-ink-muted">Used by: {usage(selected.name).map((f) => f.name).join(", ") || "no workflows yet"}</p>
+            </>
+          ) : (
+            <EmptyState icon={Braces} title="No schema selected" body="Choose an event to preview its schema and payload structure." />
+          )}
+        </Panel>
+      </div>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Panel title="Connected Sources">
+          {bySource.length || integrations ? (
+            <>
+              <BarList rows={[...BUILT_IN.map(([n, s]): [string, number] => [`${s}: ${n}`, flows.filter((f) => f.trigger === n).length]).filter(([, v]) => v > 0), ...bySource]} />
+              <p className="mt-3 text-[12px] text-ink-muted">{integrations} connected integration{integrations === 1 ? "" : "s"} in this workspace.</p>
+            </>
+          ) : (
+            <EmptyState icon={Plug} title="No sources connected" body="Connect a source to start receiving events." action={<Link href="/app/integrations" className={outlineSm}>Manage Sources</Link>} />
+          )}
+        </Panel>
+        <Panel title="Trigger Usage">
+          {triggerUse.length ? <BarList rows={triggerUse} /> : <EmptyState icon={Zap} title="No workflows yet" body="Events will appear here once they are used in workflows." action={<Link href="/app/marketing/workflows" className={outlineSm}>Open Workflow Builder</Link>} />}
+        </Panel>
+        <Panel title="Validation">
+          {passed || failed ? (
+            <ul className="space-y-2 text-[13px]">
+              <li className="flex justify-between"><span>Passed</span><b className="text-emerald-700">{passed}</b></li>
+              <li className="flex justify-between"><span>Failed</span><b className="text-red-600">{failed}</b></li>
+              <li className="flex justify-between"><span>Not validated</span><b>{events.length - passed - failed}</b></li>
+              <li className="text-[12px] text-ink-muted">Last run {fmtDateTime(events.map((e) => e.validatedAt).filter(Boolean).sort((a, b) => b!.getTime() - a!.getTime())[0])}</li>
+            </ul>
+          ) : (
+            <EmptyState icon={ShieldCheck} title="No validation has run" body="Validation checks each event's name and sample payload. Use Validate on an event." />
+          )}
+        </Panel>
       </div>
     </div>
-  );
-}
-
-function SideCard({ icon: Icon, tone, title, value, hint, cta }: { icon: typeof Clock; tone: string; title: string; value: string; hint: string; cta: string }) {
-  const toneCls: Record<string, string> = { red: "bg-red-500/10 text-red-600", amber: "bg-amber-500/10 text-amber-600", green: "bg-emerald-500/10 text-emerald-600", violet: "bg-violet/10 text-violet" };
-  return (
-    <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2"><div className={`flex h-8 w-8 items-center justify-center rounded-xl ${toneCls[tone]}`}><Icon className="h-4 w-4" /></div><span className="text-[12.5px] font-bold text-ink">{title}</span></div>
-        <span className="text-[16px] font-extrabold text-ink">{value}</span>
-      </div>
-      <div className="mt-1.5 text-[11px] text-ink-muted">{hint}</div>
-      <a className="mt-1.5 inline-block text-[11px] font-semibold text-violet">{cta} →</a>
-    </div>
-  );
-}
-
-function Donut({ segments, label, sub }: { segments: [number, string][]; label: string; sub: string }) {
-  let acc = 0;
-  const grad = segments.map(([pct, color]) => { const s = acc; acc += pct; return `${color} ${s}% ${acc}%`; }).join(", ");
-  return (
-    <div className="relative h-28 w-28 shrink-0 rounded-full" style={{ background: `conic-gradient(${grad})` }}>
-      <div className="absolute inset-[24%] flex flex-col items-center justify-center rounded-full bg-white"><span className="text-[13px] font-extrabold text-ink">{label}</span><span className="text-[9px] text-ink-muted">{sub}</span></div>
-    </div>
-  );
-}
-
-function AreaChart({ data }: { data: number[] }) {
-  const max = Math.max(...data) * 1.1, w = 320, h = 120, pad = 4;
-  const x = (i: number) => pad + (i * (w - pad * 2)) / (data.length - 1);
-  const y = (v: number) => h - pad - (v / max) * (h - pad * 2);
-  const line = data.map((v, i) => `${x(i)},${y(v)}`).join(" ");
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full">
-      <polygon fill="url(#g)" points={`${pad},${h - pad} ${line} ${w - pad},${h - pad}`} />
-      <polyline fill="none" stroke="#6A35F0" strokeWidth="2" points={line} />
-      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6A35F0" stopOpacity="0.25" /><stop offset="100%" stopColor="#6A35F0" stopOpacity="0" /></linearGradient></defs>
-    </svg>
   );
 }

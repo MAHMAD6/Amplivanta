@@ -1,34 +1,19 @@
 // Standalone BullMQ worker. Run alongside the app:  node scripts/worker.mjs
-// Processes workflow runs from Redis. Self-contained (own Prisma + step logic) so
-// it doesn't depend on the app's TS path aliases.
+// Consumes queued workflow runs and hands each to the app's engine through the
+// marketing cron endpoint, so step logic lives in one place (lib/workflow-engine.ts).
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
-import { PrismaClient } from "@prisma/client";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6390";
-const db = new PrismaClient();
+const APP_URL = (process.env.WORKER_APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000").replace(/\/$/, "");
 const connection = new IORedis(REDIS_URL, { maxRetriesPerRequest: null });
 
-function posOf(position) {
-  if (position && typeof position === "object" && "order" in position) return Number(position.order) || 0;
-  return 0;
-}
-
 async function runWorkflowExecution(executionId) {
-  const execution = await db.workflowExecution.findUnique({ where: { id: executionId } });
-  if (!execution) return;
-  const nodes = await db.workflowNode.findMany({ where: { workflowId: execution.workflowId } });
-  const ordered = nodes.sort((a, b) => posOf(a.position) - posOf(b.position));
-  for (const node of ordered) {
-    const step = await db.workflowExecutionStep.create({
-      data: { executionId, nodeId: node.id, status: "running", startedAt: new Date() },
-    });
-    await db.workflowExecutionStep.update({
-      where: { id: step.id },
-      data: { status: "completed", completedAt: new Date(), metadata: { type: node.type } },
-    });
-  }
-  await db.workflowExecution.update({ where: { id: executionId }, data: { status: "completed", completedAt: new Date() } });
+  const res = await fetch(`${APP_URL}/api/cron/marketing?execution=${encodeURIComponent(executionId)}`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${process.env.CRON_SECRET ?? ""}` },
+  });
+  if (!res.ok) throw new Error(`engine responded ${res.status}`);
 }
 
 const worker = new Worker(

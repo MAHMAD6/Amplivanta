@@ -83,13 +83,52 @@ export const APP_NAV: AppNavSection[] = [
     items: [
       { label: "Marketing Automation", href: "/app/marketing", icon: "workflow" },
       { label: "Campaigns", href: "/app/marketing/campaigns", icon: "megaphone" },
-      { label: "Workflow Builder", href: "/app/marketing/workflows", icon: "workflow" },
-      { label: "Email Campaigns", href: "/app/marketing/emails", icon: "megaphone" },
+      {
+        label: "Workflow Builder",
+        href: "/app/marketing/workflows",
+        icon: "workflow",
+        children: [
+          { label: "Automation Templates", href: "/app/marketing/templates" },
+          { label: "Trigger / Event Manager", href: "/app/marketing/triggers" },
+          { label: "Execution Logs", href: "/app/marketing/execution-logs" },
+          { label: "Automation Analytics", href: "/app/marketing/analytics" },
+        ],
+      },
+      {
+        label: "Email Campaigns",
+        href: "/app/marketing/emails",
+        icon: "megaphone",
+        children: [{ label: "Email Deliverability", href: "/app/marketing/deliverability" }],
+      },
       { label: "Email Composer", href: "/app/marketing/email-composer", icon: "wand" },
-      { label: "Lead Capture Forms", href: "/app/marketing/forms", icon: "template" },
-      { label: "Landing Pages", href: "/app/marketing/landing-pages", icon: "template" },
+      {
+        label: "Lead Capture Forms",
+        href: "/app/marketing/forms",
+        icon: "template",
+        children: [
+          { label: "Form Submissions Analytics", href: "/app/marketing/form-analytics" },
+          { label: "Conversion Settings", href: "/app/marketing/conversion-settings" },
+        ],
+      },
+      {
+        label: "Landing Pages",
+        href: "/app/marketing/landing-pages",
+        icon: "template",
+        children: [
+          { label: "Landing Page Templates", href: "/app/marketing/landing-page-templates" },
+          { label: "Landing Page Analytics", href: "/app/marketing/landing-page-analytics" },
+          { label: "Landing Page Publishing", href: "/app/marketing/publishing" },
+          { label: "Publish & Domains", href: "/app/marketing/domains" },
+          { label: "A/B Testing", href: "/app/marketing/ab-testing" },
+        ],
+      },
       { label: "Landing Page Builder", href: "/app/marketing/page-builder", icon: "wand" },
-      { label: "Segments & Audiences", href: "/app/marketing/segments", icon: "users" },
+      {
+        label: "Segments & Audiences",
+        href: "/app/marketing/segments",
+        icon: "users",
+        children: [{ label: "Lead Scoring", href: "/app/marketing/lead-scoring" }],
+      },
     ],
   },
   {

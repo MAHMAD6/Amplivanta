@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { route, parseBody, listParams } from "@/lib/tenant";
+import { triggerWorkflows } from "@/lib/server/marketing-runtime";
 
 // GET /api/analytics-events — event definitions + recent daily aggregates.
 export const GET = route(async (ctx, req) => {
@@ -34,5 +35,8 @@ export const POST = route(async (ctx, req) => {
     update: { count: { increment: 1 } },
     create: { workspaceId: ctx.workspaceId, eventName: name, date: day, count: 1 },
   });
+  const contactId = properties && typeof properties === "object" && typeof (properties as { contactId?: unknown }).contactId === "string" ? (properties as { contactId: string }).contactId : null;
+  const contact = contactId ? await db.contact.findFirst({ where: { id: contactId, workspaceId: ctx.workspaceId }, select: { id: true } }) : null;
+  await triggerWorkflows(ctx.workspaceId, `event:${name}`, { contactId: contact?.id ?? null, payload: { event: name } });
   return NextResponse.json({ ok: true }, { status: 201 });
 });

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { route, parseBody, listParams, requireRole } from "@/lib/tenant";
 import { emitWebhookEvent } from "@/lib/webhook-delivery";
+import { triggerWorkflows } from "@/lib/server/marketing-runtime";
 
 const createSchema = z.object({
   email: z.string().email().optional(),
@@ -52,5 +53,6 @@ export const POST = route(async (ctx, req) => {
   });
   // Notify any subscribed outbound webhooks.
   emitWebhookEvent(ctx.workspaceId, "contact.created", { id: contact.id, email: contact.email });
+  await triggerWorkflows(ctx.workspaceId, "contact.created", { contactId: contact.id });
   return NextResponse.json(contact, { status: 201 });
 });

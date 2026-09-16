@@ -12,7 +12,7 @@ export const POST = route<Params>(async (ctx, _req, { id }) => {
   if (!workflow) throw new ApiError(404, "Workflow not found");
 
   const execution = await db.workflowExecution.create({
-    data: { workflowId: id, status: "running", startedAt: new Date() },
+    data: { workflowId: id, status: "pending", startedAt: new Date() },
   });
   const mode = await enqueueWorkflowRun(execution.id);
 

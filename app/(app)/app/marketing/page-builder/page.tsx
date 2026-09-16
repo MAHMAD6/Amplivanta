@@ -1,152 +1,148 @@
 import type { Metadata } from "next";
-import { Save, Eye, Sparkles, Type, Image as ImageIcon, Layout, Columns, Minus, Video, Smartphone, Tablet, Monitor, Undo2, Redo2 } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
+import Link from "next/link";
+import { ExternalLink, LayoutTemplate } from "lucide-react";
+import { db } from "@/lib/db";
+import { EmptyState, KeyList, Panel, Pill, ScreenHeader, TabBar, fmtDateTime } from "@/components/amplivanta/screen-kit";
+import { headerOutline, headerPrimary, outlineSm } from "@/components/amplivanta/growth-kit";
+import { ActButton } from "@/components/amplivanta/growth-ui";
+import { FormDialog } from "@/components/amplivanta/creative-ui";
+import { PageBuilder } from "@/components/amplivanta/marketing-builders";
+import { LandingBlocks } from "@/components/amplivanta/landing-render";
+import { createLandingPage, publishPage, rollbackPage, savePage, setPageStatus, updatePublishSettings } from "@/app/(app)/app/marketing/actions";
+import { daysAgo, hostedPageUrl, marketingContext, pct } from "@/lib/server/marketing-screens";
+import { parseBlocks } from "@/lib/marketing/blocks";
+import { parseFields } from "@/lib/marketing/logic";
+import { EXPERIMENT_STATUSES, PAGE_STATUSES, label } from "@/lib/marketing/options";
 
 export const metadata: Metadata = { title: "Landing Page Builder" };
+export const dynamic = "force-dynamic";
 
-export default function PageBuilderPage() {
+const TABS = [["builder", "Builder"], ["design", "Design"], ["settings", "Settings"], ["ab", "A/B Test"], ["analytics", "Analytics"], ["history", "History"]] as const;
+
+export default async function LandingPageBuilderPage({ searchParams }: { searchParams: Promise<{ id?: string; tab?: string }> }) {
+  const sp = await searchParams;
+  const c = await marketingContext();
+  const canEdit = Boolean(c?.canEdit);
+  let pages: { id: string; title: string; status: string }[] = [];
+  let forms: { id: string; name: string; status: string }[] = [];
+  let domains: [string, string][] = [];
+  let wsSlug = "";
+  let page: Awaited<ReturnType<typeof db.landingPage.findFirst>> = null;
+  let versions: { version: number; createdAt: Date }[] = [];
+  let experiments: { id: string; name: string; status: string }[] = [];
+  let stats = { visits: 0, starts: 0, conv: 0 };
+  let form: Awaited<ReturnType<typeof db.form.findFirst>> = null;
+  if (c) {
+    try {
+      const w = c.workspaceId;
+      const [p, f, d, ws] = await Promise.all([
+        db.landingPage.findMany({ where: { workspaceId: w }, orderBy: { updatedAt: "desc" }, take: 200, select: { id: true, title: true, status: true } }),
+        db.form.findMany({ where: { workspaceId: w, status: { not: "archived" } }, select: { id: true, name: true, status: true } }),
+        db.domain.findMany({ where: { workspaceId: w, purpose: "publishing", isVerified: true }, select: { id: true, domain: true } }),
+        db.workspace.findUnique({ where: { id: w }, select: { slug: true } }),
+      ]);
+      pages = p;
+      forms = f;
+      domains = d.map((x) => [x.id, x.domain]);
+      wsSlug = ws?.slug ?? "";
+      const id = sp.id ?? pages[0]?.id;
+      if (id) {
+        page = await db.landingPage.findFirst({ where: { id, workspaceId: w } });
+        if (page) {
+          const since = daysAgo(30);
+          const [v, ex, visits, starts, conv, f2] = await Promise.all([
+            db.landingPageVersion.findMany({ where: { landingPageId: page.id }, orderBy: { version: "desc" }, take: 30, select: { version: true, createdAt: true } }),
+            db.experiment.findMany({ where: { workspaceId: w, landingPageId: page.id }, select: { id: true, name: true, status: true } }),
+            db.landingPageVisit.count({ where: { landingPageId: page.id, createdAt: { gte: since } } }),
+            db.landingPageVisit.count({ where: { landingPageId: page.id, createdAt: { gte: since }, formStarted: true } }),
+            db.landingPageVisit.count({ where: { landingPageId: page.id, createdAt: { gte: since }, converted: true } }),
+            page.formId ? db.form.findFirst({ where: { id: page.formId, workspaceId: w } }) : Promise.resolve(null),
+          ]);
+          versions = v;
+          experiments = ex;
+          stats = { visits, starts, conv };
+          form = f2;
+        }
+      }
+    } catch {
+      page = null;
+    }
+  }
+  const tab = (TABS.find(([k]) => k === sp.tab)?.[0] ?? "builder") as (typeof TABS)[number][0];
+  const create = (cls: string, text: string) => <FormDialog title="Create Landing Page" label={text} className={cls} action={createLandingPage} disabled={!canEdit} goTo="/app/marketing/page-builder?id=" submitLabel="Open builder" fields={[{ name: "title", label: "Page name", kind: "text", required: true }]} />;
+  const live = page && page.status === "published" && wsSlug ? hostedPageUrl(wsSlug, page.slug) : null;
+  const analytics = (
+    <Panel title="Analytics Overview" subtitle="Last 30 days" className="mt-4">
+      {stats.visits ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[["Visits", String(stats.visits)], ["Form starts", String(stats.starts)], ["Conversions", String(stats.conv)], ["Conversion rate", pct(stats.conv, stats.visits) ?? "—"]].map(([l, v]) => <div key={l} className="rounded-lg border border-line p-3 text-center"><div className="text-[12px] text-ink-muted">{l}</div><div className="text-[18px] font-bold text-deep-navy">{v}</div></div>)}
+        </div>
+      ) : (
+        <p className="py-4 text-center text-[13px] text-ink-soft"><b className="block text-deep-navy">No data yet</b>Publish the page to begin collecting analytics.</p>
+      )}
+    </Panel>
+  );
+
   return (
     <div className="mx-auto max-w-[1600px]">
-      <PageHeader
+      <ScreenHeader
+        crumbs={[["Home", "/app"], ["Marketing Automation", "/app/marketing"], ["Landing Page Builder"]]}
         title="Landing Page Builder"
-        subtitle="Design, publish and optimize hosted landing pages."
-        actions={
-          <>
-            <div className="flex items-center gap-1 rounded-xl border border-line bg-white p-1">
-              <button className="rounded-lg p-1.5 text-ink-muted"><Undo2 className="h-3.5 w-3.5" /></button>
-              <button className="rounded-lg p-1.5 text-ink-muted"><Redo2 className="h-3.5 w-3.5" /></button>
-            </div>
-            <div className="flex items-center gap-1 rounded-xl border border-line bg-white p-1">
-              <button className="rounded-lg bg-violet/10 p-1.5 text-violet"><Monitor className="h-3.5 w-3.5" /></button>
-              <button className="rounded-lg p-1.5 text-ink-muted"><Tablet className="h-3.5 w-3.5" /></button>
-              <button className="rounded-lg p-1.5 text-ink-muted"><Smartphone className="h-3.5 w-3.5" /></button>
-            </div>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink"><Eye className="h-3.5 w-3.5" /> Preview</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink"><Save className="h-3.5 w-3.5" /> Save</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet">Publish</button>
-          </>
-        }
+        actions={<>{live && <a href={live} target="_blank" rel="noopener noreferrer" className={headerOutline}>View live <ExternalLink className="h-4 w-4" /></a>}{page && <Link href={`?id=${page.id}&tab=design`} className={headerOutline}>Preview</Link>}{create(headerOutline, "+ New Page")}<Link href="/app/marketing/landing-page-templates" className={headerOutline}>Templates</Link></>}
       />
-      <MarketingSubnav />
-
-      <div className="mb-4 flex gap-4 border-b border-line text-[12.5px] font-semibold">
-        {["Builder", "Design", "Settings", "A/B Test", "Analytics", "History"].map((t, i) => (
-          <button key={t} className={`relative pb-2 ${i === 0 ? "text-violet" : "text-ink-muted"}`}>
-            {t}
-            {i === 0 && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-violet" />}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr_280px]">
-        <aside className="rounded-2xl border border-line bg-white p-3 shadow-card">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-ink-muted">Sections</div>
-          <div className="space-y-1.5">
-            {["Hero", "Features", "Social Proof", "Pricing", "Testimonials", "FAQ", "CTA", "Footer"].map((s) => (
-              <button key={s} className="w-full rounded-lg border border-line bg-white p-2 text-left text-[11.5px] font-semibold text-ink-soft hover:border-violet/30">{s}</button>
-            ))}
-          </div>
-          <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-ink-muted">Elements</div>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {[
-              { icon: Type, label: "Heading" },
-              { icon: Type, label: "Text" },
-              { icon: ImageIcon, label: "Image" },
-              { icon: Video, label: "Video" },
-              { icon: Columns, label: "Columns" },
-              { icon: Minus, label: "Divider" },
-              { icon: Layout, label: "Button" },
-              { icon: Sparkles, label: "AI Block" },
-            ].map((e) => (
-              <button key={e.label} className="flex flex-col items-center gap-1 rounded-xl border border-line p-2 text-[10.5px] font-semibold text-ink-soft hover:border-violet/30">
-                <e.icon className="h-3.5 w-3.5" />
-                {e.label}
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <div className="rounded-2xl border border-line bg-bg-soft p-6 shadow-card">
-          <div className="mx-auto max-w-[900px] rounded-2xl bg-white shadow-card">
-            <div className="border-b border-line p-4 text-center text-[11px] text-ink-muted">
-              Preview: <span className="font-mono text-ink">go.amplivanta.com/ai-advisor</span>
-            </div>
-            {/* Hero */}
-            <div className="relative overflow-hidden rounded-t-2xl bg-gradient-to-br from-violet/[0.06] to-orange-brand/[0.06] p-10 text-center">
-              <div className="mx-auto max-w-lg">
-                <span className="rounded-full border border-violet/20 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-violet">AI Advisor</span>
-                <h1 className="mt-4 text-3xl font-extrabold text-ink">Your always-on growth strategist.</h1>
-                <p className="mt-3 text-[13px] text-ink-soft">Ask any business question. Get scored answers, projected impact, one-click execution.</p>
-                <button className="mt-5 rounded-xl bg-grad-cta px-5 py-2.5 text-[13px] font-bold text-white shadow-violet">Start Free</button>
+      {pages.length > 0 && (
+        <form method="get" className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-2">
+          <label htmlFor="pg" className="px-2 text-[12.5px] font-semibold text-deep-navy">Page</label>
+          <select id="pg" name="id" defaultValue={page?.id} className="h-9 min-w-[240px] rounded-md border border-line bg-white px-2.5 text-[12.5px]">{pages.map((p) => <option key={p.id} value={p.id}>{p.title} · {label(PAGE_STATUSES, p.status)}</option>)}</select>
+          <button className="h-9 rounded-md border border-line px-4 text-[12.5px] font-semibold">Open</button>
+          {page && <span className="ml-auto flex items-center gap-2"><Pill tone={page.status === "published" ? "green" : page.status === "scheduled" ? "blue" : "gray"}>{label(PAGE_STATUSES, page.status)}</Pill>{canEdit && page.status === "published" && <ActButton action={setPageStatus.bind(null, page.id, "draft")} confirm="Unpublish this page? Visitors will get a not found page.">Unpublish</ActButton>}</span>}
+        </form>
+      )}
+      {!page ? (
+        <Panel><EmptyState icon={LayoutTemplate} title="Start building your landing page" body="Create a page from scratch or a template, add sections, connect a lead form and publish." action={<span className="flex gap-2">{create(headerPrimary, "Create Landing Page")}<Link href="/app/marketing/landing-page-templates" className={outlineSm}>Browse Templates</Link></span>} /></Panel>
+      ) : (
+        <>
+          <div className="mb-4"><TabBar active={TABS.find(([k]) => k === tab)![1]} tabs={TABS.map(([k, l]) => [l, `?id=${page!.id}&tab=${k}`])} /></div>
+          {tab === "builder" && (
+            <>
+              <PageBuilder
+                key={`${page.id}-${page.updatedAt.getTime()}`}
+                page={{ id: page.id, blocks: parseBlocks(page.content, "page"), settings: { title: page.title, slug: page.slug, metaTitle: page.metaTitle ?? "", metaDescription: page.metaDescription ?? "", socialImage: page.socialImage ?? "", formId: page.formId ?? "" } }}
+                forms={forms.map((f) => [f.id, `${f.name}${f.status === "active" ? "" : " (draft)"}`])}
+                canEdit={canEdit}
+                save={savePage}
+                publish={publishPage}
+                hostedBase={`/lp/${wsSlug}/`}
+              />
+              {analytics}
+            </>
+          )}
+          {tab === "design" && (
+            <Panel title="Preview" subtitle="Saved draft content. Unsaved builder changes are not shown.">
+              <div className="overflow-hidden rounded-xl border border-line">
+                <LandingBlocks preview blocks={parseBlocks(page.content, "page")} form={form ? { id: form.id, fields: parseFields(form.fields), submitButtonText: form.submitButtonText, requireConsent: form.requireConsent, consentText: form.consentText, privacyUrl: form.privacyUrl, termsUrl: form.termsUrl } : null} />
               </div>
-            </div>
-            {/* Features */}
-            <div className="grid grid-cols-3 gap-4 border-t border-line p-8">
-              {["Conversational", "Growth Score", "Take Action"].map((f) => (
-                <div key={f} className="rounded-xl border border-line p-4 text-center">
-                  <div className="mx-auto h-8 w-8 rounded-xl bg-violet/10" />
-                  <div className="mt-2 text-[12px] font-bold text-ink">{f}</div>
-                </div>
-              ))}
-            </div>
-            {/* Form section */}
-            <div className="border-t border-line bg-bg-soft/40 p-8">
-              <div className="mx-auto max-w-md rounded-2xl border border-line bg-white p-5">
-                <div className="text-[14px] font-bold text-ink">Get Early Access</div>
-                <div className="mt-3 space-y-2">
-                  <input placeholder="Work email" className="w-full rounded-lg border border-line px-3 py-2 text-[13px]" />
-                  <input placeholder="Company" className="w-full rounded-lg border border-line px-3 py-2 text-[13px]" />
-                  <button className="w-full rounded-xl bg-grad-cta py-2 text-[13px] font-bold text-white">Request Access</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-            <div className="mb-2 text-[12px] font-bold text-ink">Page Settings</div>
-            <div className="space-y-2 text-[11.5px]">
-              <div>
-                <label className="mb-1 block font-semibold text-ink-muted">URL slug</label>
-                <input defaultValue="/lp/ai-advisor" className="w-full rounded-lg border border-line px-2 py-1.5" />
-              </div>
-              <div>
-                <label className="mb-1 block font-semibold text-ink-muted">Meta title</label>
-                <input defaultValue="AI Advisor — Amplivanta" className="w-full rounded-lg border border-line px-2 py-1.5" />
-              </div>
-              <div>
-                <label className="mb-1 block font-semibold text-ink-muted">Meta description</label>
-                <textarea rows={2} defaultValue="Your always-on growth strategist, powered by AI." className="w-full resize-none rounded-lg border border-line px-2 py-1.5" />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-            <div className="mb-2 text-[12px] font-bold text-ink">SEO Score</div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-extrabold text-emerald-600">88</span>
-              <span className="text-[11px] text-ink-muted">/ 100</span>
-            </div>
-            <div className="mt-2 space-y-1 text-[11px] text-ink-soft">
-              <div>✓ Title within 55 chars</div>
-              <div>✓ Description present</div>
-              <div>✓ H1 detected</div>
-              <div className="text-amber-700">△ Missing OpenGraph image</div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-4">
-            <div className="mb-1 flex items-center gap-1 text-[12px] font-bold text-ink"><Sparkles className="h-3 w-3 text-violet" /> AI CRO Suggestions</div>
-            <ul className="mt-2 space-y-1 text-[11px] text-ink-soft">
-              <li>· Move form above the fold for +14% CR.</li>
-              <li>· Add customer logo strip below hero.</li>
-              <li>· Shorten headline to under 50 chars.</li>
-            </ul>
-          </div>
-        </aside>
-      </div>
+            </Panel>
+          )}
+          {tab === "settings" && (
+            <Panel title="Publish Settings" className="max-w-[640px]">
+              <FormDialog title="Publish Settings" label="Configure Settings" className={outlineSm} action={updatePublishSettings} disabled={!canEdit} submitLabel="Save" fields={[{ name: "id", kind: "hidden", value: page.id }, { name: "domainId", label: "Destination domain (verified)", kind: "select", options: domains, placeholder: "Amplivanta hosted URL", defaultValue: page.domainId ?? "" }, { name: "visibility", label: "Visibility", kind: "select", options: [["public", "Public (indexable)"], ["unlisted", "Unlisted (no search indexing)"]], defaultValue: page.visibility }, { name: "analyticsEnabled", label: "Analytics tracking", kind: "checkbox", defaultChecked: page.analyticsEnabled }]} />
+              <div className="mt-4"><KeyList rows={[["Hosted URL", `/lp/${wsSlug}/${page.slug}`], ["Visibility", page.visibility === "unlisted" ? "Unlisted" : "Public"], ["Analytics", page.analyticsEnabled ? "On" : "Off"], ["Meta title", page.metaTitle ?? "—"], ["Lead form", form?.name ?? "Not connected"]]} /></div>
+            </Panel>
+          )}
+          {tab === "ab" && (
+            <Panel title="A/B Tests on this page" action={<Link href={`/app/marketing/ab-testing?page=${page.id}`} className={outlineSm}>Create Test</Link>}>
+              {experiments.length ? <ul className="divide-y divide-line">{experiments.map((e) => <li key={e.id} className="flex justify-between py-2.5 text-[13px]"><Link href={`/app/marketing/ab-testing?id=${e.id}`} className="font-semibold text-deep-navy hover:text-[#0B5CFF]">{e.name}</Link><Pill tone={e.status === "running" ? "green" : "gray"}>{label(EXPERIMENT_STATUSES, e.status)}</Pill></li>)}</ul> : <p className="text-[13px] text-ink-soft">No tests use this page as variant A yet.</p>}
+            </Panel>
+          )}
+          {tab === "analytics" && analytics}
+          {tab === "history" && (
+            <Panel title="Version History">
+              {versions.length ? <ul className="divide-y divide-line">{versions.map((v, i) => <li key={v.version} className="flex items-center justify-between py-2.5 text-[13px]"><span className="font-semibold text-deep-navy">Version {v.version}{i === 0 && page!.status === "published" ? " · live" : ""}<span className="ml-2 font-normal text-ink-muted">{fmtDateTime(v.createdAt)}</span></span>{canEdit && i > 0 && <ActButton action={rollbackPage.bind(null, page!.id, v.version)} confirm="Publish this older version as the live page?">Roll back</ActButton>}</li>)}</ul> : <p className="text-[13px] text-ink-soft">No versions yet. Each publish creates a version you can roll back to.</p>}
+            </Panel>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { getSessionContext } from "@/lib/tenant";
 import { isStripeConfigured } from "@/lib/stripe";
 import { parseCreditPacks } from "@/lib/credits/policy";
 import { DEALS, ACTIVITIES, CRM_TASKS, CONTACTS, type Deal, type DealStage, type ActivityType, type Contact } from "@/lib/crm-data";
-import { CAMPAIGNS, WORKFLOWS, type Campaign, type Workflow } from "@/lib/marketing-auto-data";
 import { INTEGRATIONS, type Integration } from "@/lib/integrations-data";
 import { AUDIT_EVENTS } from "@/lib/settings-data";
 import {
@@ -276,80 +275,6 @@ export async function loadContacts(): Promise<Live<Contact>> {
     source: "Import",
     avatar: undefined
   }));
-  return { items, live: true };
-}
-
-const CAMPAIGN_STATUS: Record<string, Campaign["status"]> = {
-  live: "Active",
-  in_progress: "Active",
-  active: "Active",
-  paused: "Paused",
-  draft: "Draft",
-  scheduled: "Scheduled",
-  ended: "Ended",
-};
-
-export async function loadCampaigns(): Promise<Live<Campaign>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: CAMPAIGNS, live: false };
-  const rows = await db.campaign.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    include: { metrics: true },
-    orderBy: { createdAt: "desc" },
-    take: 60,
-  });
-  if (rows.length === 0) return { items: CAMPAIGNS, live: false };
-  const items: Campaign[] = rows.map((c) => {
-    const reach = c.metrics.reduce((s, m) => s + m.impressions, 0);
-    const clicks = c.metrics.reduce((s, m) => s + m.clicks, 0);
-    const conversions = c.metrics.reduce((s, m) => s + m.conversions, 0);
-    const revenue = c.metrics.reduce((s, m) => s + m.revenue, 0);
-    return {
-      id: c.id,
-      name: c.name,
-      type: "Multi-channel",
-      status: CAMPAIGN_STATUS[c.status] ?? "Draft",
-      channel: ["Email"],
-      reach,
-      ctr: reach ? Math.round((clicks / reach) * 1000) / 10 : 0,
-      conversions,
-      revenue,
-      goal: c.objective ?? "—",
-      progress: c.status === "live" || c.status === "active" ? 80 : 0,
-      owner: "Alex Johnson",
-      updatedAt: formatDistanceToNow(c.updatedAt, { addSuffix: true }),
-    };
-  });
-  return { items, live: true };
-}
-
-const WORKFLOW_STATUS: Record<string, Workflow["status"]> = { active: "Active", paused: "Paused", draft: "Draft" };
-
-export async function loadWorkflows(): Promise<Live<Workflow>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: WORKFLOWS, live: false };
-  const rows = await db.workflow.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    include: { _count: { select: { executions: true, nodes: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 60,
-  });
-  if (rows.length === 0) return { items: WORKFLOWS, live: false };
-  const items: Workflow[] = rows.map((w) => {
-    const trig = (w.trigger as { type?: string } | null)?.type ?? "manual";
-    return {
-      id: w.id,
-      name: w.name,
-      trigger: trig.replace(/_/g, " "),
-      status: WORKFLOW_STATUS[w.status] ?? "Draft",
-      enrolled: w._count.executions,
-      completed: w._count.executions,
-      conversionRate: 0,
-      revenue: 0,
-      channels: ["Email"],
-      updatedAt: formatDistanceToNow(w.updatedAt, { addSuffix: true }),
-    };
-  });
   return { items, live: true };
 }
 

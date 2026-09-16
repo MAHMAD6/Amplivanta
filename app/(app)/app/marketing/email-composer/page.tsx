@@ -1,122 +1,73 @@
 import type { Metadata } from "next";
-import { Save, Send, Eye, Sparkles, Type, Image as ImageIcon, Layout, Square as BtnI, Minus, Columns } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
+import { Mail } from "lucide-react";
+import { db } from "@/lib/db";
+import { EmptyState, Panel, Pill, ScreenHeader } from "@/components/amplivanta/screen-kit";
+import { headerOutline, headerPrimary } from "@/components/amplivanta/growth-kit";
+import { FormDialog } from "@/components/amplivanta/creative-ui";
+import { EmailComposer } from "@/components/amplivanta/marketing-builders";
+import { createEmailCampaign, saveEmail, scheduleEmail, sendEmailNow, sendTestEmail } from "@/app/(app)/app/marketing/actions";
+import { marketingContext } from "@/lib/server/marketing-screens";
+import { parseBlocks } from "@/lib/marketing/blocks";
+import { EMAIL_STATUSES, label } from "@/lib/marketing/options";
 
 export const metadata: Metadata = { title: "Email Composer" };
+export const dynamic = "force-dynamic";
 
-export default function EmailComposerPage() {
+export default async function EmailComposerPage({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
+  const sp = await searchParams;
+  const c = await marketingContext();
+  const canEdit = Boolean(c?.canEdit);
+  let emails: { id: string; name: string; status: string }[] = [];
+  let segments: [string, string][] = [];
+  let email: Awaited<ReturnType<typeof db.emailCampaign.findFirst>> = null;
+  if (c) {
+    try {
+      const w = c.workspaceId;
+      [emails, segments] = await Promise.all([
+        db.emailCampaign.findMany({ where: { workspaceId: w }, orderBy: { updatedAt: "desc" }, take: 100, select: { id: true, name: true, status: true } }),
+        db.segment.findMany({ where: { workspaceId: w, status: "active" }, select: { id: true, name: true, memberCount: true } }).then((r) => r.map((s): [string, string] => [s.id, `${s.name} (${s.memberCount})`])),
+      ]);
+      const id = sp.id ?? emails.find((e) => ["draft", "paused"].includes(e.status))?.id;
+      if (id) email = await db.emailCampaign.findFirst({ where: { id, workspaceId: w } });
+    } catch {
+      email = null;
+    }
+  }
+  const create = (cls: string, text: string) => <FormDialog title="Create Email Campaign" label={text} className={cls} action={createEmailCampaign} disabled={!canEdit} goTo="/app/marketing/email-composer?id=" submitLabel="Open composer" fields={[{ name: "name", label: "Campaign name", kind: "text", required: true }, { name: "subject", label: "Subject line", kind: "text" }, { name: "segmentId", label: "Audience", kind: "select", options: segments, placeholder: "Choose later" }]} />;
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["Home", "/app"], ["Marketing Automation", "/app/marketing"], ["Email Composer"]]}
         title="Email Composer"
-        subtitle="Drag-and-drop email creation with AI optimization."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink"><Save className="h-3.5 w-3.5" /> Save Draft</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-violet/30 bg-violet/5 px-4 text-[13px] font-bold text-violet"><Eye className="h-3.5 w-3.5" /> Preview</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Send className="h-3.5 w-3.5" /> Send / Schedule</button>
-          </>
-        }
+        actions={create(headerOutline, "+ New Email")}
       />
-      <MarketingSubnav />
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr_260px]">
-        {/* Blocks panel */}
-        <aside className="rounded-2xl border border-line bg-white p-3 shadow-card">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-ink-muted">Blocks</div>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { icon: Type, label: "Text" },
-              { icon: ImageIcon, label: "Image" },
-              { icon: BtnI, label: "Button" },
-              { icon: Columns, label: "Columns" },
-              { icon: Layout, label: "Header" },
-              { icon: Minus, label: "Divider" },
-            ].map((b) => (
-              <button key={b.label} className="flex flex-col items-center gap-1 rounded-xl border border-line p-3 text-[11px] font-semibold text-ink-soft hover:border-violet/30 hover:text-violet">
-                <b.icon className="h-4 w-4" />
-                {b.label}
-              </button>
-            ))}
-          </div>
-          <div className="mt-4 text-[11px] font-bold uppercase tracking-wider text-ink-muted">Saved Sections</div>
-          <div className="mt-2 space-y-2">
-            {["Header + Logo", "Footer + Social", "CTA Band"].map((s) => (
-              <button key={s} className="w-full rounded-lg border border-line bg-white p-2 text-left text-[11.5px] font-semibold text-ink-soft hover:border-violet/30">
-                {s}
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        {/* Canvas */}
-        <div className="rounded-2xl border border-line bg-bg-soft p-6 shadow-card">
-          <div className="mx-auto max-w-[600px] rounded-2xl bg-white shadow-card">
-            <div className="border-b border-line bg-bg-soft/60 p-3 text-[11px] text-ink-muted">
-              <div>From: <span className="font-semibold text-ink">Amplivanta &lt;hello@amplivanta.com&gt;</span></div>
-              <div>Subject: <span className="font-semibold text-ink">Growth playbooks for August 🚀</span></div>
-              <div>Preheader: <span className="text-ink">3 case studies + AI Advisor tips inside.</span></div>
-            </div>
-            <div className="p-8">
-              <div className="mb-4 h-12 w-40 rounded-md bg-gradient-to-br from-violet/40 to-orange-brand/40" />
-              <h1 className="mb-2 text-2xl font-extrabold text-ink">Hi {"{{firstName}}"},</h1>
-              <p className="mb-4 text-[14px] leading-relaxed text-ink-soft">
-                August is off to a strong start. Here are three growth playbooks our top customers are running right now — you can copy any of them in one click.
-              </p>
-              <div className="mb-4 aspect-video rounded-xl bg-gradient-to-br from-violet/25 via-fuchsia-200/60 to-orange-brand/25" />
-              <p className="mb-4 text-[14px] leading-relaxed text-ink-soft">
-                <strong>1. Trial-to-Paid Nurture (42% conversion)</strong> — five emails, one workflow. Steal it.
-              </p>
-              <button className="rounded-xl bg-grad-cta px-5 py-2.5 text-[13px] font-bold text-white shadow-violet">Get the Playbook →</button>
-            </div>
-            <div className="border-t border-line p-4 text-center text-[10.5px] text-ink-muted">
-              Amplivanta · Remote-first · Global · <a className="text-violet underline">Unsubscribe</a>
-            </div>
-          </div>
-        </div>
-
-        {/* Right: AI + score */}
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-4">
-            <div className="mb-2 flex items-center gap-1.5 text-[12px] font-bold text-ink"><Sparkles className="h-3.5 w-3.5 text-violet" /> AI Assistant</div>
-            <div className="space-y-2 text-[11px]">
-              <button className="w-full rounded-lg border border-line bg-white p-2 text-left font-semibold text-ink-soft hover:border-violet/30">Rewrite subject</button>
-              <button className="w-full rounded-lg border border-line bg-white p-2 text-left font-semibold text-ink-soft hover:border-violet/30">Generate 3 variants</button>
-              <button className="w-full rounded-lg border border-line bg-white p-2 text-left font-semibold text-ink-soft hover:border-violet/30">Personalize by segment</button>
-              <button className="w-full rounded-lg border border-line bg-white p-2 text-left font-semibold text-ink-soft hover:border-violet/30">Translate email</button>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-            <div className="mb-2 text-[12px] font-bold text-ink">Email Score</div>
-            <div className="flex items-baseline gap-2">
-              <div className="text-3xl font-extrabold text-emerald-600">82</div>
-              <div className="text-[11px] text-ink-muted">/ 100 · Good</div>
-            </div>
-            <div className="mt-3 space-y-2 text-[11px]">
-              {[
-                { l: "Subject length", s: "24 chars — great" },
-                { l: "Spam score", s: "0.8 — low risk" },
-                { l: "Preview text", s: "Present" },
-                { l: "Broken links", s: "None" },
-                { l: "Alt text on images", s: "Missing on 1", warn: true },
-              ].map((c, i) => (
-                <div key={i} className={`flex items-center justify-between rounded-lg px-2 py-1 ${c.warn ? "bg-amber-50 text-amber-700" : "text-ink-soft"}`}>
-                  <span>{c.l}</span>
-                  <span className="font-semibold">{c.s}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-            <div className="mb-2 text-[12px] font-bold text-ink">A/B Test</div>
-            <p className="text-[11px] text-ink-soft">Test subject line variants across 20% of your audience, send winner to remaining 80%.</p>
-            <button className="mt-2 w-full rounded-xl border border-violet/30 bg-violet/5 py-2 text-[12px] font-bold text-violet">Enable A/B Test</button>
-          </div>
-        </aside>
-      </div>
+      {emails.length > 0 && (
+        <form method="get" className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-2">
+          <label htmlFor="em" className="px-2 text-[12.5px] font-semibold text-deep-navy">Email</label>
+          <select id="em" name="id" defaultValue={email?.id} className="h-9 min-w-[260px] rounded-md border border-line bg-white px-2.5 text-[12.5px]">
+            {emails.map((e) => <option key={e.id} value={e.id}>{e.name} · {label(EMAIL_STATUSES, e.status)}</option>)}
+          </select>
+          <button className="h-9 rounded-md border border-line px-4 text-[12.5px] font-semibold">Open</button>
+          {email && <span className="ml-auto"><Pill tone={email.status === "sent" ? "green" : email.status === "draft" ? "gray" : "blue"}>{label(EMAIL_STATUSES, email.status)}</Pill></span>}
+        </form>
+      )}
+      {email ? (
+        <EmailComposer
+          key={`${email.id}-${email.updatedAt.getTime()}`}
+          email={{ id: email.id, blocks: parseBlocks(email.blocks, "email"), locked: ["sending", "sent"].includes(email.status), settings: { senderName: email.fromName ?? "", senderEmail: email.fromEmail ?? "", replyTo: email.replyTo ?? "", subject: email.subject, preheader: email.previewText ?? "", segmentId: email.segmentId ?? "" } }}
+          segments={segments}
+          canEdit={canEdit}
+          save={saveEmail}
+          sendTest={sendTestEmail}
+          sendNow={sendEmailNow}
+          schedule={scheduleEmail}
+        />
+      ) : (
+        <Panel>
+          <EmptyState icon={Mail} title="Start building your email" body="Create an email campaign, then drag content blocks to design it, choose an audience and schedule it." action={create(headerPrimary, "Create Email Campaign")} />
+        </Panel>
+      )}
     </div>
   );
 }

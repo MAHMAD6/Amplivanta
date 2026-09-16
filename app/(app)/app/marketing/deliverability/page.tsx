@@ -1,198 +1,168 @@
 import type { Metadata } from "next";
-import { ShieldCheck, Inbox, MailWarning, AlertTriangle, Award, BadgeCheck, Play, Filter, Download } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { LiveBadge } from "@/components/amplivanta/live-badge";
-import { loadDeliverability } from "@/lib/server/loaders";
+import { BookOpen, Globe, MailWarning, Send, ShieldCheck, Star, Users } from "lucide-react";
+import { db } from "@/lib/db";
+import { EmptyState, Panel, Pill, ScreenHeader, fmtDate } from "@/components/amplivanta/screen-kit";
+import { headerOutline, outlineSm } from "@/components/amplivanta/growth-kit";
+import { ActButton } from "@/components/amplivanta/growth-ui";
+import { FormDialog } from "@/components/amplivanta/creative-ui";
+import { addMarketingDomain, checkDomainRecords, removeMarketingDomain, suppressContacts } from "@/app/(app)/app/marketing/actions";
+import { daysAgo, marketingContext, pct } from "@/lib/server/marketing-screens";
+import { emailProvider } from "@/lib/email";
 
 export const metadata: Metadata = { title: "Email Deliverability" };
 export const dynamic = "force-dynamic";
 
-const AUTH = [
-  ["SPF", "Verified", "green"], ["DKIM", "Verified", "green"], ["DMARC", "Quarantine", "amber"],
-  ["BIMI", "Needs Setup", "orange"], ["Custom Tracking Domain", "Verified", "green"], ["Reverse DNS", "Verified", "green"],
-] as const;
-const REPUTATION = [["Domain Reputation", "Good"], ["IP Reputation", "Good"], ["Blocklist Monitoring", "Clean"], ["Complaint Risk", "Low"]] as const;
-const PROVIDERS = [
-  ["Gmail", 89.2, 28.4, 0.4, "Good"], ["Outlook", 86.1, 25.7, 0.6, "Good"], ["Yahoo", 84.9, 24.1, 0.8, "Good"], ["Apple Mail", 90.3, 31.1, 0.3, "Excellent"],
-] as const;
-const RECS = [
-  ["Improve DMARC alignment", "Move policy to reject for stronger protection.", "High Impact"],
-  ["Slow down sending ramp-up", "Increase gradual sending to avoid reputation spikes.", "Medium Impact"],
-  ["Clean inactive contacts", "Remove inactive subscribers to reduce bounces.", "High Impact"],
-  ["Separate promotional segments", "Better segmentation can improve inbox placement.", "Medium Impact"],
-] as const;
-const STEPS = [
-  ["Authenticate Domain", "Set up SPF, DKIM, DMARC and verify your domain."],
-  ["Warm Up IP & Domain", "Gradually increase volume to build reputation."],
-  ["Monitor Reputation", "Track inbox placement, complaints, and blocklists."],
-  ["Clean Your Lists", "Remove inactive and risky contacts regularly."],
-  ["Optimize Content", "Create relevant content and test subject lines."],
-] as const;
+type Checks = { ownership?: boolean; spf?: string | null; dmarc?: string | null };
 
 export default async function DeliverabilityPage() {
-  const { items: campaigns, live } = await loadDeliverability();
-  const avgInbox = Math.round((campaigns.reduce((s, c) => s + c.inboxRate, 0) / Math.max(campaigns.length, 1)) * 10) / 10;
-  const avgBounce = Math.round((campaigns.reduce((s, c) => s + c.bounceRate, 0) / Math.max(campaigns.length, 1)) * 100) / 100;
-  const avgSpam = Math.round((campaigns.reduce((s, c) => s + c.spamRate, 0) / Math.max(campaigns.length, 1)) * 100) / 100;
-  const score = Math.round(avgInbox);
+  const c = await marketingContext();
+  let domains: { id: string; domain: string; isVerified: boolean; verificationToken: string | null; authChecks: unknown; lastCheckedAt: Date | null; createdAt: Date }[] = [];
+  let suppressed: { reason: string; n: number }[] = [];
+  let sends = { total: 0, sent: 0, suppressed: 0, failed: 0 };
+  if (c) {
+    try {
+      const w = c.workspaceId;
+      const since = daysAgo(30);
+      const scope = { emailCampaign: { workspaceId: w }, createdAt: { gte: since } };
+      const [d, s, total, sent, sup, failed] = await Promise.all([
+        db.domain.findMany({ where: { workspaceId: w, purpose: "sending" }, orderBy: { createdAt: "desc" }, select: { id: true, domain: true, isVerified: true, verificationToken: true, authChecks: true, lastCheckedAt: true, createdAt: true } }),
+        db.$queryRaw<{ reason: string; n: bigint }[]>`SELECT s.reason, COUNT(DISTINCT s.email) AS n FROM "SuppressionEntry" s JOIN "Contact" c ON LOWER(c.email) = s.email WHERE c."workspaceId" = ${w} GROUP BY s.reason`,
+        db.emailSend.count({ where: scope }),
+        db.emailSend.count({ where: { ...scope, status: "sent" } }),
+        db.emailSend.count({ where: { ...scope, status: "suppressed" } }),
+        db.emailSend.count({ where: { ...scope, status: { in: ["failed", "not_sent"] } } }),
+      ]);
+      domains = d;
+      suppressed = s.map((x) => ({ reason: x.reason, n: Number(x.n) }));
+      sends = { total, sent, suppressed: sup, failed };
+    } catch {
+      domains = [];
+    }
+  }
+  const isAdmin = Boolean(c?.isAdmin);
+  const provider = emailProvider();
+  const add = (cls: string) => <FormDialog title="Add Sender Domain" label="+ Add Sender Domain" className={cls} action={addMarketingDomain} disabled={!isAdmin} submitLabel="Add domain" note="Only workspace admins can add domains. You'll get a TXT record to prove ownership." fields={[{ name: "domain", label: "Domain", kind: "text", required: true, placeholder: "mail.example.com" }, { name: "purpose", kind: "hidden", value: "sending" }]} />;
+  const totalSuppressed = suppressed.reduce((n, s) => n + s.n, 0);
+  const bounces = suppressed.filter((s) => s.reason === "bounce").reduce((n, s) => n + s.n, 0);
+  const complaints = suppressed.filter((s) => s.reason === "complaint").reduce((n, s) => n + s.n, 0);
 
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["Home", "/app"], ["Marketing Automation", "/app/marketing"], ["Email Deliverability"]]}
         title="Email Deliverability"
-        subtitle="Monitor inbox placement, sender reputation, and authentication to improve performance and build trust."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink hover:border-ink/30"><Filter className="h-3.5 w-3.5" /> Filters</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink hover:border-ink/30"><Download className="h-3.5 w-3.5" /> Export</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Play className="h-3.5 w-3.5" /> Run Deliverability Test</button>
-          </>
-        }
+        subtitle="Configure sender authentication and review deliverability diagnostics when email sending is enabled."
+        actions={<a href="#guide" className={headerOutline}>Review Setup Guide</a>}
       />
-      <MarketingSubnav />
-      {live && <LiveBadge label={`Live · ${campaigns.length} campaigns from database`} />}
-
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <KpiCard icon={ShieldCheck} tone="violet" label="Deliverability Score" value={`${score}/100`} />
-        <KpiCard icon={Inbox} tone="blue" label="Inbox Placement Rate" value={`${avgInbox}%`} />
-        <KpiCard icon={MailWarning} tone="teal" label="Bounce Rate" value={`${avgBounce}%`} deltaTone="down" />
-        <KpiCard icon={AlertTriangle} tone="orange" label="Spam Complaint Rate" value={`${avgSpam}%`} deltaTone="down" />
-        <KpiCard icon={Award} tone="indigo" label="Sender Reputation" value={null} deltaTone="neutral" />
-        <KpiCard icon={BadgeCheck} tone="green" label="Auth Coverage" value={null} deltaTone="neutral" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-4">
-          {/* Trend charts */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <ChartCard title="Inbox Placement Trend" series={[["Inbox", "#16A56A", [86, 89, 87, 88, 90, 88, 89]], ["Promotions", "#3B82F6", [10, 8, 11, 9, 7, 9, 8]], ["Spam", "#EF4444", [3, 2, 2, 3, 2, 2, 2]]]} />
-            <ChartCard title="Engagement vs Bounce" series={[["Open", "#7C3AED", [28, 31, 27, 29, 26, 30, 31]], ["Click", "#3B82F6", [11, 12, 10, 11, 12, 10, 12]], ["Bounce", "#EF4444", [1, 1, 1.2, 0.9, 1, 0.8, 1]]]} />
-          </div>
-
-          {/* Auth / reputation / providers */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Panel title="Authentication & Domain Setup">
-              {AUTH.map(([k, v, tone]) => (
-                <div key={k} className="flex items-center justify-between py-1 text-[12.5px]"><span className="text-ink-soft">{k}</span><StatusPill tone={tone}>{v}</StatusPill></div>
-              ))}
-            </Panel>
-            <Panel title="Sender Reputation">
-              {REPUTATION.map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between py-1 text-[12.5px]"><span className="text-ink-soft">{k}</span><StatusPill tone="green">{v}</StatusPill></div>
-              ))}
-              <div className="mt-2 flex items-center justify-between py-1 text-[12.5px]"><span className="text-ink-soft">Warm-up Status</span><span className="font-semibold text-ink">78%</span></div>
-            </Panel>
-            <Panel title="Mailbox Provider Performance">
-              <div className="overflow-x-auto">
-                <table className="w-full text-[11.5px]">
-                  <thead><tr className="text-left text-ink-muted"><th className="py-1 font-semibold">Provider</th><th className="py-1 font-semibold">Inbox</th><th className="py-1 font-semibold">Open</th><th className="py-1 font-semibold">Status</th></tr></thead>
-                  <tbody>
-                    {PROVIDERS.map(([p, inbox, open, , st]) => (
-                      <tr key={p} className="border-t border-line/60"><td className="py-1.5 font-medium text-ink">{p}</td><td className="py-1.5">{inbox}%</td><td className="py-1.5">{open}%</td><td className="py-1.5"><StatusPill tone={st === "Excellent" ? "green" : "green"}>{st}</StatusPill></td></tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Panel>
-          </div>
-
-          {/* Campaign table */}
-          <div className="rounded-2xl border border-line bg-white shadow-card">
-            <div className="border-b border-line px-4 py-3 text-[13px] font-bold text-ink">Recent Campaign Deliverability</div>
+      {!provider && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-900">Email sending is not configured on this server, so bounce, complaint and reputation data cannot be collected yet.</p>}
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <Panel title="Sender Domains" subtitle="Manage the domains you'll use to send email." action={domains.length ? add(outlineSm) : undefined}>
+          {domains.length ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-[12.5px]">
-                <thead><tr className="border-b border-line text-left text-[11px] uppercase tracking-wide text-ink-muted">
-                  <th className="px-4 py-2 font-semibold">Campaign</th><th className="px-3 py-2 font-semibold">Sent</th><th className="px-3 py-2 font-semibold">Delivered</th><th className="px-3 py-2 font-semibold">Inbox %</th><th className="px-3 py-2 font-semibold">Open %</th><th className="px-3 py-2 font-semibold">Bounce %</th><th className="px-3 py-2 font-semibold">Status</th>
-                </tr></thead>
+              <table className="w-full min-w-[560px] text-left text-[12.5px]">
+                <thead><tr className="border-b border-line bg-bg-soft/70 text-deep-navy">{["Domain", "Status", "Authentication", "Added On", ""].map((h) => <th key={h} className="px-3 py-2.5 font-semibold">{h}</th>)}</tr></thead>
                 <tbody>
-                  {campaigns.map((c) => (
-                    <tr key={c.id} className="border-b border-line/60 hover:bg-bg-soft/50">
-                      <td className="px-4 py-2.5 font-medium text-ink">{c.name}</td>
-                      <td className="px-3 py-2.5 text-ink-soft">{c.sent.toLocaleString()}</td>
-                      <td className="px-3 py-2.5 text-ink-soft">{c.delivered.toLocaleString()}</td>
-                      <td className="px-3 py-2.5 text-ink-soft">{c.inboxRate}%</td>
-                      <td className="px-3 py-2.5 text-ink-soft">{c.openRate}%</td>
-                      <td className="px-3 py-2.5 text-ink-soft">{c.bounceRate}%</td>
-                      <td className="px-3 py-2.5"><StatusPill tone={c.status === "Good" ? "green" : "amber"}>{c.status}</StatusPill></td>
-                    </tr>
-                  ))}
+                  {domains.map((d) => {
+                    const a = (d.authChecks ?? {}) as Checks;
+                    return (
+                      <tr key={d.id} className="border-b border-line last:border-0">
+                        <td className="px-3 py-2.5 font-semibold text-deep-navy">{d.domain}</td>
+                        <td className="px-3 py-2.5"><Pill tone={d.isVerified ? "green" : "amber"}>{d.isVerified ? "Verified" : "Pending"}</Pill></td>
+                        <td className="px-3 py-2.5 text-ink-soft">{d.lastCheckedAt ? `SPF ${a.spf ? "✓" : "✗"} · DMARC ${a.dmarc ? "✓" : "✗"}` : "Not checked"}</td>
+                        <td className="px-3 py-2.5 text-ink-soft">{fmtDate(d.createdAt)}</td>
+                        <td className="px-3 py-2.5">{isAdmin && <span className="flex gap-1.5"><ActButton action={checkDomainRecords.bind(null, d.id)}>Check DNS</ActButton><ActButton action={removeMarketingDomain.bind(null, d.id)} confirm="Remove this domain?">Remove</ActButton></span>}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-          </div>
-
-          {/* Workflow */}
-          <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <div className="mb-4 text-[13px] font-bold text-ink">Deliverability Workflow</div>
-            <div className="flex flex-wrap gap-2">
-              {STEPS.map(([t, d], i) => (
-                <div key={t} className="flex-1 min-w-[150px] rounded-xl border border-line bg-bg-soft/40 p-3">
-                  <div className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-grad-brand text-[12px] font-bold text-white">{i + 1}</div>
-                  <div className="text-[12.5px] font-semibold text-ink">{t}</div>
-                  <div className="mt-0.5 text-[11px] text-ink-muted">{d}</div>
-                </div>
-              ))}
+          ) : (
+            <EmptyState icon={Globe} title="No sender domains added" body="Add a sender domain to get started with email deliverability." action={add(outlineSm)} />
+          )}
+        </Panel>
+        <Panel title="Authentication Records" subtitle="Set up SPF, DKIM, and DMARC to authenticate your domain.">
+          {domains.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-left text-[12px]">
+                <thead><tr className="border-b border-line bg-bg-soft/70 text-deep-navy">{["Record Type", "Host / Name", "Value", "Status"].map((h) => <th key={h} className="px-3 py-2.5 font-semibold">{h}</th>)}</tr></thead>
+                <tbody>
+                  {domains.flatMap((d) => {
+                    const a = (d.authChecks ?? {}) as Checks;
+                    const checked = Boolean(d.lastCheckedAt);
+                    return [
+                      ["TXT (ownership)", `_amplivanta.${d.domain}`, d.verificationToken ?? "—", d.isVerified ? "Found" : checked ? "Missing" : "Not checked"],
+                      ["TXT (SPF)", d.domain, a.spf ?? "v=spf1 include:<your provider> ~all", a.spf ? "Found" : checked ? "Missing" : "Not checked"],
+                      ["TXT (DMARC)", `_dmarc.${d.domain}`, a.dmarc ?? `v=DMARC1; p=none; rua=mailto:dmarc@${d.domain}`, a.dmarc ? "Found" : checked ? "Missing" : "Not checked"],
+                      ["CNAME (DKIM)", "Provided by your email provider", "Selector records from the sending provider", "Set up with provider"],
+                    ].map(([t, host, value, status]) => (
+                      <tr key={`${d.id}-${t}`} className="border-b border-line last:border-0">
+                        <td className="px-3 py-2 font-semibold text-deep-navy">{t}</td>
+                        <td className="break-all px-3 py-2 font-mono text-ink-soft">{host}</td>
+                        <td className="break-all px-3 py-2 font-mono text-ink-soft">{value}</td>
+                        <td className="px-3 py-2"><Pill tone={status === "Found" ? "green" : status === "Missing" ? "red" : "gray"}>{status}</Pill></td>
+                      </tr>
+                    ));
+                  })}
+                </tbody>
+              </table>
+              <p className="mt-2 text-[11.5px] text-ink-muted">Values shown for SPF and DMARC are the records found in DNS, or a starting point when none exist.</p>
             </div>
-          </div>
-        </div>
-
-        {/* Right sidebar */}
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-            <div className="mb-3 flex items-center justify-between"><span className="text-[13px] font-bold text-ink">AI Recommendations</span></div>
-            <div className="space-y-3">
-              {RECS.map(([t, d, tag]) => (
-                <div key={t} className="border-b border-line/60 pb-3 last:border-0">
-                  <div className="text-[12.5px] font-semibold text-ink">{t}</div>
-                  <div className="mt-0.5 text-[11px] text-ink-muted">{d}</div>
-                  <StatusPill tone={tag.startsWith("High") ? "orange" : "amber"} className="mt-1">{tag}</StatusPill>
-                </div>
-              ))}
-            </div>
-          </div>
-          <SideStat title="Suppression Health" value="2.4%" hint="Total Suppressed 24,618" />
-          <SideStat title="Blocklist Alerts" value="0" hint="Active Listings · All clear" tone="green" />
-          <SideStat title="Seed Test Results" value="85.7%" hint="Avg Inbox Placement · +6.2%" tone="green" />
-        </div>
+          ) : (
+            <EmptyState icon={ShieldCheck} title="No authentication records configured" body="Add a sender domain, then check its DNS to see which authentication records are in place." />
+          )}
+        </Panel>
       </div>
-    </div>
-  );
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div className="rounded-2xl border border-line bg-white p-4 shadow-card"><div className="mb-2 text-[12.5px] font-bold text-ink">{title}</div>{children}</div>;
-}
-function SideStat({ title, value, hint, tone }: { title: string; value: string; hint: string; tone?: string }) {
-  return (
-    <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-      <div className="text-[12.5px] font-bold text-ink">{title}</div>
-      <div className={`mt-1 text-[22px] font-extrabold ${tone === "green" ? "text-emerald-600" : "text-ink"}`}>{value}</div>
-      <div className="mt-0.5 text-[11px] text-ink-muted">{hint}</div>
-    </div>
-  );
-}
-
-function ChartCard({ title, series }: { title: string; series: [string, string, number[]][] }) {
-  const max = Math.max(...series.flatMap(([, , d]) => d)) * 1.15;
-  const days = ["May 12", "May 13", "May 14", "May 15", "May 16", "May 17", "May 18"];
-  const w = 320, h = 120, pad = 4;
-  const x = (i: number) => pad + (i * (w - pad * 2)) / (days.length - 1);
-  const y = (v: number) => h - pad - (v / max) * (h - pad * 2);
-  return (
-    <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-[13px] font-bold text-ink">{title}</span>
-        <div className="flex gap-2 text-[10px]">{series.map(([n, c]) => <span key={n} className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{n}</span>)}</div>
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Panel title="Suppression Management" subtitle="Contacts who won't receive marketing email.">
+          {totalSuppressed ? (
+            <ul className="space-y-2 text-[13px]">
+              {suppressed.map((s) => <li key={s.reason} className="flex justify-between"><span className="capitalize">{s.reason === "unsubscribe" ? "Unsubscribed" : s.reason}</span><b>{s.n}</b></li>)}
+            </ul>
+          ) : (
+            <EmptyState icon={Users} title="No suppression data yet" body="Unsubscribes, hard bounces and complaints from your contacts will appear here." compact />
+          )}
+          <div className="mt-3 text-center">
+            <FormDialog title="Manage Suppressions" label="Manage Suppressions" className={outlineSm} action={suppressContacts} disabled={!isAdmin} submitLabel="Suppress" note="Adds an unsubscribe for addresses that are contacts in this workspace. Suppressions can't be lifted here, because the recipient's own opt-out must be respected." fields={[{ name: "emails", label: "Email addresses", kind: "textarea", rows: 5, required: true, placeholder: "one@example.com, two@example.com" }]} />
+          </div>
+        </Panel>
+        <Panel title="Bounce & Complaint Diagnostics" subtitle="Last 30 days of sends plus provider feedback.">
+          {sends.total || bounces || complaints ? (
+            <ul className="space-y-2 text-[13px]">
+              <li className="flex justify-between"><span>Hard bounces (contacts)</span><b>{bounces}</b></li>
+              <li className="flex justify-between"><span>Spam complaints (contacts)</span><b>{complaints}</b></li>
+              <li className="flex justify-between"><span>Blocked by suppression</span><b>{sends.suppressed}</b></li>
+              <li className="flex justify-between"><span>Not delivered</span><b>{sends.failed}</b></li>
+            </ul>
+          ) : (
+            <EmptyState icon={MailWarning} title="No diagnostics available yet" body="Enable email sending to view bounce and complaint diagnostics." compact />
+          )}
+        </Panel>
+        <Panel title="Sending Reputation" subtitle="Based on your last 30 days of sends.">
+          {sends.total ? (
+            <ul className="space-y-2 text-[13px]">
+              <li className="flex justify-between"><span>Delivery rate</span><b>{pct(sends.sent, sends.total)}</b></li>
+              <li className="flex justify-between"><span>Complaint share of contacts</span><b>{complaints}</b></li>
+              <li className="text-[12px] text-ink-muted">Keep complaints under 0.1% and bounces under 2% of sends.</li>
+            </ul>
+          ) : (
+            <EmptyState icon={Star} title="No reputation data yet" body="Reputation metrics will appear here once email sending is enabled." compact />
+          )}
+        </Panel>
       </div>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full">
-        {series.map(([n, c, d]) => (
-          <polyline key={n} fill="none" stroke={c} strokeWidth="2" points={d.map((v, i) => `${x(i)},${y(v)}`).join(" ")} />
-        ))}
-      </svg>
-      <div className="mt-1 flex justify-between text-[9px] text-ink-muted">{days.map((d) => <span key={d}>{d}</span>)}</div>
+      <Panel title="Deliverability Guidance" subtitle="Follow best practices to improve your email deliverability." id="guide">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            [ShieldCheck, "Authenticate Your Domain", "Set up SPF, DKIM, and DMARC to build trust and protect your domain."],
+            [Users, "Keep Your List Clean", "Remove inactive or invalid addresses to reduce bounces and complaints."],
+            [Send, "Send Relevant Content", "Deliver valuable, relevant content that your audience wants to receive."],
+            [BookOpen, "Monitor & Improve", "Continuously monitor performance and follow best practices to maintain a strong reputation."],
+          ].map(([Icon, t, b]) => {
+            const I = Icon as typeof ShieldCheck;
+            return <div key={t as string} className="flex gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-royal-tint text-[#0B5CFF]"><I className="h-5 w-5" /></span><div><h3 className="text-[14px] font-semibold text-deep-navy">{t as string}</h3><p className="text-[12.5px] text-ink-soft">{b as string}</p></div></div>;
+          })}
+        </div>
+      </Panel>
     </div>
   );
 }

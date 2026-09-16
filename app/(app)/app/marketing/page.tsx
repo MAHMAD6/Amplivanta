@@ -1,173 +1,187 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Users, DollarSign, Target, Workflow as WFI, Mail, TrendingUp, Plus, Sparkles, AlertTriangle } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { MarketingSubnav } from "@/components/amplivanta/marketing-subnav";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { loadCampaigns, loadWorkflows } from "@/lib/server/loaders";
-import { CAMPAIGN_STATUS_TONE } from "@/lib/marketing-auto-data";
+import { Activity, Bell, Eye, FileText, Mail, Megaphone, Star, UserPlus, Workflow } from "lucide-react";
+import { db } from "@/lib/db";
+import { BarList, EmptyState, Panel, Pill, RangeSelect, ScreenHeader, StatGrid, fmtDateTime, figure } from "@/components/amplivanta/screen-kit";
+import { FormDialog } from "@/components/amplivanta/creative-ui";
+import { headerOutline, outlineSm } from "@/components/amplivanta/growth-kit";
+import { createCampaign, createForm, createLandingPage, createWorkflow } from "@/app/(app)/app/marketing/actions";
+import { daysAgo, marketingContext, rangeDays, triggerOptions } from "@/lib/server/marketing-screens";
+import { actionLabel } from "@/lib/server/workspace-screens";
+import { CAMPAIGN_CHANNELS, CAMPAIGN_GOALS, CAMPAIGN_STATUSES, label } from "@/lib/marketing/options";
+import { emailProvider } from "@/lib/email";
 
 export const metadata: Metadata = { title: "Marketing Automation" };
+export const dynamic = "force-dynamic";
 
-export default async function MarketingDashboardPage() {
-  const [{ items: CAMPAIGNS }, { items: WORKFLOWS }] = await Promise.all([
-    loadCampaigns(),
-    loadWorkflows(),
-  ]);
+const crumbs: [string, string?][] = [["Home", "/app"], ["Marketing Automation", "/app/marketing"], ["Dashboard"]];
+const MA_PREFIXES = ["campaign.", "automation.", "email.", "form.", "page.", "segment.", "scoring.", "experiment."];
 
-  const active = CAMPAIGNS.filter((c) => c.status === "Active").slice(0, 4);
-  const activeWfs = WORKFLOWS.filter((w) => w.status === "Active").slice(0, 4);
+type SP = { days?: string; campaign?: string; workflow?: string };
+
+export default async function MarketingDashboardPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const days = rangeDays(sp.days ?? "7");
+  const c = await marketingContext();
+  const from = daysAgo(days);
+  let d = {
+    activeCampaigns: 0, activeWorkflows: 0, emailsSent: 0, newLeads: 0, submissions: 0, views: 0,
+    campaigns: [] as { id: string; name: string; status: string; channel: string | null; startDate: Date | null; endDate: Date | null; budget: number | null; spend: number | null }[],
+    runs: [] as [string, number][], workflows: [] as { id: string; name: string }[],
+    funnel: { visitors: 0, leads: 0, qualified: 0, opportunities: 0, customers: 0 },
+    activity: [] as { id: string; action: string; createdAt: Date }[],
+    alerts: [] as { title: string; href: string }[],
+    content: [] as { label: string; value: string; href: string }[],
+    triggers: [] as [string, string][],
+  };
+  if (c) {
+    const w = c.workspaceId;
+    try {
+      const [ac, aw, es, nl, fs, lv, camps, flows, execs, qual, opps, won, logs, failed, scheduledNoProvider, idleForms, unverified, pageConv, emailOpens, triggers] = await Promise.all([
+        db.campaign.count({ where: { workspaceId: w, status: "active" } }),
+        db.workflow.count({ where: { workspaceId: w, status: "active" } }),
+        db.emailSend.count({ where: { emailCampaign: { workspaceId: w }, status: "sent", createdAt: { gte: from } } }),
+        db.contact.count({ where: { workspaceId: w, createdAt: { gte: from } } }),
+        db.formSubmission.count({ where: { form: { workspaceId: w }, createdAt: { gte: from } } }),
+        db.landingPageVisit.count({ where: { workspaceId: w, createdAt: { gte: from } } }),
+        db.campaign.findMany({ where: { workspaceId: w, ...(sp.campaign ? { id: sp.campaign } : { status: { not: "archived" } }) }, orderBy: { updatedAt: "desc" }, take: 6, select: { id: true, name: true, status: true, channel: true, startDate: true, endDate: true, budget: true, spend: true } }),
+        db.workflow.findMany({ where: { workspaceId: w }, select: { id: true, name: true }, orderBy: { updatedAt: "desc" }, take: 50 }),
+        db.workflowExecution.groupBy({ by: ["workflowId"], where: { workflow: { workspaceId: w }, startedAt: { gte: from }, environment: "live", ...(sp.workflow ? { workflowId: sp.workflow } : {}) }, _count: true }),
+        db.contact.count({ where: { workspaceId: w, createdAt: { gte: from }, status: "qualified" } }),
+        db.deal.count({ where: { workspaceId: w, createdAt: { gte: from } } }),
+        db.deal.count({ where: { workspaceId: w, status: "won", updatedAt: { gte: from } } }),
+        db.auditLog.findMany({ where: { workspaceId: w, OR: MA_PREFIXES.map((p) => ({ action: { startsWith: p } })) }, orderBy: { createdAt: "desc" }, take: 8, select: { id: true, action: true, createdAt: true } }),
+        db.workflowExecution.count({ where: { workflow: { workspaceId: w }, status: "failed", startedAt: { gte: from } } }),
+        emailProvider() ? 0 : db.emailCampaign.count({ where: { workspaceId: w, status: "scheduled" } }),
+        db.form.count({ where: { workspaceId: w, status: "active", submissions: { none: {} } } }),
+        db.domain.count({ where: { workspaceId: w, isVerified: false } }),
+        db.landingPageVisit.groupBy({ by: ["landingPageId"], where: { workspaceId: w, createdAt: { gte: from }, converted: true }, _count: true, orderBy: { _count: { landingPageId: "desc" } }, take: 3 }),
+        db.emailSend.groupBy({ by: ["emailCampaignId"], where: { emailCampaign: { workspaceId: w }, openedAt: { gte: from } }, _count: true, orderBy: { _count: { emailCampaignId: "desc" } }, take: 3 }),
+        triggerOptions(w),
+      ]);
+      const pages = await db.landingPage.findMany({ where: { id: { in: pageConv.map((p) => p.landingPageId) } }, select: { id: true, title: true } });
+      const emails = await db.emailCampaign.findMany({ where: { id: { in: emailOpens.map((e) => e.emailCampaignId!).filter(Boolean) } }, select: { id: true, name: true } });
+      d = {
+        activeCampaigns: ac, activeWorkflows: aw, emailsSent: es, newLeads: nl, submissions: fs, views: lv, campaigns: camps,
+        runs: execs.map((e): [string, number] => [flows.find((f) => f.id === e.workflowId)?.name ?? "Workflow", e._count]).sort((a, b) => b[1] - a[1]),
+        workflows: flows,
+        funnel: { visitors: lv, leads: nl, qualified: qual, opportunities: opps, customers: won },
+        activity: logs,
+        alerts: [
+          ...(failed ? [{ title: `${failed} workflow run${failed === 1 ? "" : "s"} failed in this period`, href: "/app/marketing/execution-logs?status=failed" }] : []),
+          ...(scheduledNoProvider ? [{ title: `${scheduledNoProvider} scheduled email${scheduledNoProvider === 1 ? "" : "s"} can't send: email sending is not configured`, href: "/app/marketing/emails" }] : []),
+          ...(idleForms ? [{ title: `${idleForms} active form${idleForms === 1 ? " has" : "s have"} no submissions yet`, href: "/app/marketing/form-analytics" }] : []),
+          ...(unverified ? [{ title: `${unverified} domain${unverified === 1 ? " is" : "s are"} not verified`, href: "/app/marketing/domains" }] : []),
+        ],
+        content: [
+          ...pageConv.map((p) => ({ label: pages.find((x) => x.id === p.landingPageId)?.title ?? "Landing page", value: `${p._count} conversions`, href: "/app/marketing/landing-page-analytics" })),
+          ...emailOpens.map((e) => ({ label: emails.find((x) => x.id === e.emailCampaignId)?.name ?? "Email", value: `${e._count} opens`, href: "/app/marketing/emails" })),
+        ],
+        triggers,
+      };
+    } catch {
+      /* database unavailable: empty states */
+    }
+  }
+  const canEdit = Boolean(c?.canEdit);
+  const funnel: [string, number][] = [["Visitors", d.funnel.visitors], ["Leads", d.funnel.leads], ["Qualified Leads", d.funnel.qualified], ["Opportunities", d.funnel.opportunities], ["Customers", d.funnel.customers]];
+  const hasFunnel = funnel.some(([, v]) => v > 0);
+  const filter = (name: "campaign" | "workflow", all: string, options: { id: string; name: string }[]) => (
+    <form method="get" className="flex items-center gap-1.5">
+      <input type="hidden" name="days" value={days} />
+      {name === "workflow" && sp.campaign && <input type="hidden" name="campaign" value={sp.campaign} />}
+      {name === "campaign" && sp.workflow && <input type="hidden" name="workflow" value={sp.workflow} />}
+      <select name={name} defaultValue={sp[name] ?? ""} aria-label={all} className="h-9 rounded-md border border-line bg-white px-2 text-[12.5px]">
+        <option value="">{all}</option>
+        {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+      </select>
+      <button className="h-9 rounded-md border border-line px-3 text-[12px] font-semibold">Go</button>
+    </form>
+  );
 
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={crumbs}
         title="Marketing Automation"
-        subtitle="Command center for campaigns, workflows, lead capture and marketing performance."
         actions={
           <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink">📅 Last 30 Days</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet">
-              <Plus className="h-3.5 w-3.5" /> New Campaign
-            </button>
+            <RangeSelect days={days} />
+            <FormDialog title="Create Campaign" label="+ Create Campaign" className={headerOutline} action={createCampaign} disabled={!canEdit} goTo="/app/marketing/campaigns?c=" submitLabel="Create campaign" fields={[{ name: "name", label: "Campaign name", kind: "text", required: true }, { name: "channel", label: "Channel", kind: "select", options: CAMPAIGN_CHANNELS, placeholder: "Select" }, { name: "goal", label: "Goal", kind: "select", options: CAMPAIGN_GOALS, placeholder: "Select" }, { name: "startDate", label: "Start date", kind: "date" }, { name: "endDate", label: "End date", kind: "date" }]} />
+            <FormDialog title="Build Workflow" label="Build Workflow" className={headerOutline} action={createWorkflow} disabled={!canEdit} goTo="/app/marketing/workflows?id=" submitLabel="Open builder" fields={[{ name: "name", label: "Workflow name", kind: "text", required: true }, { name: "trigger", label: "Trigger", kind: "select", options: d.triggers, placeholder: "Choose later" }]} />
+            <FormDialog title="Create Form" label="Create Form" className={headerOutline} action={createForm} disabled={!canEdit} goTo="/app/marketing/forms?id=" submitLabel="Open form builder" fields={[{ name: "name", label: "Form name", kind: "text", required: true }]} />
+            <FormDialog title="Create Landing Page" label="Create Landing Page" className={headerOutline} action={createLandingPage} disabled={!canEdit} goTo="/app/marketing/page-builder?id=" submitLabel="Open builder" fields={[{ name: "title", label: "Page name", kind: "text", required: true }]} />
           </>
         }
       />
-      <MarketingSubnav />
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <KpiCard icon={Target} label="Active Campaigns" value={null} tone="violet" />
-        <KpiCard icon={WFI} label="Active Workflows" value={null} tone="pink" />
-        <KpiCard icon={Users} label="New Leads (30d)" value={null} tone="blue" />
-        <KpiCard icon={Mail} label="Emails Sent" value={null} tone="orange" />
-        <KpiCard icon={TrendingUp} label="Conversion Rate" value={null} tone="green" />
-        <KpiCard icon={DollarSign} label="Revenue Influenced" value={null} tone="teal" />
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-3 text-[14px] font-bold text-ink">Lead Conversion Funnel</div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-          {[
-            { label: "Visitors", value: "42,800", pct: 100, tone: "bg-violet/70" },
-            { label: "Leads", value: "8,420", pct: 20, tone: "bg-violet" },
-            { label: "MQLs", value: "3,480", pct: 8, tone: "bg-pink-brand" },
-            { label: "SQLs", value: "842", pct: 2, tone: "bg-orange-brand" },
-            { label: "Customers", value: "128", pct: 0.3, tone: "bg-emerald-500" },
-          ].map((s) => (
-            <div key={s.label} className="rounded-xl border border-line bg-bg-soft/40 p-3">
-              <div className="text-[11px] font-semibold text-ink-muted">{s.label}</div>
-              <div className="mt-1 text-[22px] font-extrabold text-ink">{s.value}</div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white">
-                <div className={`h-full rounded-full ${s.tone}`} style={{ width: `${Math.max(s.pct, 6)}%` }} />
-              </div>
-              <div className="mt-1 text-[10.5px] text-ink-muted">{s.pct}% of top</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-[14px] font-bold text-ink">Active Campaigns</div>
-            <Link href="/app/marketing/campaigns" className="text-[12px] font-semibold text-violet">View all →</Link>
-          </div>
-          <div className="space-y-3">
-            {active.map((c) => (
-              <div key={c.id} className="rounded-xl border border-line p-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-[13px] font-semibold text-ink">{c.name}</div>
-                    <div className="text-[11px] text-ink-muted">{c.type} · {c.channel.join(" · ")}</div>
-                  </div>
-                  <StatusPill tone={CAMPAIGN_STATUS_TONE[c.status]}>{c.status}</StatusPill>
-                </div>
-                <div className="mt-2 grid grid-cols-3 gap-2 text-[11px]">
-                  <div><span className="text-ink-muted">Reach: </span><span className="font-bold text-ink">{(c.reach / 1000).toFixed(1)}K</span></div>
-                  <div><span className="text-ink-muted">CTR: </span><span className="font-bold text-ink">{c.ctr}%</span></div>
-                  <div><span className="text-ink-muted">Revenue: </span><span className="font-bold text-emerald-600">${(c.revenue / 1000).toFixed(0)}K</span></div>
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-bg-soft">
-                  <div className="h-full rounded-full bg-grad-brand" style={{ width: `${c.progress}%` }} />
-                </div>
-              </div>
+      <StatGrid
+        cols={6}
+        stats={[
+          { label: "Active Campaigns", icon: Megaphone, value: figure(d.activeCampaigns), hint: d.activeCampaigns ? "Status active" : "No active campaigns" },
+          { label: "Workflows Active", icon: Workflow, value: figure(d.activeWorkflows), hint: d.activeWorkflows ? "Published and on" : "No active workflows", tone: "green" },
+          { label: "Emails Sent", icon: Mail, value: figure(d.emailsSent), hint: d.emailsSent ? `Last ${days} days` : "No emails sent", tone: "violet" },
+          { label: "New Leads", icon: UserPlus, value: figure(d.newLeads), hint: d.newLeads ? `Contacts added, last ${days} days` : "No new leads", tone: "orange" },
+          { label: "Form Submissions", icon: FileText, value: figure(d.submissions), hint: d.submissions ? `Last ${days} days` : "No submissions", tone: "pink" },
+          { label: "Landing Page Views", icon: Eye, value: figure(d.views), hint: d.views ? `Last ${days} days` : "No page views", tone: "teal" },
+        ]}
+      />
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Panel title="Campaign Health" action={filter("campaign", "All Campaigns", d.campaigns)}>
+          {d.campaigns.length ? (
+            <ul className="divide-y divide-line">
+              {d.campaigns.map((x) => {
+                const late = x.endDate && x.endDate < new Date() && x.status === "active";
+                return (
+                  <li key={x.id} className="flex items-center justify-between gap-3 py-2.5 text-[13px]">
+                    <span className="min-w-0"><Link href={`/app/marketing/campaigns?c=${x.id}`} className="block truncate font-semibold text-deep-navy hover:text-[#0B5CFF]">{x.name}</Link><span className="text-[12px] text-ink-muted">{label(CAMPAIGN_CHANNELS, x.channel)}{x.budget ? ` · $${(x.spend ?? 0).toLocaleString()} of $${x.budget.toLocaleString()}` : ""}</span></span>
+                    <Pill tone={late ? "amber" : x.status === "active" ? "green" : "gray"}>{late ? "Past end date" : label(CAMPAIGN_STATUSES, x.status)}</Pill>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <EmptyState icon={Activity} title="No campaign data yet" body="Create a campaign to start tracking performance and see health metrics here." action={<FormDialog title="Create Campaign" label="Create Campaign" className={outlineSm} action={createCampaign} disabled={!canEdit} submitLabel="Create campaign" fields={[{ name: "name", label: "Campaign name", kind: "text", required: true }]} />} />
+          )}
+        </Panel>
+        <Panel title="Workflow Activity" action={filter("workflow", "All Workflows", d.workflows)}>
+          {d.runs.length ? <><BarList rows={d.runs} /><p className="mt-3 text-[11.5px] text-ink-muted">Live runs started in the last {days} days.</p></> : <EmptyState icon={Workflow} tone="green" title="No workflow activity" body="Create a workflow to begin automation and see activity over time." action={<Link href="/app/marketing/workflows" className={outlineSm}>Build Workflow</Link>} />}
+        </Panel>
+        <Panel title="Lead Funnel" subtitle={`Last ${days} days`}>
+          <ul className="space-y-3">
+            {funnel.map(([l, v]) => (
+              <li key={l} className="flex items-center justify-between border-b border-line pb-2.5 text-[13.5px] last:border-0">
+                <span className="font-semibold text-deep-navy">{l}</span>
+                <span className="font-semibold tabular-nums text-deep-navy">{hasFunnel ? v.toLocaleString("en-US") : "—"}</span>
+              </li>
             ))}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-[14px] font-bold text-ink">Top Workflows</div>
-            <Link href="/app/marketing/workflows" className="text-[12px] font-semibold text-violet">View all →</Link>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[720px]">
-              <thead>
-                <tr className="border-b border-line text-[10.5px] font-bold uppercase tracking-wider text-ink-muted">
-                  <th className="pb-2">Workflow</th>
-                  <th className="pb-2 text-right">Enrolled</th>
-                  <th className="pb-2 text-right">CVR</th>
-                  <th className="pb-2 text-right">Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeWfs.map((w) => (
-                  <tr key={w.id} className="border-b border-line last:border-0">
-                    <td className="py-2.5">
-                      <div className="text-[12.5px] font-semibold text-ink">{w.name}</div>
-                      <div className="text-[10.5px] text-ink-muted">Trigger: {w.trigger}</div>
-                    </td>
-                    <td className="py-2.5 text-right text-[12px]">{w.enrolled.toLocaleString()}</td>
-                    <td className="py-2.5 text-right text-[12px] font-bold text-emerald-600">{w.conversionRate}%</td>
-                    <td className="py-2.5 text-right text-[12px] font-bold text-ink">${(w.revenue / 1000).toFixed(0)}K</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          </ul>
+          <p className="mt-2 text-[11.5px] text-ink-muted">Visitors are landing page visits; qualified leads are new contacts with status Qualified; customers are deals won.</p>
+        </Panel>
       </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-amber-300/50 bg-amber-50/40 p-5 lg:col-span-2">
-          <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-amber-700">
-            <AlertTriangle className="h-4 w-4" /> 2 issues need attention
-          </div>
-          <div className="mt-2 space-y-2">
-            <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-3 text-[12px]">
-              <div>
-                <div className="font-semibold text-ink">Welcome Series — 3 executions failed</div>
-                <div className="text-ink-muted">SMTP bounces on invalid recipients. Cleanup segment.</div>
-              </div>
-              <Link href="/app/marketing/execution-logs" className="text-[11px] font-bold text-violet">Investigate →</Link>
-            </div>
-            <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-3 text-[12px]">
-              <div>
-                <div className="font-semibold text-ink">beta.amplivanta.com — SSL expired</div>
-                <div className="text-ink-muted">Renew certificate to avoid landing page downtime.</div>
-              </div>
-              <Link href="/app/marketing/domains" className="text-[11px] font-bold text-violet">Renew →</Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
-          <div className="mb-3 flex items-center gap-1.5 text-[13px] font-bold text-ink">
-            <Sparkles className="h-4 w-4 text-violet" /> AI Recommendations
-          </div>
-          <div className="space-y-2">
-            {[
-              "Winback flow open rate is 12% — try AI-generated subjects.",
-              "PQL Ready segment grew 42% — increase Sales alerts.",
-              "3 emails scheduled outside optimal send window (Tue 10 AM).",
-            ].map((r, i) => (
-              <div key={i} className="rounded-xl border border-line bg-white p-2.5 text-[11.5px] text-ink-soft">
-                {r}
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Panel title="Recent Activity">
+          {d.activity.length ? (
+            <ul className="divide-y divide-line">{d.activity.map((a) => <li key={a.id} className="flex justify-between gap-3 py-2 text-[13px]"><span className="capitalize text-deep-navy">{a.action.split(".")[0]} {actionLabel(a.action)}</span><span className="shrink-0 text-[12px] text-ink-muted">{fmtDateTime(a.createdAt)}</span></li>)}</ul>
+          ) : (
+            <EmptyState icon={FileText} title="No recent activity" body="Your recent automation activity will appear here." />
+          )}
+        </Panel>
+        <Panel title="Alerts & Recommendations">
+          {d.alerts.length ? (
+            <ul className="space-y-2">{d.alerts.map((a) => <li key={a.title}><Link href={a.href} className="block rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] text-amber-900 hover:border-amber-300">{a.title}</Link></li>)}</ul>
+          ) : (
+            <EmptyState icon={Bell} tone="orange" title="No alerts or recommendations" body="You're all caught up. We'll notify you about important updates here." />
+          )}
+        </Panel>
+        <Panel title="Top Performing Content" subtitle={`Last ${days} days`}>
+          {d.content.length ? (
+            <ul className="divide-y divide-line">{d.content.map((x) => <li key={x.label + x.value}><Link href={x.href} className="flex justify-between gap-3 py-2.5 text-[13px] hover:text-[#0B5CFF]"><span className="truncate font-semibold text-deep-navy">{x.label}</span><span className="shrink-0 text-ink-soft">{x.value}</span></Link></li>)}</ul>
+          ) : (
+            <EmptyState icon={Star} tone="violet" title="No content data yet" body="Content performance will appear here once data is available." />
+          )}
+        </Panel>
       </div>
+      <p className="mt-4 text-[12px] text-ink-muted">Data for all metrics comes from your campaigns, workflows, forms, emails and landing pages in this workspace.</p>
     </div>
   );
 }

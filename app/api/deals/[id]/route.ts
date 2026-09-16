@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { route, parseBody, requireRole, ApiError } from "@/lib/tenant";
 import { emitWebhookEvent } from "@/lib/webhook-delivery";
+import { triggerWorkflows } from "@/lib/server/marketing-runtime";
 
 const updateSchema = z.object({
   name: z.string().min(1).max(160).optional(),
@@ -39,6 +40,7 @@ export const PATCH = route<Params>(async (ctx, req, { id }) => {
   const updated = await db.deal.update({ where: { id }, data });
   if (data.status && data.status !== before.status && data.status !== "open") {
     emitWebhookEvent(ctx.workspaceId, data.status === "won" ? "deal.won" : "deal.lost", { id: updated.id, name: updated.name, value: updated.value, currency: updated.currency });
+    if (data.status === "won") await triggerWorkflows(ctx.workspaceId, "deal.won", { contactId: updated.contactId, payload: { dealId: updated.id } });
   }
   return NextResponse.json(updated);
 });

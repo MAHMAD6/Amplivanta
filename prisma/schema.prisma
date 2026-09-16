@@ -168,6 +168,7 @@ model Contact {
   budget          String?
   message         String?          @db.Text
   leadScore       Int?             @default(0)
+  tags            String[]         @default([])
   status          String           @default("new")
   legacyNotes     String?          @db.Text
   createdAt       DateTime         @default(now())
@@ -298,6 +299,10 @@ model Campaign {
   spend       Float?            @default(0)
   startDate   DateTime?
   endDate     DateTime?
+  channel     String?
+  goal        String?
+  ownerId     String?
+  templateKey String?
   elements    CampaignElement[]
   metrics     CampaignMetric[]
   createdAt   DateTime          @default(now())
@@ -334,6 +339,14 @@ model Workflow {
   description String?             @db.Text
   trigger     String?
   status      String              @default("draft")
+  segmentId   String?
+  goal        String?
+  /// Published version number; 0 while the workflow has never been published.
+  version     Int                 @default(0)
+  publishedAt DateTime?
+  templateKey String?
+  maxRetries  Int                 @default(0)
+  versions    WorkflowVersion[]
   nodes       WorkflowNode[]
   executions  WorkflowExecution[]
   createdAt   DateTime            @default(now())
@@ -357,9 +370,36 @@ model WorkflowExecution {
   workflow       Workflow                @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   status         String                  @default("pending")
   triggerPayload Json?
+  /// live | test
+  environment    String                  @default("live")
+  version        Int?
+  contactId      String?
+  error          String?                 @db.Text
+  attempt        Int                     @default(1)
+  retryOfId      String?
+  goalReached    Boolean                 @default(false)
+  /// Index of the next node to run; set with resumeAt while a delay is pending.
+  cursor         Int                     @default(0)
+  resumeAt       DateTime?
   startedAt      DateTime                @default(now())
   completedAt    DateTime?
   steps          WorkflowExecutionStep[]
+
+  @@index([workflowId, startedAt])
+  @@index([status, resumeAt])
+}
+
+/// Snapshot of a workflow's nodes at publish time; live runs use the latest one.
+model WorkflowVersion {
+  id          String   @id @default(cuid())
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  version     Int
+  nodes       Json
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@unique([workflowId, version])
 }
 
 model WorkflowExecutionStep {
@@ -374,23 +414,31 @@ model WorkflowExecutionStep {
 }
 
 model EmailCampaign {
-  id          String         @id @default(cuid())
-  workspaceId String
-  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name        String
-  subject     String
-  previewText String?
-  fromName    String?
-  fromEmail   String?
-  content     String         @db.Text
-  templateId  String?
-  template    EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
-  status      String         @default("draft")
-  scheduledAt DateTime?
-  sentAt      DateTime?
-  sends       EmailSend[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id             String         @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name           String
+  subject        String
+  previewText    String?
+  fromName       String?
+  fromEmail      String?
+  content        String         @db.Text
+  templateId     String?
+  template       EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  replyTo        String?
+  segmentId      String?
+  workflowId     String?
+  campaignId     String?
+  /// Composer blocks [{ id, type, props }]; `content` holds the rendered HTML.
+  blocks         Json?
+  /// draft | scheduled | sending | sent | paused
+  status         String         @default("draft")
+  recipientCount Int            @default(0)
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  sends          EmailSend[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 model EmailTemplate {
@@ -412,6 +460,8 @@ model EmailSend {
   emailCampaignId String?
   emailCampaign   EmailCampaign? @relation(fields: [emailCampaignId], references: [id], onDelete: Cascade)
   recipientEmail  String
+  contactId       String?
+  error           String?
   status          String         @default("sent")
   deliveredAt     DateTime?
   openedAt        DateTime?
@@ -421,17 +471,27 @@ model EmailSend {
 }
 
 model Form {
-  id               String           @id @default(cuid())
-  workspaceId      String
-  workspace        Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name             String
-  fields           Json
-  submitButtonText String           @default("Submit")
-  successMessage   String           @default("Thank you!")
-  redirectUrl      String?
-  submissions      FormSubmission[]
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  id                  String           @id @default(cuid())
+  workspaceId         String
+  workspace           Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name                String
+  fields              Json
+  submitButtonText    String           @default("Submit")
+  successMessage      String           @default("Thank you!")
+  redirectUrl         String?
+  /// draft | active | archived
+  status              String           @default("draft")
+  workflowId          String?
+  requireConsent      Boolean          @default(false)
+  consentText         String?
+  privacyUrl          String?
+  termsUrl            String?
+  confirmationSubject String?
+  views               Int              @default(0)
+  starts              Int              @default(0)
+  submissions         FormSubmission[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 }
 
 model FormSubmission {
@@ -442,7 +502,11 @@ model FormSubmission {
   contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
   data      Json
   ipAddress String?
+  source    String?
+  consent   Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([formId, createdAt])
 }
 
 model Segment {
@@ -453,22 +517,43 @@ model Segment {
   description    String?   @db.Text
   filterCriteria Json
   memberCount    Int       @default(0)
+  /// dynamic (rules) | static (fixed contact list)
+  type           String    @default("dynamic")
+  source         String    @default("crm")
+  status         String    @default("active")
+  contactIds     String[]  @default([])
+  refreshedAt    DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
 
 model LandingPage {
-  id          String               @id @default(cuid())
-  workspaceId String
-  workspace   Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  title       String
-  slug        String
-  content     Json?
-  isPublished Boolean              @default(false)
-  publishedAt DateTime?
-  versions    LandingPageVersion[]
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  id               String               @id @default(cuid())
+  workspaceId      String
+  workspace        Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title            String
+  slug             String
+  content          Json?
+  isPublished      Boolean              @default(false)
+  publishedAt      DateTime?
+  /// draft | scheduled | published | archived
+  status           String               @default("draft")
+  metaTitle        String?
+  metaDescription  String?
+  socialImage      String?
+  domainId         String?
+  formId           String?
+  workflowId       String?
+  scheduledAt      DateTime?
+  /// public | unlisted
+  visibility       String               @default("public")
+  analyticsEnabled Boolean              @default(true)
+  templateKey      String?
+  contentReviewed  Boolean              @default(false)
+  seoReviewed      Boolean              @default(false)
+  versions         LandingPageVersion[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 }
 
 model LandingPageVersion {
@@ -477,6 +562,7 @@ model LandingPageVersion {
   landingPage   LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
   version       Int
   content       Json
+  createdById   String?
   createdAt     DateTime    @default(now())
 }
 
@@ -487,6 +573,12 @@ model Domain {
   domain            String    @unique
   isVerified        Boolean   @default(false)
   verificationToken String?
+  /// publishing | sending
+  purpose           String    @default("publishing")
+  isDefault         Boolean   @default(false)
+  /// Last SPF/DMARC lookup results for sender domains.
+  authChecks        Json?
+  lastCheckedAt     DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 }
@@ -746,13 +838,13 @@ model Persona {
 }
 
 model ChannelPlan {
-  id          String    @id @default(cuid())
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  channel     String
-  budget      Float     @default(0)
-  strategy    String?   @db.Text
-  status      String    @default("active")
+  id             String    @id @default(cuid())
+  workspaceId    String
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  channel        String
+  budget         Float     @default(0)
+  strategy       String?   @db.Text
+  status         String    @default("active")
   plannedSpend   Float?
   expectedReturn Float?
   targetLeads    Int?
@@ -763,7 +855,7 @@ model ChannelPlan {
   /// not_submitted | pending | approved | changes_requested
   approvalStatus String    @default("not_submitted")
   approvedById   String?
-  createdAt   DateTime  @default(now())
+  createdAt      DateTime  @default(now())
 }
 
 model StrategyPlan {
@@ -837,13 +929,18 @@ model TeamMemberOrg {
 }
 
 model EventDefinition {
-  id          String    @id @default(cuid())
-  workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name        String
-  description String?
-  properties  Json?
-  createdAt   DateTime  @default(now())
+  id               String    @id @default(cuid())
+  workspaceId      String
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name             String
+  description      String?
+  properties       Json?
+  /// custom | form | crm | webhook | landing_page
+  source           String    @default("custom")
+  validationStatus String?
+  validatedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
 }
 
 model DailyEventAggregate {
@@ -2666,21 +2763,97 @@ model Document {
 
 /// A Growth Audit run: deterministic readiness checks over workspace data.
 model GrowthAudit {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   workspaceId String
   website     String
   industry    String?
   goal        String?
-  periodDays  Int       @default(30)
-  competitors String[]  @default([])
+  periodDays  Int      @default(30)
+  competitors String[] @default([])
   /// completed | failed
-  status      String    @default("completed")
+  status      String   @default("completed")
   /// 0-100 share of passed checks; null until run.
   score       Int?
   /// [{ key, dimension, label, passed, detail, href }]
   checks      Json?
   createdById String?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
   @@index([workspaceId, createdAt])
+}
+
+model LandingPageVisit {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  landingPageId String
+  experimentId  String?
+  variant       String?
+  source        String?
+  device        String?
+  formStarted   Boolean  @default(false)
+  converted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([landingPageId, createdAt])
+  @@index([workspaceId, createdAt])
+}
+
+model ScoringRule {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  /// A signal key from lib/marketing/scoring.ts
+  signal      String
+  value       String?
+  points      Int
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workspaceId])
+}
+
+model ScoreBand {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  minScore    Int
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
+}
+
+model ScoringRun {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  status         String    @default("completed")
+  contactsScored Int       @default(0)
+  rulesApplied   Int       @default(0)
+  createdById    String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+
+  @@index([workspaceId, startedAt])
+}
+
+model Experiment {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  name          String
+  /// Landing page whose visitors are split between variants.
+  landingPageId String
+  /// form_submission | form_start
+  goal          String    @default("form_submission")
+  minSampleSize Int       @default(100)
+  /// draft | running | paused | completed
+  status        String    @default("draft")
+  /// [{ key: "A" | "B" | ..., landingPageId, weight }]
+  variants      Json
+  winner        String?
+  startedAt     DateTime?
+  endedAt       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([workspaceId])
 }
