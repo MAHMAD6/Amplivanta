@@ -1,87 +1,122 @@
 import type { Metadata } from "next";
-import { Search, Sparkles, Star, Plus } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { CreativeSubnav } from "@/components/amplivanta/creative-subnav";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { CREATIVE_TEMPLATES } from "@/lib/creative-data";
+import Link from "next/link";
+import { LayoutTemplate, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { db } from "@/lib/db";
+import { EmptyState, fmtDate, kitField } from "@/components/amplivanta/screen-kit";
+import { FormDialog, TemplateActions } from "@/components/amplivanta/creative-ui";
+import { createTemplate } from "@/app/(app)/app/creative-studio/actions";
+import { TEMPLATE_CATEGORIES, TEMPLATE_CHANNELS, TEMPLATE_TYPES } from "@/lib/creative/options";
+import { creativeContext } from "@/lib/server/creative-screens";
 
 export const metadata: Metadata = { title: "Templates — Creative Studio" };
+export const dynamic = "force-dynamic";
 
-const CATS = ["All", "Social Media", "Presentations", "Documents", "Marketing", "Videos", "Ads", "Print", "More"];
+const BASE = "/app/creative-studio/templates";
+type SP = { q?: string; category?: string; type?: string; channel?: string };
 
-export default function CreativeTemplatesPage() {
-  const featured = CREATIVE_TEMPLATES.filter((t) => t.featured);
-  const popular = CREATIVE_TEMPLATES.filter((t) => t.popular);
-  const recent = CREATIVE_TEMPLATES.slice(0, 4);
-
-  return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
-        title="Templates"
-        subtitle="Searchable template library for rapid content production."
-        actions={
-          <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet">
-            <Plus className="h-3.5 w-3.5" /> Custom Template
-          </button>
-        }
-      />
-      <CreativeSubnav />
-
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex h-10 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3">
-          <Search className="h-3.5 w-3.5 text-ink-muted" />
-          <input placeholder="Search 5,240 templates…" className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none" />
-        </div>
-        {["Any Industry", "Any Platform", "Any Style", "Any Color"].map((l) => (
-          <button key={l} className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-3 text-[12px] font-semibold text-ink-soft">{l}</button>
-        ))}
-      </div>
-
-      {/* Categories */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        {CATS.map((c, i) => (
-          <button key={c} className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold ${i === 0 ? "border-violet/40 bg-violet/10 text-violet" : "border-line bg-white text-ink-soft hover:border-violet/30"}`}>{c}</button>
-        ))}
-      </div>
-
-      {/* Featured */}
-      <Section title="Featured" items={featured} />
-
-      {/* Popular */}
-      <Section title="Popular" items={popular} />
-
-      {/* Recently Used */}
-      <Section title="Recently Used" items={recent} />
-    </div>
+export default async function TemplatesPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const c = await creativeContext();
+  let reachable = Boolean(c);
+  let rows: { id: string; name: string; category: string; type: string; channel: string | null; content: unknown; createdAt: Date }[] = [];
+  if (c) {
+    try {
+      rows = await db.template.findMany({
+        where: {
+          workspaceId: c.workspaceId,
+          ...(sp.category ? { category: sp.category } : {}),
+          ...(sp.type ? { type: sp.type } : {}),
+          ...(sp.channel ? { channel: sp.channel } : {}),
+          ...(sp.q ? { name: { contains: sp.q, mode: "insensitive" } } : {}),
+        },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        select: { id: true, name: true, category: true, type: true, channel: true, content: true, createdAt: true },
+      });
+    } catch {
+      reachable = false;
+    }
+  }
+  const qs = (patch: Partial<SP>) => {
+    const u = new URLSearchParams();
+    for (const [k, v] of Object.entries({ ...sp, ...patch })) if (v) u.set(k, v);
+    const s = u.toString();
+    return s ? `${BASE}?${s}` : BASE;
+  };
+  const create = (label = "Create from Blank", cls?: string) => (
+    <FormDialog
+      title="Create Template"
+      label={label}
+      className={cls}
+      action={createTemplate}
+      disabled={!c?.canEdit}
+      submitLabel="Create template"
+      fields={[
+        { name: "name", label: "Template name", kind: "text", required: true },
+        { name: "category", label: "Category", kind: "select", required: true, options: TEMPLATE_CATEGORIES, defaultValue: sp.category },
+        { name: "type", label: "Type", kind: "select", options: TEMPLATE_TYPES, defaultValue: "document" },
+        { name: "channel", label: "Channel", kind: "select", options: TEMPLATE_CHANNELS, placeholder: "Optional" },
+        { name: "content", label: "Content", kind: "textarea", rows: 6, placeholder: "Reusable text with [placeholders]" },
+      ]}
+    />
   );
-}
+  const excerpt = (content: unknown) => {
+    const t = typeof (content as { text?: unknown })?.text === "string" ? (content as { text: string }).text : "";
+    return t.length > 140 ? `${t.slice(0, 139)}…` : t;
+  };
 
-function Section({ title, items }: { title: string; items: typeof CREATIVE_TEMPLATES }) {
   return (
-    <div className="mb-8">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-[14px] font-bold text-ink">{title}</div>
-        <button className="text-[12px] font-semibold text-violet">See all →</button>
-      </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {items.map((t) => (
-          <div key={t.id} className="group overflow-hidden rounded-2xl border border-line bg-white shadow-card transition hover:-translate-y-1 hover:border-violet/30">
-            <div className={`relative aspect-[4/5] bg-gradient-to-br ${t.thumb}`}>
-              {t.featured && <StatusPill tone="pink" className="absolute left-2 top-2"><Star className="mr-0.5 h-2.5 w-2.5" />Featured</StatusPill>}
-              {t.popular && !t.featured && <StatusPill tone="amber" className="absolute left-2 top-2">Popular</StatusPill>}
-            </div>
-            <div className="p-3">
-              <div className="text-[12.5px] font-semibold text-ink">{t.name}</div>
-              <div className="mt-0.5 text-[10.5px] text-ink-muted">{t.category} · {t.size}</div>
-              <div className="mt-2 flex items-center justify-between border-t border-line pt-2">
-                <span className="text-[10px] text-ink-muted">{t.uses} uses</span>
-                <button className="inline-flex items-center gap-1 rounded-lg bg-grad-cta px-2 py-1 text-[10.5px] font-bold text-white shadow-violet">
-                  <Sparkles className="h-3 w-3" /> Use
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+    <div className="mx-auto max-w-[1600px]">
+      <h1 className="font-display text-[30px] font-bold text-deep-navy">Templates</h1>
+      <p className="mt-1 text-[14.5px] text-ink-soft">Browse reusable creative templates when template content is available.</p>
+
+      <form method="get" className="my-6 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-white px-6 py-4">
+        {sp.category && <input type="hidden" name="category" value={sp.category} />}
+        <label className="relative w-full max-w-[520px] flex-1">
+          <span className="sr-only">Search templates</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Search templates..." className={cn(kitField, "h-11 pl-9")} />
+        </label>
+        <select name="type" defaultValue={sp.type ?? ""} aria-label="Type" className={cn(kitField, "h-10 w-[150px] rounded-full")}>
+          <option value="">All Types</option>
+          {TEMPLATE_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <select name="channel" defaultValue={sp.channel ?? ""} aria-label="Channel" className={cn(kitField, "h-10 w-[160px] rounded-full")}>
+          <option value="">All Channels</option>
+          {TEMPLATE_CHANNELS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <button type="submit" className="h-10 rounded-md border border-line px-4 text-[13px] font-semibold text-deep-navy hover:bg-bg-soft">Apply</button>
+      </form>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
+        <aside className="h-fit rounded-xl border border-line bg-white p-5">
+          <h2 className="mb-4 text-[16px] font-semibold text-deep-navy">Categories</h2>
+          <nav className="space-y-3" aria-label="Template categories">
+            {[["", "All Templates"] as [string, string], ...TEMPLATE_CATEGORIES].map(([v, l]) => (
+              <Link key={l} href={qs({ category: v || undefined })} className={cn("block rounded-md border px-4 py-3 text-[13.5px]", (sp.category ?? "") === v ? "border-line bg-bg-soft font-semibold text-deep-navy" : "border-line text-deep-navy hover:bg-bg-soft/60")}>{l}</Link>
+            ))}
+          </nav>
+        </aside>
+        <section className="min-h-[720px] rounded-xl border border-line bg-white p-5">
+          {rows.length ? (
+            <>
+              <div className="mb-4 flex justify-end">{create()}</div>
+              <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                {rows.map((t) => (
+                  <li key={t.id} className="flex flex-col rounded-lg border border-line p-4">
+                    <div className="text-[14.5px] font-semibold text-deep-navy">{t.name}</div>
+                    <div className="text-[12px] text-ink-muted">{TEMPLATE_CATEGORIES.find(([v]) => v === t.category)?.[1] ?? t.category} · {TEMPLATE_TYPES.find(([v]) => v === t.type)?.[1] ?? t.type}{t.channel ? ` · ${t.channel}` : ""} · {fmtDate(t.createdAt)}</div>
+                    <p className="mt-2 flex-1 whitespace-pre-wrap text-[12.5px] text-ink-soft">{excerpt(t.content) || "No content"}</p>
+                    <div className="mt-3"><TemplateActions id={t.id} type={t.type} canEdit={Boolean(c?.canEdit)} /></div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <EmptyState icon={LayoutTemplate} title={reachable ? "No templates available yet" : "Templates unavailable"} body="Templates will appear here when they are added to the Creative Studio library." action={reachable ? create() : undefined} />
+          )}
+        </section>
       </div>
     </div>
   );

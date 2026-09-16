@@ -153,6 +153,36 @@ export const AI_TASKS = {
     jsonSchema: null,
     creditsEnv: "AI_CREDITS_SOCIAL_POST_COPY",
   },
+  document_draft: {
+    code: "document_draft",
+    feature: "creative_studio",
+    tier: "terra",
+    promptId: "creative/document-draft",
+    promptVersion: 1,
+    system:
+      "You draft business documents for a marketing team. Write clear, well-structured Markdown with headings where useful. " +
+      `Follow the requested document type, tone and length. Leave [placeholders] for facts you were not given. ${NO_INVENTION}`,
+    maxOutputTokens: 2500,
+    moderateInput: true,
+    schema: null,
+    jsonSchema: null,
+    creditsEnv: "AI_CREDITS_DOCUMENT_DRAFT",
+  },
+  document_transform: {
+    code: "document_transform",
+    feature: "creative_studio",
+    tier: "luna",
+    promptId: "creative/document-transform",
+    promptVersion: 1,
+    system:
+      "You edit text as instructed (summarize, translate, improve writing, change tone, or fix grammar). Return only the edited text in the same format, " +
+      `with no preamble. Preserve facts, names and numbers exactly. ${NO_INVENTION}`,
+    maxOutputTokens: 2500,
+    moderateInput: true,
+    schema: null,
+    jsonSchema: null,
+    creditsEnv: "AI_CREDITS_DOCUMENT_TRANSFORM",
+  },
 } satisfies Record<string, AiTaskDef>;
 
 export type AiTaskCode = keyof typeof AI_TASKS;

@@ -1,111 +1,151 @@
 import type { Metadata } from "next";
-import { Plus, Search, Filter, Star, MoreHorizontal, Folder } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { CreativeSubnav } from "@/components/amplivanta/creative-subnav";
-import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
-import { PROJECTS, PROJECT_STATUS_TONE } from "@/lib/creative-data";
-import { CreateButton } from "@/components/amplivanta/crud/create-button";
-import { PROJECT_FIELDS } from "@/components/amplivanta/crud/module-fields";
+import Link from "next/link";
+import { Search, Square } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { db } from "@/lib/db";
+import { DataTable, EmptyState, Pill, fmtDate, kitField } from "@/components/amplivanta/screen-kit";
+import { FormDialog, ProjectActions } from "@/components/amplivanta/creative-ui";
+import { createProject } from "@/app/(app)/app/creative-studio/actions";
+import { PROJECT_STATUSES, PROJECT_TYPES } from "@/lib/creative/options";
+import { creativeContext } from "@/lib/server/creative-screens";
 
 export const metadata: Metadata = { title: "My Projects — Creative Studio" };
+export const dynamic = "force-dynamic";
 
-const TABS = [
-  { label: "All Projects", count: PROJECTS.length },
-  { label: "Starred", count: PROJECTS.filter((p) => p.starred).length },
-  { label: "Shared with Me", count: 3 },
-  { label: "My Folders", count: 4 },
-];
+const BASE = "/app/creative-studio/projects";
+type SP = { view?: string; q?: string; type?: string; status?: string; owner?: string; tag?: string; modified?: string };
 
-const FOLDERS = [
-  { name: "Spring Launch", count: 12 },
-  { name: "Events", count: 8 },
-  { name: "Templates", count: 24 },
-  { name: "Client Work", count: 42 },
-];
+export default async function ProjectsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const view = sp.view === "starred" ? "starred" : sp.view === "shared" ? "shared" : "all";
+  const c = await creativeContext();
+  let reachable = Boolean(c);
+  let rows: { id: string; name: string; type: string; status: string; starred: boolean; tags: string[]; ownerId: string | null; updatedAt: Date }[] = [];
+  let owners: { id: string; name: string }[] = [];
+  const days = [7, 30, 90].includes(Number(sp.modified)) ? Number(sp.modified) : null;
+  if (c && view !== "shared") {
+    try {
+      const [p, m] = await Promise.all([
+        db.project.findMany({
+          where: {
+            workspaceId: c.workspaceId,
+            ...(view === "starred" ? { starred: true } : {}),
+            ...(sp.q ? { name: { contains: sp.q, mode: "insensitive" } } : {}),
+            ...(sp.type ? { type: sp.type } : {}),
+            ...(sp.status ? { status: sp.status } : { status: { not: "archived" } }),
+            ...(sp.owner ? { ownerId: sp.owner } : {}),
+            ...(sp.tag ? { tags: { has: sp.tag.toLowerCase() } } : {}),
+            ...(days ? { updatedAt: { gte: new Date(Date.now() - days * 86400000) } } : {}),
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 200,
+          select: { id: true, name: true, type: true, status: true, starred: true, tags: true, ownerId: true, updatedAt: true },
+        }),
+        db.membership.findMany({ where: { workspaceId: c.workspaceId }, include: { user: { select: { id: true, name: true, email: true } } } }),
+      ]);
+      rows = p;
+      owners = m.map((x) => ({ id: x.user.id, name: x.user.name || x.user.email }));
+    } catch {
+      reachable = false;
+    }
+  }
+  const create = (label = "Create Project", cls?: string) => (
+    <FormDialog
+      title="Create Project"
+      label={label}
+      className={cls}
+      action={createProject}
+      disabled={!c?.canEdit}
+      submitLabel="Create project"
+      fields={[
+        { name: "name", label: "Project name", kind: "text", required: true },
+        { name: "type", label: "Type", kind: "select", options: PROJECT_TYPES, defaultValue: "general" },
+        { name: "tags", label: "Tags (comma-separated)", kind: "text", placeholder: "launch, q4" },
+        { name: "description", label: "Description", kind: "textarea", rows: 3 },
+      ]}
+    />
+  );
+  const ownerName = (id: string | null) => owners.find((o) => o.id === id)?.name ?? "—";
+  const filtered = Boolean(sp.q || sp.type || sp.status || sp.owner || sp.tag || sp.modified);
 
-export default function ProjectsPage() {
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
-        title="My Projects"
-        subtitle="Project-management layer for all creative work."
-        actions={
-          <CreateButton label="Project" fields={PROJECT_FIELDS} endpoint="/api/projects" />
-        }
-      />
-      <CreativeSubnav />
+    <div className="mx-auto max-w-[1600px]">
+      <h1 className="font-display text-[30px] font-bold text-deep-navy">My Projects</h1>
+      <p className="mt-1 text-[14.5px] text-ink-soft">Organize creative work, folders, collaborators, and project activity.</p>
 
-      <div className="mb-4 flex gap-4 border-b border-line">
-        {TABS.map((t, i) => (
-          <button key={t.label} className={`relative pb-2 text-[13px] font-semibold ${i === 0 ? "text-violet" : "text-ink-muted"}`}>
-            {t.label} <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${i === 0 ? "bg-violet/10 text-violet" : "bg-bg-soft text-ink-muted"}`}>{t.count}</span>
-            {i === 0 && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-violet" />}
-          </button>
+      <div className="my-6 flex flex-wrap items-center gap-2.5 rounded-xl border border-line bg-white px-6 py-3.5">
+        {[["all", "All Projects"], ["starred", "Starred"], ["shared", "Shared with Me"]].map(([k, l]) => (
+          <Link key={k} href={k === "all" ? BASE : `${BASE}?view=${k}`} className={cn("rounded-full border px-3.5 py-1.5 text-[12.5px]", view === k ? "border-[#0B5CFF] bg-royal-tint font-semibold text-[#0B5CFF]" : "border-line bg-bg-soft/60 text-ink-soft hover:text-deep-navy")}>{l}</Link>
         ))}
+        <form method="get" className="ml-auto flex items-center gap-3">
+          {view !== "all" && <input type="hidden" name="view" value={view} />}
+          <label className="relative">
+            <span className="sr-only">Search projects</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+            <input name="q" defaultValue={sp.q ?? ""} placeholder="Search projects..." className={cn(kitField, "h-11 w-[300px] pl-9")} />
+          </label>
+        </form>
+        {create("Create Project", "inline-flex h-11 items-center rounded-md bg-[#0B5CFF] px-10 text-[13.5px] font-semibold text-white hover:bg-[#0A4FE0] disabled:opacity-50")}
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex h-10 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3">
-          <Search className="h-3.5 w-3.5 text-ink-muted" />
-          <input placeholder="Search projects…" className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none" />
-        </div>
-        {["All Types", "All Status", "All Owners", "Any Date"].map((l) => (
-          <button key={l} className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-3 text-[12px] font-semibold text-ink-soft">{l}</button>
-        ))}
-        <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-violet/30 bg-violet/5 px-3 text-[12px] font-bold text-violet"><Filter className="h-3.5 w-3.5" /> More</button>
-      </div>
-
-      {/* Folders row */}
-      <div className="mb-6 rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="text-[13px] font-bold text-ink">Folders</div>
-          <button className="text-[11.5px] font-semibold text-violet">+ New Folder</button>
-        </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-          {FOLDERS.map((f) => (
-            <button key={f.name} className="flex items-center gap-3 rounded-xl border border-line p-3 hover:border-violet/30">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600"><Folder className="h-4 w-4" /></div>
-              <div className="min-w-0 flex-1 text-left">
-                <div className="text-[12.5px] font-semibold text-ink">{f.name}</div>
-                <div className="text-[10.5px] text-ink-muted">{f.count} projects</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Projects grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {PROJECTS.map((p) => (
-          <div key={p.id} id={p.id} className="group overflow-hidden rounded-2xl border border-line bg-white shadow-card transition hover:-translate-y-1 hover:border-violet/30">
-            <div className={`relative aspect-video bg-gradient-to-br ${p.thumb}`}>
-              {p.starred && <Star className="absolute right-2 top-2 h-4 w-4 fill-amber-400 text-amber-400" />}
-              <StatusPill tone={PROJECT_STATUS_TONE[p.status]} className="absolute left-2 top-2">{p.status}</StatusPill>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_455px]">
+        <section className="min-h-[580px] rounded-xl border border-line bg-white p-5">
+          {rows.length ? (
+            <DataTable
+              minWidth={760}
+              columns={["Project", "Type", "Status", "Owner", "Updated", "Actions"]}
+              rows={rows.map((p) => [
+                <span key="n">{p.name}{p.tags.length > 0 && <span className="ml-2 text-[11.5px] font-normal text-ink-muted">{p.tags.map((t) => `#${t}`).join(" ")}</span>}</span>,
+                <span key="t" className="capitalize">{p.type}</span>,
+                <Pill key="s" tone={p.status === "completed" ? "green" : p.status === "archived" ? "gray" : "blue"}>{p.status.replace(/_/g, " ")}</Pill>,
+                ownerName(p.ownerId),
+                fmtDate(p.updatedAt),
+                <ProjectActions key="a" id={p.id} starred={p.starred} status={p.status} canEdit={Boolean(c?.canEdit)} />,
+              ])}
+            />
+          ) : (
+            <EmptyState
+              icon={Square}
+              title={!reachable ? "Projects unavailable" : view === "shared" ? "Nothing shared with you" : filtered ? "No projects match these filters" : view === "starred" ? "No starred projects" : "No projects yet"}
+              body={view === "shared" ? "Projects belong to the workspace; sharing individual projects is not available yet." : "Create a project to organize creative assets, collaborators, and activity."}
+              action={reachable && view === "all" && !filtered ? create() : undefined}
+            />
+          )}
+        </section>
+        <aside className="rounded-xl border border-line bg-white p-5">
+          <h2 className="mb-4 text-[16px] font-semibold text-deep-navy">Project Filters</h2>
+          <form method="get" className="space-y-4">
+            {view !== "all" && <input type="hidden" name="view" value={view} />}
+            {sp.q && <input type="hidden" name="q" value={sp.q} />}
+            {([
+              ["type", "Type", PROJECT_TYPES, "All"],
+              ["status", "Status", PROJECT_STATUSES, "Active and in progress"],
+              ["owner", "Owner", owners.map((o) => [o.id, o.name] as [string, string]), "All"],
+              ["modified", "Modified", [["7", "Last 7 days"], ["30", "Last 30 days"], ["90", "Last 90 days"]] as [string, string][], "Any time"],
+            ] as [keyof SP, string, [string, string][], string][]).map(([name, label, opts, all]) => (
+              <label key={name} className="block">
+                <span className="mb-1.5 block text-[13.5px] font-semibold text-deep-navy">{label}</span>
+                <select name={name} defaultValue={sp[name] ?? ""} className={cn(kitField, "h-11")}>
+                  <option value="">{all}</option>
+                  {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+              </label>
+            ))}
+            <label className="block">
+              <span className="mb-1.5 block text-[13.5px] font-semibold text-deep-navy">Tags</span>
+              <input name="tag" defaultValue={sp.tag ?? ""} placeholder="Any" className={cn(kitField, "h-11")} />
+            </label>
+            <div className="flex gap-2">
+              <button type="submit" className="h-10 rounded-md bg-[#0B5CFF] px-5 text-[13px] font-semibold text-white">Apply</button>
+              {filtered && <Link href={view === "all" ? BASE : `${BASE}?view=${view}`} className="flex h-10 items-center rounded-md border border-line px-4 text-[13px]">Clear</Link>}
             </div>
-            <div className="p-4">
-              <div className="mb-1 flex items-start justify-between">
-                <div>
-                  <div className="text-[13px] font-semibold text-ink">{p.name}</div>
-                  <div className="text-[10.5px] text-ink-muted">{p.type}{p.folder ? ` · ${p.folder}` : ""}</div>
-                </div>
-                <button className="text-ink-muted"><MoreHorizontal className="h-4 w-4" /></button>
-              </div>
-              <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
-                <div className="flex -space-x-1.5">
-                  <Avatar name={p.owner} size={22} />
-                  {p.collaborators.slice(0, 2).map((c) => <Avatar key={c} name={c} size={22} />)}
-                  {p.collaborators.length > 2 && (
-                    <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-white bg-bg-soft text-[9px] font-bold text-ink-muted">
-                      +{p.collaborators.length - 2}
-                    </div>
-                  )}
-                </div>
-                <span className="text-[10.5px] text-ink-muted">{p.updatedAt}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+          </form>
+        </aside>
       </div>
+      <section className="mt-6 rounded-xl border border-line bg-white p-5">
+        <h2 className="mb-2 text-[16px] font-semibold text-deep-navy">Project Actions</h2>
+        <p className="text-[13px] text-ink-soft">Star, duplicate, archive or delete a project from its row. Opening a project in an editor and moving it between folders become available as those editors ship.</p>
+      </section>
     </div>
   );
 }

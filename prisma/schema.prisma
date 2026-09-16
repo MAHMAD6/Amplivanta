@@ -546,6 +546,13 @@ model Project {
   name        String
   description String?   @db.Text
   status      String    @default("active")
+  /// general | graphic | video | document | campaign
+  type        String    @default("general")
+  starred     Boolean   @default(false)
+  tags        String[]  @default([])
+  /// Type-specific setup, e.g. a graphic's format, dimensions and destination.
+  config      Json?
+  ownerId     String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -590,6 +597,8 @@ model BrandKit {
   accentColor    String?
   logos          String[]
   fonts          Json?
+  guidelines     String?   @db.Text
+  isDefault      Boolean   @default(false)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
@@ -602,6 +611,9 @@ model Template {
   category    String
   content     Json
   thumbnail   String?
+  /// image | graphic | document | video | email | social
+  type        String    @default("document")
+  channel     String?
   createdAt   DateTime  @default(now())
 }
 
@@ -2580,4 +2592,22 @@ model MentionReference {
   createdAt   DateTime @default(now())
 
   @@index([workspaceId])
+}
+
+/// Creative Studio document. AI output is stored only when a person applies it.
+model Document {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  title           String
+  content         String   @db.Text
+  /// blog_post | email | landing_page | social | report | proposal | other
+  type            String   @default("other")
+  aiGenerated     Boolean  @default(false)
+  /// draft | archived
+  status          String   @default("draft")
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([workspaceId, updatedAt])
 }
