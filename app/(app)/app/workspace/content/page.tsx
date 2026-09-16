@@ -1,108 +1,95 @@
 import type { Metadata } from "next";
-import { Plus, Search, LayoutGrid, List, Calendar, Sparkles } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { WorkspaceSubnav } from "@/components/amplivanta/workspace-subnav";
-import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { WS_CONTENT } from "@/lib/workspace-data";
-import { FileText, Mail, Share2, Video, Image as ImageIcon } from "lucide-react";
+import Link from "next/link";
+import { FileText, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { db } from "@/lib/db";
+import { DataTable, EmptyState, Pill, ScreenHeader, TabBar, fmtDate, kitField, kitPrimary } from "@/components/amplivanta/screen-kit";
+import { workspaceContext } from "@/lib/server/workspace-screens";
+import { platformLabel, statusLabel } from "@/lib/social/platforms";
 
-export const metadata: Metadata = { title: "Content Hub — AI Workspace" };
+export const metadata: Metadata = { title: "Content Hub" };
+export const dynamic = "force-dynamic";
 
-const QUICK = [
-  { icon: FileText, label: "Blog", tone: "violet" },
-  { icon: Share2, label: "Social", tone: "pink" },
-  { icon: Mail, label: "Email", tone: "blue" },
-  { icon: FileText, label: "Ad Copy", tone: "orange" },
-  { icon: Video, label: "Video Script", tone: "green" },
-  { icon: ImageIcon, label: "Image", tone: "amber" },
-];
-const TONE_CLS: Record<string, string> = { violet: "bg-violet/10 text-violet", pink: "bg-pink-brand/10 text-pink-brand", blue: "bg-blue-500/10 text-blue-600", orange: "bg-orange-brand/10 text-orange-brand", green: "bg-emerald-500/10 text-emerald-600", amber: "bg-amber-500/10 text-amber-600" };
-const STATUS_TONE = { Draft: "gray", "In Review": "amber", Approved: "green", Published: "blue" } as const;
+const BASE = "/app/workspace/content";
+const STAGES: [string, string][] = [["draft", "Drafts"], ["review", "In Review"], ["scheduled", "Scheduled"], ["published", "Published"], ["archived", "Archived"]];
 
-export default function ContentHubPage() {
+type Item = { id: string; title: string; type: string; channel: string; stage: string; statusText: string; updatedAt: Date; href: string };
+
+/** Maps each module's own status onto the hub's stages. */
+const socialStage = (s: string) => (s === "pending_approval" || s === "changes_requested" ? "review" : s === "scheduled" || s === "approved" ? "scheduled" : s === "published" ? "published" : s === "archived" || s === "rejected" ? "archived" : "draft");
+const emailStage = (s: string) => (s === "scheduled" ? "scheduled" : s === "sent" ? "published" : s === "archived" ? "archived" : "draft");
+
+export default async function ContentHubPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; type?: string }> }) {
+  const sp = await searchParams;
+  const stage = STAGES.some(([v]) => v === sp.tab) ? sp.tab! : null;
+  const c = await workspaceContext();
+  let reachable = Boolean(c);
+  let items: Item[] = [];
+  if (c) {
+    try {
+      const w = c.workspaceId;
+      const [docs, posts, emails] = await Promise.all([
+        db.document.findMany({ where: { workspaceId: w }, orderBy: { updatedAt: "desc" }, take: 100, select: { id: true, title: true, status: true, updatedAt: true } }),
+        db.socialPost.findMany({ where: { workspaceId: w }, orderBy: { updatedAt: "desc" }, take: 100, select: { id: true, content: true, status: true, platforms: true, updatedAt: true } }),
+        db.emailCampaign.findMany({ where: { workspaceId: w }, orderBy: { updatedAt: "desc" }, take: 100 }).catch(() => [] as { id: string; name: string; status: string; updatedAt: Date }[]),
+      ]);
+      items = [
+        ...docs.map((d) => ({ id: d.id, title: d.title, type: "Document", channel: "—", stage: d.status === "archived" ? "archived" : "draft", statusText: d.status === "archived" ? "Archived" : "Draft", updatedAt: d.updatedAt, href: `/app/creative-studio/documents/${d.id}` })),
+        ...posts.map((p) => ({ id: p.id, title: p.content.slice(0, 80), type: "Social post", channel: p.platforms.map(platformLabel).join(", ") || "—", stage: socialStage(p.status), statusText: statusLabel(p.status), updatedAt: p.updatedAt, href: "/app/social/posts" })),
+        ...emails.map((e) => ({ id: e.id, title: e.name, type: "Email", channel: "Email", stage: emailStage(e.status), statusText: e.status, updatedAt: e.updatedAt, href: "/app/marketing/emails" })),
+      ]
+        .filter((i) => (!stage || i.stage === stage) && (!sp.type || i.type === sp.type) && (!sp.q || i.title.toLowerCase().includes(sp.q.toLowerCase())))
+        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    } catch {
+      reachable = false;
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["AI Workspace", "/app/workspace"], ["Content Hub"]]}
         title="Content Hub"
-        subtitle="Every piece of campaign content + AI generation, one place."
+        subtitle="Create, manage, and collaborate on content across all your campaigns."
         actions={
-          <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet">
-            <Plus className="h-3.5 w-3.5" /> New Content
-          </button>
+          <details className="relative">
+            <summary className={cn(kitPrimary, "h-11 cursor-pointer list-none")}><FileText className="h-4 w-4" /> Create Content</summary>
+            <div className="absolute right-0 z-10 mt-1 w-52 rounded-lg border border-line bg-white py-1 text-[13.5px] shadow-card">
+              <Link href="/app/creative-studio/documents" className="block px-3 py-2 hover:bg-bg-soft">Document</Link>
+              <Link href="/app/social/compose" className="block px-3 py-2 hover:bg-bg-soft">Social post</Link>
+              <Link href="/app/marketing/emails" className="block px-3 py-2 hover:bg-bg-soft">Email campaign</Link>
+            </div>
+          </details>
         }
       />
-      <WorkspaceSubnav />
-
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={FileText} label="Total Content" value={null} tone="violet" />
-        <KpiCard icon={Sparkles} label="AI Generated" value={null} tone="pink" />
-        <KpiCard icon={Calendar} label="Scheduled" value={null} tone="blue" />
-        <KpiCard icon={FileText} label="Published (30d)" value={null} tone="green" />
-      </div>
-
-      {/* Quick create */}
-      <div className="mb-6 rounded-2xl border border-violet/25 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
-        <div className="mb-3 flex items-center gap-2 text-[13px] font-bold text-ink"><Sparkles className="h-4 w-4 text-violet" /> Quick Create with AI</div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">
-          {QUICK.map((q) => (
-            <button key={q.label} className="flex items-center gap-2 rounded-xl border border-line bg-white p-3 hover:border-violet/30">
-              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${TONE_CLS[q.tone]}`}><q.icon className="h-3.5 w-3.5" /></div>
-              <span className="text-[12px] font-semibold text-ink">{q.label}</span>
-            </button>
-          ))}
+      <TabBar active={stage ? `${BASE}?tab=${stage}` : BASE} tabs={[["All Content", BASE], ...STAGES.map(([v, l]) => [l, `${BASE}?tab=${v}`] as [string, string])]} />
+      <section className="rounded-xl border border-line bg-white p-6">
+        <form method="get" className="mb-5 flex flex-wrap gap-4">
+          {stage && <input type="hidden" name="tab" value={stage} />}
+          <label className="relative w-full max-w-[420px] flex-1">
+            <span className="sr-only">Search content</span>
+            <input name="q" defaultValue={sp.q ?? ""} placeholder="Search content..." className={cn(kitField, "h-11 pr-9")} />
+            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          </label>
+          <select name="type" defaultValue={sp.type ?? ""} aria-label="Type" className={cn(kitField, "h-11 w-[280px]")}>
+            <option value="">All Types</option>
+            {["Document", "Social post", "Email"].map((t) => <option key={t}>{t}</option>)}
+          </select>
+          <button type="submit" className="h-11 rounded-md border border-line px-5 text-[13.5px] font-semibold text-deep-navy hover:bg-bg-soft">Filters</button>
+        </form>
+        <div className="mb-6 rounded-xl border border-line">
+          <DataTable
+            minWidth={760}
+            columns={["Content", "Type", "Channel", "Status", "Updated"]}
+            rows={items.slice(0, 150).map((i) => [<Link key="t" href={i.href} className="hover:text-[#0B5CFF]">{i.title}</Link>, i.type, i.channel, <Pill key="s" tone={i.stage === "published" ? "green" : i.stage === "review" ? "amber" : i.stage === "scheduled" ? "blue" : "gray"}>{i.statusText}</Pill>, fmtDate(i.updatedAt)])}
+            empty={<EmptyState icon={FileText} title={reachable ? "No content yet" : "Content unavailable"} body="Start creating content to engage your audience and drive results." action={reachable ? <Link href="/app/creative-studio/documents" className={kitPrimary}><FileText className="h-4 w-4" /> Create Content</Link> : undefined} />}
+          />
         </div>
-      </div>
-
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex h-10 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3">
-          <Search className="h-3.5 w-3.5 text-ink-muted" />
-          <input placeholder="Search content…" className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none" />
+        <div className="rounded-xl border border-line bg-bg-soft/50 px-8 py-10">
+          <h2 className="text-[22px] font-semibold text-deep-navy">Create. Collaborate. Publish.</h2>
+          <p className="mt-2 max-w-[460px] text-[15px] text-ink-soft">Build content for any channel and stage. Collaborate with your team and move content to publishing.</p>
         </div>
-        {["All Types", "All Channels", "All Status", "All Owners"].map((l) => (
-          <button key={l} className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-3 text-[12px] font-semibold text-ink-soft">{l}</button>
-        ))}
-        <div className="flex overflow-hidden rounded-xl border border-line">
-          <button className="flex h-10 w-10 items-center justify-center bg-violet/10 text-violet"><List className="h-4 w-4" /></button>
-          <button className="flex h-10 w-10 items-center justify-center border-l border-line text-ink-muted"><LayoutGrid className="h-4 w-4" /></button>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[720px]">
-            <thead>
-              <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                <th className="px-4 py-3">Content</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Channel</th>
-                <th className="px-4 py-3">Owner</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Performance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {WS_CONTENT.map((c) => (
-                <tr key={c.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br ${c.thumb}`} />
-                      <div className="text-[13px] font-semibold text-ink">{c.title}</div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3"><StatusPill tone="violet">{c.type}</StatusPill></td>
-                  <td className="px-4 py-3 text-[12px] text-ink-soft">{c.channel}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2"><Avatar name={c.owner} size={22} /><span className="text-[12px] text-ink-soft">{c.owner.split(" ")[0]}</span></div>
-                  </td>
-                  <td className="px-4 py-3"><StatusPill tone={STATUS_TONE[c.status]}>{c.status}</StatusPill></td>
-                  <td className="px-4 py-3 text-right text-[12px] font-bold text-emerald-600">{c.performance || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

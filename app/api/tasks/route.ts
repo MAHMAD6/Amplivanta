@@ -6,7 +6,7 @@ import { route, parseBody, listParams, requireRole } from "@/lib/tenant";
 const createSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(2000).optional(),
-  status: z.enum(["open", "in_progress", "done"]).optional(),
+  status: z.enum(["open", "in_progress", "waiting", "done"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   dueDate: z.coerce.date().optional(),
   contactId: z.string().optional(),

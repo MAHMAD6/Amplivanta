@@ -6,7 +6,7 @@ import { route, parseBody, requireRole, ApiError } from "@/lib/tenant";
 const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).nullable().optional(),
-  status: z.enum(["open", "in_progress", "done"]).optional(),
+  status: z.enum(["open", "in_progress", "waiting", "done"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   dueDate: z.coerce.date().nullable().optional(),
   isCompleted: z.boolean().optional(),

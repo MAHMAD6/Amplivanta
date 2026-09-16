@@ -1,103 +1,90 @@
 import type { Metadata } from "next";
-import { Upload, Plus, Sparkles, Search, Folder, HardDrive, Image as ImageIcon, Video, FileText, Palette, Music } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { WorkspaceSubnav } from "@/components/amplivanta/workspace-subnav";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
-import { WS_ASSETS } from "@/lib/workspace-data";
+import { File, Folder, Image as ImageIcon, Music, Search, Video } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { db } from "@/lib/db";
+import { EmptyState, ScreenHeader, TabBar, fmtDate, kitField } from "@/components/amplivanta/screen-kit";
+import { AssetMenu, UploadButton } from "@/components/amplivanta/media-studio";
+import { workspaceContext } from "@/lib/server/workspace-screens";
+import { formatBytes } from "@/lib/server/media-library";
+import { isStorageConfigured, objectUrl } from "@/lib/storage";
 
-export const metadata: Metadata = { title: "Asset Library — AI Workspace" };
+export const metadata: Metadata = { title: "Asset Library" };
+export const dynamic = "force-dynamic";
 
-const CATS = [
-  { label: "All", count: 128 },
-  { label: "Images", count: 62, icon: ImageIcon },
-  { label: "Videos", count: 24, icon: Video },
-  { label: "Documents", count: 18, icon: FileText },
-  { label: "Designs", count: 16, icon: Palette },
-  { label: "Audio", count: 8, icon: Music },
-];
+const BASE = "/app/workspace/assets";
+const KINDS: [string, string, string | null][] = [["images", "Images", "image/"], ["videos", "Videos", "video/"], ["documents", "Documents", "application/"], ["audio", "Audio", "audio/"], ["other", "Other", null]];
 
-const FOLDERS = ["Spring Launch", "Case Studies", "Ads", "Videos", "Brand", "Audio"];
+export default async function AssetLibraryPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; project?: string }> }) {
+  const sp = await searchParams;
+  const kind = KINDS.find(([k]) => k === sp.tab) ?? null;
+  const c = await workspaceContext();
+  let reachable = Boolean(c);
+  const storage = isStorageConfigured();
+  let assets: { id: string; name: string; mimeType: string | null; fileSize: number; tags: string[]; createdAt: Date; url: string | null }[] = [];
+  if (c) {
+    try {
+      const rows = await db.asset.findMany({
+        where: {
+          workspaceId: c.workspaceId,
+          ...(kind?.[2] ? { mimeType: { startsWith: kind[2] } } : {}),
+          ...(kind && !kind[2] ? { NOT: [{ mimeType: { startsWith: "image/" } }, { mimeType: { startsWith: "video/" } }, { mimeType: { startsWith: "audio/" } }, { mimeType: { startsWith: "application/" } }] } : {}),
+          ...(sp.q ? { name: { contains: sp.q, mode: "insensitive" } } : {}),
+        },
+        orderBy: { createdAt: "desc" },
+        take: 60,
+      });
+      assets = await Promise.all(rows.map(async (a) => ({ id: a.id, name: a.name, mimeType: a.mimeType, fileSize: a.fileSize, tags: a.tags, createdAt: a.createdAt, url: storage && a.mimeType?.startsWith("image/") ? await objectUrl(a.fileUrl).catch(() => null) : null })));
+    } catch {
+      reachable = false;
+    }
+  }
+  const icon = (m: string | null) => (m?.startsWith("video/") ? Video : m?.startsWith("audio/") ? Music : m?.startsWith("image/") ? ImageIcon : File);
 
-export default function AssetLibraryPage() {
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["AI Workspace", "/app/workspace"], ["Asset Library"]]}
         title="Asset Library"
-        subtitle="Workspace repository for images, video, documents, designs, audio, and other files."
-        actions={
-          <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink"><Upload className="h-3.5 w-3.5" /> Upload</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-violet/30 bg-violet/5 px-4 text-[13px] font-bold text-violet"><Plus className="h-3.5 w-3.5" /> New Folder</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Sparkles className="h-3.5 w-3.5" /> Generate Asset</button>
-          </>
-        }
+        subtitle="Store, organize, and manage your marketing assets in one place."
+        actions={<UploadButton accept="image/*,video/*,audio/*,application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv" storageReady={storage} label="Upload assets" />}
       />
-      <WorkspaceSubnav />
-
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={HardDrive} label="Storage Used" value={null} tone="violet" />
-        <KpiCard icon={Folder} label="Folders" value={null} tone="amber" />
-        <KpiCard icon={ImageIcon} label="Assets" value={null} tone="pink" />
-        <KpiCard icon={Sparkles} label="AI Generated" value={null} tone="blue" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]">
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-line bg-white p-3 shadow-card">
-            <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-ink-muted">Categories</div>
-            <div className="space-y-0.5">
-              {CATS.map((c, i) => (
-                <button key={c.label} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-[12.5px] font-semibold ${i === 0 ? "bg-violet/10 text-violet" : "text-ink-soft hover:bg-bg-soft"}`}>
-                  <span className="flex items-center gap-2">{c.icon && <c.icon className="h-3.5 w-3.5" />} {c.label}</span>
-                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${i === 0 ? "bg-white text-violet" : "bg-bg-soft text-ink-muted"}`}>{c.count}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-white p-3 shadow-card">
-            <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-ink-muted">Folders</div>
-            <div className="space-y-0.5">
-              {FOLDERS.map((f) => (
-                <button key={f} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12.5px] font-semibold text-ink-soft hover:bg-bg-soft">
-                  <Folder className="h-3.5 w-3.5 text-amber-500" /> {f}
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        <div>
-          <div className="mb-4 flex items-center gap-2">
-            <div className="flex h-10 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3">
-              <Search className="h-3.5 w-3.5 text-ink-muted" />
-              <input placeholder="Search assets, tags…" className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none" />
-            </div>
-            {["All Formats", "All Owners", "Recent"].map((l) => (
-              <button key={l} className="inline-flex h-10 items-center rounded-xl border border-line bg-white px-3 text-[12px] font-semibold text-ink-soft">{l}</button>
-            ))}
-          </div>
-
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {WS_ASSETS.map((a) => (
-              <div key={a.id} className="group overflow-hidden rounded-xl border border-line bg-white shadow-card transition hover:-translate-y-1 hover:border-violet/30">
-                <div className={`relative aspect-video bg-gradient-to-br ${a.thumb}`}>
-                  <StatusPill tone="gray" className="absolute left-2 top-2">{a.kind}</StatusPill>
-                </div>
-                <div className="p-3">
-                  <div className="truncate font-mono text-[11.5px] font-semibold text-ink">{a.name}</div>
-                  <div className="text-[10.5px] text-ink-muted">{a.folder} · {a.size}</div>
-                  <div className="mt-2 flex items-center justify-between border-t border-line pt-2">
-                    <div className="flex items-center gap-1"><Avatar name={a.owner} size={16} /><span className="text-[10px] text-ink-muted">{a.owner.split(" ")[0]}</span></div>
-                    <span className="text-[10px] text-ink-muted">{a.updatedAt}</span>
+      <TabBar active={kind ? `${BASE}?tab=${kind[0]}` : BASE} tabs={[["All Assets", BASE], ...KINDS.map(([k, l]) => [l, `${BASE}?tab=${k}`] as [string, string])]} />
+      <section className="rounded-xl border border-line bg-white p-5">
+        <form method="get" className="mb-5 flex flex-wrap gap-4">
+          {kind && <input type="hidden" name="tab" value={kind[0]} />}
+          <label className="relative w-full max-w-[520px] flex-1">
+            <span className="sr-only">Search assets</span>
+            <input name="q" defaultValue={sp.q ?? ""} placeholder="Search assets..." className={cn(kitField, "h-11 pr-9")} />
+            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          </label>
+          <button type="submit" className="h-11 rounded-md border border-line px-5 text-[13.5px] font-semibold text-deep-navy hover:bg-bg-soft">Filters</button>
+        </form>
+        {assets.length ? (
+          <ul className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4 2xl:grid-cols-6">
+            {assets.map((a) => {
+              const Icon = icon(a.mimeType);
+              return (
+                <li key={a.id} className="overflow-hidden rounded-lg border border-line">
+                  <div className="flex aspect-square items-center justify-center bg-bg-soft">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {a.url ? <img src={a.url} alt={a.name} loading="lazy" className="h-full w-full object-cover" /> : <Icon className="h-8 w-8 text-ink-muted" />}
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                  <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+                    <div className="min-w-0"><div className="truncate text-[12.5px] font-semibold text-deep-navy">{a.name}</div><div className="text-[11px] text-ink-muted">{formatBytes(a.fileSize)} · {fmtDate(a.createdAt)}</div></div>
+                    {c?.canEdit && <AssetMenu id={a.id} favorite={a.tags.includes("favorite")} draft={a.tags.includes("draft")} />}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <EmptyState icon={Folder} title={!reachable ? "Assets unavailable" : sp.q || kind ? "No assets match" : "No assets yet"} body={storage ? "Upload your first asset to get started." : "Asset storage is not configured yet, so uploads are unavailable."} action={reachable && storage ? <UploadButton accept="image/*,video/*,audio/*,application/pdf" storageReady={storage} label="Upload assets" /> : undefined} />
+        )}
+        <div className="mt-4 rounded-xl border border-line bg-bg-soft/50 px-8 py-10">
+          <h2 className="text-[22px] font-semibold text-deep-navy">Organized. Accessible. Ready.</h2>
+          <p className="mt-2 text-[15px] text-ink-soft">Manage your media and files in one place. Keeps everything organized and easy to find.</p>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

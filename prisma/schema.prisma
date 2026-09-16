@@ -274,7 +274,12 @@ model Note {
   id          String    @id @default(cuid())
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title       String?
   content     String    @db.Text
+  /// idea | meeting | research | strategy | uncategorized
+  category    String    @default("uncategorized")
+  pinned      Boolean   @default(false)
+  createdById String?
   contactId   String?
   contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())

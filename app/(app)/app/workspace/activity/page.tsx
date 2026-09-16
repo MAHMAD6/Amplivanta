@@ -1,105 +1,105 @@
 import type { Metadata } from "next";
-import { Search, Filter, Download } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { WorkspaceSubnav } from "@/components/amplivanta/workspace-subnav";
-import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
-import { WS_ACTIVITY } from "@/lib/workspace-data";
+import { Diamond, History, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { db } from "@/lib/db";
+import { EmptyState, InfoList, ScreenHeader, fmtDateTime, fmtInt, kitField } from "@/components/amplivanta/screen-kit";
+import { MODULES, actionLabel, memberNames, moduleOf, workspaceContext } from "@/lib/server/workspace-screens";
 
-export const metadata: Metadata = { title: "Workspace Activity" };
+export const metadata: Metadata = { title: "Activity / History" };
+export const dynamic = "force-dynamic";
 
-const CAT_TONE = { Create: "blue", Edit: "gray", Approve: "green", Publish: "violet", Budget: "orange", Integration: "teal", AI: "pink" } as const;
-const CATS = ["All", "Create", "Edit", "Approve", "Publish", "Budget", "Integration", "AI"];
+type SP = { q?: string; module?: string; user?: string; range?: string };
 
-const topUsers = [
-  { name: "Emily Davis", actions: 42 },
-  { name: "Alex Johnson", actions: 38 },
-  { name: "Sarah Chen", actions: 34 },
-  { name: "Marcus Lee", actions: 24 },
-  { name: "Priya Ramesh", actions: 18 },
-];
+export default async function ActivityHistoryPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const c = await workspaceContext();
+  let reachable = Boolean(c);
+  let events: { id: string; action: string; actor: string; at: Date; resourceType: string | null }[] = [];
+  let members: { id: string; name: string }[] = [];
+  let totals = { activity: 0, contributors: 0, exports: 0 };
+  const days = [1, 7, 30, 90].includes(Number(sp.range)) ? Number(sp.range) : null;
+  if (c) {
+    try {
+      const w = c.workspaceId;
+      const where = {
+        workspaceId: w,
+        ...(sp.user ? { actorUserId: sp.user } : {}),
+        ...(days ? { createdAt: { gte: new Date(Date.now() - days * 86400000) } } : {}),
+        ...(sp.module ? { action: { startsWith: sp.module } } : {}),
+        ...(sp.q ? { OR: [{ action: { contains: sp.q, mode: "insensitive" as const } }, { resourceType: { contains: sp.q, mode: "insensitive" as const } }] } : {}),
+      };
+      const [rows, count, actors, exportsCount, m] = await Promise.all([
+        db.auditLog.findMany({ where, orderBy: { createdAt: "desc" }, take: 150, include: { user: { select: { name: true, email: true } } } }),
+        db.auditLog.count({ where }),
+        db.auditLog.groupBy({ by: ["actorUserId"], where: { ...where, actorUserId: { not: null } } }),
+        db.auditLog.count({ where: { workspaceId: w, action: { in: ["audit.exported", "report.exported"] } } }),
+        memberNames(w),
+      ]);
+      events = rows.map((r) => ({ id: r.id, action: r.action, actor: r.user?.name || r.user?.email || "System", at: r.createdAt, resourceType: r.resourceType }));
+      totals = { activity: count, contributors: actors.length, exports: exportsCount };
+      members = m;
+    } catch {
+      reachable = false;
+    }
+  }
+  const qs = new URLSearchParams(Object.entries({ q: sp.q, user: sp.user, range: sp.range }).filter(([, v]) => v) as [string, string][]).toString();
+  const filtered = Boolean(sp.q || sp.module || sp.user || sp.range);
 
-export default function WSActivityPage() {
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
-        title="Activity / History"
-        subtitle="Chronological, filterable audit trail for workspace activity."
-        actions={
-          <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Download className="h-3.5 w-3.5" /> Export</button>
-        }
-      />
-      <WorkspaceSubnav />
-
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex h-10 min-w-[240px] flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3">
-          <Search className="h-3.5 w-3.5 text-ink-muted" />
-          <input placeholder="Search actors, objects, keywords…" className="min-w-0 flex-1 bg-transparent text-[13px] focus:outline-none" />
-        </div>
-        {CATS.map((c, i) => (
-          <button key={c} className={`rounded-full px-3 py-1.5 text-[11.5px] font-semibold ${i === 0 ? "bg-violet/10 text-violet" : "text-ink-soft hover:bg-bg-soft"}`}>{c}</button>
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader crumbs={[["AI Workspace", "/app/workspace"], ["Activity / History"]]} title="Activity / History" subtitle="Review a chronological history of actions across your workspace." />
+      <form method="get" className="mb-5 flex flex-wrap items-center gap-3">
+        <label className="relative w-full max-w-[510px] flex-1">
+          <span className="sr-only">Search activity</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Search activity..." className={cn(kitField, "h-11 pl-9")} />
+        </label>
+        <select name="module" defaultValue={sp.module ?? ""} aria-label="Module" className={cn(kitField, "h-11 w-[210px]")}><option value="">All Modules</option>{MODULES.map(([p, l]) => <option key={p} value={p}>{l}</option>)}</select>
+        <select name="user" defaultValue={sp.user ?? ""} aria-label="User" className={cn(kitField, "h-11 w-[210px]")}><option value="">All Users</option>{members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
+        <select name="range" defaultValue={sp.range ?? ""} aria-label="Date range" className={cn(kitField, "h-11 w-[170px]")}><option value="">Date Range</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select>
+        <button type="submit" className="h-11 rounded-md border border-line px-5 text-[13.5px] font-semibold text-deep-navy hover:bg-bg-soft">Apply</button>
+        {c?.isAdmin && events.length > 0 ? (
+          <a href={`/api/audit-logs/export${qs ? `?${qs}` : ""}`} className="ml-auto inline-flex h-11 items-center rounded-md border border-line bg-white px-8 text-[15px] font-semibold text-deep-navy hover:bg-bg-soft">Export</a>
+        ) : (
+          <span className="ml-auto inline-flex h-11 items-center rounded-md border border-line bg-bg-soft px-8 text-[15px] text-ink-muted" title={c?.isAdmin ? "Export becomes available when activity exists" : "Only admins can export"}>Export</span>
+        )}
+      </form>
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3 xl:w-2/3">
+        {([["Activity", totals.activity], ["Contributors", totals.contributors], ["Exports", totals.exports]] as [string, number][]).map(([l, v]) => (
+          <div key={l} className="flex gap-4 rounded-xl border border-line bg-white px-5 py-5">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><Diamond className="h-5 w-5" /></span>
+            <div><div className="text-[14px] font-semibold text-deep-navy">{l}</div><div className="mt-2 text-[20px] font-bold text-deep-navy">{v ? fmtInt(v) : "—"}</div><div className="text-[12px] text-ink-muted">{v ? "" : "Not available yet"}</div></div>
+          </div>
         ))}
-        <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-3 text-[12px] font-semibold text-ink"><Filter className="h-3.5 w-3.5" /> More</button>
       </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[720px]">
-              <thead>
-                <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                  <th className="px-4 py-3">Actor</th>
-                  <th className="px-4 py-3">Action</th>
-                  <th className="px-4 py-3">Module</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {WS_ACTIVITY.map((a) => (
-                  <tr key={a.id} className="border-b border-line last:border-0">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2"><Avatar name={a.actor} size={22} /><span className="text-[12.5px] font-semibold text-ink">{a.actor}</span></div>
-                    </td>
-                    <td className="px-4 py-3 text-[12.5px] text-ink"><span className="text-ink-soft">{a.verb}</span> <span className="font-semibold">{a.object}</span></td>
-                    <td className="px-4 py-3 text-[11.5px] text-ink-muted">{a.module}</td>
-                    <td className="px-4 py-3"><StatusPill tone={CAT_TONE[a.category]}>{a.category}</StatusPill></td>
-                    <td className="px-4 py-3 text-[11.5px] text-ink-muted">{a.when}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <div className="mb-3 text-[13px] font-bold text-ink">Activity Summary (30d)</div>
-            <div className="space-y-2 text-[12px]">
-              {[
-                { l: "Total events", v: "1,428" },
-                { l: "Publish events", v: "128" },
-                { l: "Approvals", v: "342" },
-                { l: "AI events", v: "620" },
-                { l: "Budget changes", v: "18" },
-              ].map((r) => (
-                <div key={r.l} className="flex items-center justify-between border-b border-line pb-1.5 last:border-0"><span className="text-ink-soft">{r.l}</span><span className="font-bold text-ink">{r.v}</span></div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_1fr]">
+        <section className="min-h-[600px] rounded-xl border border-line bg-white p-5">
+          <h2 className="mb-4 text-[16px] font-semibold text-deep-navy">Activity Timeline</h2>
+          {events.length ? (
+            <ol className="relative space-y-4 border-l border-line pl-5">
+              {events.map((e) => (
+                <li key={e.id} className="relative">
+                  <span className="absolute -left-[26px] top-1 h-3 w-3 rounded-full border-2 border-white bg-[#0B5CFF]" />
+                  <div className="text-[13.5px] font-semibold capitalize text-deep-navy">{moduleOf(e.action)} · {actionLabel(e.action)}</div>
+                  <div className="text-[12px] text-ink-muted">{e.actor} · {fmtDateTime(e.at)}{e.resourceType ? ` · ${e.resourceType}` : ""}</div>
+                </li>
               ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <div className="mb-3 text-[13px] font-bold text-ink">Top Users</div>
-            <div className="space-y-2">
-              {topUsers.map((u) => (
-                <div key={u.name} className="flex items-center gap-2">
-                  <Avatar name={u.name} size={22} />
-                  <div className="min-w-0 flex-1"><div className="truncate text-[12px] font-semibold text-ink">{u.name}</div></div>
-                  <span className="text-[11.5px] font-bold text-ink">{u.actions}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
+            </ol>
+          ) : (
+            <EmptyState icon={History} title={!reachable ? "Activity unavailable" : filtered ? "No activity matches these filters" : "No activity recorded yet"} body="Workspace actions will appear here after activity occurs." />
+          )}
+        </section>
+        <section className="rounded-xl border border-line bg-white p-5">
+          <h2 className="text-[16px] font-semibold text-deep-navy">About Activity History</h2>
+          <InfoList
+            rows={[
+              { title: "Tracked actions", body: "Creation, edits, approvals, publishing, automation, integration, settings and AI events that write to the audit trail." },
+              { title: "Filters", body: "Filter by user, module, keyword, and date." },
+              { title: "Audit safety", body: "Sensitive credentials and private values are never recorded in plaintext." },
+              { title: "Export", body: "Admins can export the filtered history as CSV." },
+            ]}
+          />
+        </section>
       </div>
     </div>
   );

@@ -1,106 +1,79 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sparkles, Plus, Zap, Play, Pause, DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { WorkspaceSubnav } from "@/components/amplivanta/workspace-subnav";
-import { StatusPill, Avatar } from "@/components/amplivanta/status-pill";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { WS_AUTOMATIONS } from "@/lib/workspace-data";
+import { Plus, Settings } from "lucide-react";
+import { db } from "@/lib/db";
+import { DataTable, EmptyState, ScreenHeader, TabBar, fmtDate, fmtDateTime } from "@/components/amplivanta/screen-kit";
+import { FormDialog } from "@/components/amplivanta/creative-ui";
+import { StatusSelect } from "@/components/amplivanta/workspace-ui";
+import { createAutomation } from "@/app/(app)/app/workspace/actions";
+import { WORKFLOW_STATUSES, WORKFLOW_TRIGGERS, label } from "@/lib/workspace/options";
+import { workspaceContext } from "@/lib/server/workspace-screens";
 
-export const metadata: Metadata = { title: "Workspace Automations" };
+export const metadata: Metadata = { title: "Automations" };
+export const dynamic = "force-dynamic";
 
-export default function WSAutomationsPage() {
-  const active = WS_AUTOMATIONS.filter((a) => a.status === "Active");
-  const totalRev = WS_AUTOMATIONS.reduce((sum, a) => sum + a.revenue, 0);
-  const totalConv = WS_AUTOMATIONS.reduce((sum, a) => sum + a.conversions, 0);
-  const warn = WS_AUTOMATIONS.filter((a) => a.health === "Warn");
-  const top = [...WS_AUTOMATIONS].sort((a, b) => b.revenue - a.revenue).slice(0, 3);
+const BASE = "/app/workspace/automations";
+
+export default async function AutomationsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab } = await searchParams;
+  const status = WORKFLOW_STATUSES.some(([v]) => v === tab) ? tab! : null;
+  const c = await workspaceContext();
+  let reachable = Boolean(c);
+  let rows: { id: string; name: string; trigger: string | null; status: string; steps: number; runs: number; lastRun: Date | null; updatedAt: Date }[] = [];
+  if (c) {
+    try {
+      const wfs = await db.workflow.findMany({
+        where: { workspaceId: c.workspaceId, ...(status ? { status } : {}) },
+        orderBy: { updatedAt: "desc" },
+        take: 200,
+        include: { _count: { select: { nodes: true, executions: true } }, executions: { orderBy: { startedAt: "desc" }, take: 1, select: { startedAt: true } } },
+      });
+      rows = wfs.map((w) => ({ id: w.id, name: w.name, trigger: w.trigger, status: w.status, steps: w._count.nodes, runs: w._count.executions, lastRun: w.executions[0]?.startedAt ?? null, updatedAt: w.updatedAt }));
+    } catch {
+      reachable = false;
+    }
+  }
+  const create = (text: string) => (
+    <FormDialog
+      title="New Automation"
+      label={<><Plus className="h-4 w-4" /> {text}</>}
+      className="inline-flex h-11 items-center gap-2 rounded-md bg-[#0B5CFF] px-6 text-[14px] font-semibold text-white hover:bg-[#0A4FE0] disabled:opacity-50"
+      action={createAutomation}
+      disabled={!c?.canEdit}
+      submitLabel="Create draft"
+      note="Automations start as drafts. Add steps in the Workflow Builder, then activate."
+      fields={[
+        { name: "name", label: "Name", kind: "text", required: true },
+        { name: "trigger", label: "Trigger", kind: "select", options: WORKFLOW_TRIGGERS, placeholder: "Choose later" },
+        { name: "description", label: "Description", kind: "textarea", rows: 3 },
+      ]}
+    />
+  );
 
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
-        title="Automations"
-        subtitle="Manage campaign-specific automations from AI Workspace."
-        actions={
-          <>
-            <Link href="/app/marketing/templates" className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink">Templates</Link>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-violet/30 bg-violet/5 px-4 text-[13px] font-bold text-violet"><Sparkles className="h-3.5 w-3.5" /> Generate Workflow</button>
-            <Link href="/app/marketing/workflows" className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Plus className="h-3.5 w-3.5" /> Create Automation</Link>
-          </>
-        }
-      />
-      <WorkspaceSubnav />
-
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Zap} label="Active" value={String(active.length)} tone="violet" />
-        <KpiCard icon={TrendingUp} label="Contacts Enrolled" value={String(WS_AUTOMATIONS.reduce((s, a) => s + a.contacts, 0).toLocaleString())} tone="blue" />
-        <KpiCard icon={DollarSign} label="Revenue Influenced" value={`$${(totalRev / 1000).toFixed(0)}K`} tone="green" />
-        <KpiCard icon={AlertTriangle} label="Health Warnings" value={String(warn.length)} deltaTone={warn.length ? "down" : "up"} delta={warn.length ? "1 needs review" : "All healthy"} tone={warn.length ? "amber" : "green"} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-card">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[720px]">
-              <thead>
-                <tr className="border-b border-line bg-bg-soft/60 text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                  <th className="px-4 py-3">Automation</th>
-                  <th className="px-4 py-3">Trigger</th>
-                  <th className="px-4 py-3">Channels</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Contacts</th>
-                  <th className="px-4 py-3 text-right">Conv.</th>
-                  <th className="px-4 py-3 text-right">Revenue</th>
-                  <th className="w-10 px-2 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {WS_AUTOMATIONS.map((a) => (
-                  <tr key={a.id} className="border-b border-line last:border-0 hover:bg-bg-soft/40">
-                    <td className="px-4 py-3">
-                      <div className="text-[13px] font-semibold text-ink">{a.name}</div>
-                      {a.health === "Warn" && <div className="mt-0.5 text-[10.5px] font-semibold text-amber-700">⚠ Health warning</div>}
-                    </td>
-                    <td className="px-4 py-3 text-[11.5px] text-ink-soft">{a.trigger}</td>
-                    <td className="px-4 py-3 text-[11.5px] text-ink-soft">{a.channels.join(" · ")}</td>
-                    <td className="px-4 py-3"><StatusPill tone={a.status === "Active" ? "green" : "amber"}>{a.status}</StatusPill></td>
-                    <td className="px-4 py-3 text-right text-[12.5px]">{a.contacts.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right text-[12.5px] font-bold text-emerald-600">{a.conversions}</td>
-                    <td className="px-4 py-3 text-right text-[12.5px] font-bold text-ink">${(a.revenue / 1000).toFixed(0)}K</td>
-                    <td className="px-2 py-3 text-right"><button className="rounded-lg p-1 text-ink-muted hover:bg-bg-soft">{a.status === "Active" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <div className="mb-3 text-[13px] font-bold text-ink">Top Performing</div>
-            <div className="space-y-2">
-              {top.map((a, i) => (
-                <div key={a.id} className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet/10 text-[11px] font-bold text-violet">{i + 1}</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[12px] font-semibold text-ink">{a.name}</div>
-                    <div className="text-[10.5px] font-bold text-emerald-600">${(a.revenue / 1000).toFixed(0)}K</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5">
-            <div className="mb-2 flex items-center gap-1.5 text-[13px] font-bold text-ink"><Sparkles className="h-3.5 w-3.5 text-violet" /> AI Workflow Ideas</div>
-            <ul className="space-y-1.5 text-[11.5px] text-ink-soft">
-              <li>· Add re-engagement branch to Winback (est. +12% CR).</li>
-              <li>· Create post-audit nurture (missing today).</li>
-              <li>· Trigger Slack alert on PQL score {">"} 80.</li>
-            </ul>
-          </div>
-        </aside>
-      </div>
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader crumbs={[["AI Workspace", "/app/workspace"], ["Automations"]]} title="Automations" subtitle="Set up and manage automations." actions={create("New Automation")} />
+      <TabBar active={status ? `${BASE}?tab=${status}` : BASE} tabs={[["All Automations", BASE], ...WORKFLOW_STATUSES.map(([v, l]) => [l === "Draft" ? "Drafts" : l, `${BASE}?tab=${v}`] as [string, string])]} />
+      <section className="mb-5 min-h-[440px] rounded-xl border border-line bg-white p-5">
+        <DataTable
+          minWidth={860}
+          columns={["Automation", "Trigger", "Steps", "Runs", "Last run", "Updated", "Status"]}
+          rows={rows.map((r) => [
+            <Link key="n" href="/app/marketing/workflows" className="hover:text-[#0B5CFF]">{r.name}</Link>,
+            r.trigger ? label(WORKFLOW_TRIGGERS, r.trigger) : "Not set",
+            String(r.steps),
+            String(r.runs),
+            r.lastRun ? fmtDateTime(r.lastRun) : "Never",
+            fmtDate(r.updatedAt),
+            <StatusSelect key="s" kind="automation" id={r.id} value={r.status} options={WORKFLOW_STATUSES.some(([v]) => v === r.status) ? WORKFLOW_STATUSES : [[r.status, r.status], ...WORKFLOW_STATUSES]} canEdit={Boolean(c?.canEdit)} />,
+          ])}
+          empty={<EmptyState icon={Settings} title={reachable ? (status ? "No automations here" : "No automations yet") : "Automations unavailable"} body="Set up and manage automations." action={reachable && !status ? create("Create Automation") : undefined} />}
+        />
+      </section>
+      <section className="rounded-xl border border-line bg-bg-soft/50 px-10 py-10">
+        <h2 className="text-[22px] font-semibold text-deep-navy">Automate. Streamline. Scale.</h2>
+        <p className="mt-2 text-[15px] text-ink-soft">Use automations to trigger actions, send notifications, update data, and more.</p>
+      </section>
     </div>
   );
 }

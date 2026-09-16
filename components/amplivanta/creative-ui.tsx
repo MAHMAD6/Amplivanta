@@ -24,7 +24,7 @@ import {
 type Result = { ok: true; message: string; id?: string; text?: string } | { ok: false; error: string };
 
 export type FieldSpec =
-  | { name: string; label: string; kind: "text" | "number" | "color"; required?: boolean; placeholder?: string; defaultValue?: string }
+  | { name: string; label: string; kind: "text" | "number" | "color" | "date"; required?: boolean; placeholder?: string; defaultValue?: string }
   | { name: string; label: string; kind: "textarea"; required?: boolean; placeholder?: string; rows?: number; defaultValue?: string }
   | { name: string; label: string; kind: "select"; options: [string, string][]; required?: boolean; placeholder?: string; defaultValue?: string };
 
