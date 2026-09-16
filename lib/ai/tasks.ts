@@ -44,6 +44,20 @@ const recommendationsSchema = z.object({
     .max(5),
 });
 
+const contentIdeasSchema = z.object({
+  ideas: z
+    .array(
+      z.object({
+        title: z.string().min(3).max(140),
+        description: z.string().min(10).max(500),
+        channel: z.enum(["blog", "social", "email", "video", "landing_page", "ads"]),
+        type: z.enum(["blog_post", "social", "email", "video", "infographic", "other"]),
+      }),
+    )
+    .min(1)
+    .max(8),
+});
+
 const listingSeoSchema = z.object({
   seoTitle: z.string().min(3).max(60),
   metaDescription: z.string().min(10).max(160),
@@ -115,6 +129,41 @@ export const AI_TASKS = {
       },
     },
     creditsEnv: "AI_CREDITS_GROWTH_RECOMMENDATIONS",
+  },
+  content_ideas: {
+    code: "content_ideas",
+    feature: "content_intelligence",
+    tier: "luna",
+    promptId: "content-intelligence/ideas",
+    promptVersion: 1,
+    system:
+      "You generate original, channel-aware marketing content ideas from the brief and workspace context provided. Return 3-8 distinct ideas. " +
+      `Do not copy third-party content. ${NO_INVENTION}`,
+    maxOutputTokens: 1500,
+    moderateInput: true,
+    schema: contentIdeasSchema,
+    jsonSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["ideas"],
+      properties: {
+        ideas: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["title", "description", "channel", "type"],
+            properties: {
+              title: { type: "string" },
+              description: { type: "string" },
+              channel: { type: "string", enum: ["blog", "social", "email", "video", "landing_page", "ads"] },
+              type: { type: "string", enum: ["blog_post", "social", "email", "video", "infographic", "other"] },
+            },
+          },
+        },
+      },
+    },
+    creditsEnv: "AI_CREDITS_CONTENT_IDEAS",
   },
   listing_seo: {
     code: "listing_seo",

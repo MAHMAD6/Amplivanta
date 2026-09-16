@@ -1,71 +1,144 @@
 import type { Metadata } from "next";
-import { Sparkles, Download, TrendingUp, Zap, Globe, MessageCircle } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { IntelSubnav } from "@/components/amplivanta/intel-subnav";
-import { StatusPill } from "@/components/amplivanta/status-pill";
-import { KpiCard } from "@/components/amplivanta/kpi-card";
-import { TRENDS } from "@/lib/intel-data";
+import Link from "next/link";
+import { ArrowUpRight, CircleDot, TrendingUp } from "lucide-react";
+import { db } from "@/lib/db";
+import { cn } from "@/lib/utils";
+import { BarList, EmptyState, KeyList, ScreenHeader } from "@/components/amplivanta/screen-kit";
+import { FilterBar, PanelTitle, Select, filterSearch, giPanel, headerOutline, headerPrimary, outlineSm } from "@/components/amplivanta/growth-kit";
+import { ActButton } from "@/components/amplivanta/growth-ui";
+import { FormDialog } from "@/components/amplivanta/creative-ui";
+import { deleteTrend, trackTopic, trendToIdea } from "@/app/(app)/app/strategy/actions";
+import { growthContext, since } from "@/lib/server/growth-screens";
 
 export const metadata: Metadata = { title: "Trending Topics" };
+export const dynamic = "force-dynamic";
 
-const SOURCE_TONE = { X: "gray", Reddit: "orange", LinkedIn: "blue", News: "violet", TikTok: "pink" } as const;
+type SP = { q?: string; source?: string; category?: string; country?: string; days?: string; topic?: string };
 
-export default function TrendingPage() {
+export default async function TrendingTopicsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const c = await growthContext();
+  type T = Awaited<ReturnType<typeof db.trend.findMany>>[number];
+  let rows: T[] = [];
+  let facets = { sources: [] as string[], categories: [] as string[], countries: [] as string[] };
+  if (c) {
+    try {
+      const w = c.workspaceId;
+      const from = since(sp.days);
+      const [list, all] = await Promise.all([
+        db.trend.findMany({
+          where: {
+            workspaceId: w,
+            ...(sp.q ? { topic: { contains: sp.q, mode: "insensitive" } } : {}),
+            ...(sp.source ? { source: sp.source } : {}),
+            ...(sp.category ? { category: sp.category } : {}),
+            ...(sp.country ? { country: sp.country } : {}),
+            ...(from ? { createdAt: { gte: from } } : {}),
+          },
+          orderBy: [{ growth: "desc" }, { createdAt: "desc" }],
+          take: 100,
+        }),
+        db.trend.findMany({ where: { workspaceId: w }, select: { source: true, category: true, country: true } }),
+      ]);
+      rows = list;
+      const uniq = (xs: (string | null)[]) => [...new Set(xs.filter((x): x is string => Boolean(x)))].sort();
+      facets = { sources: uniq(all.map((a) => a.source)), categories: uniq(all.map((a) => a.category)), countries: uniq(all.map((a) => a.country)) };
+    } catch {
+      rows = [];
+    }
+  }
+  const selected = rows.find((r) => r.id === sp.topic) ?? rows[0];
+  const bySource = new Map<string, number>();
+  for (const r of rows) bySource.set(r.source ?? "Unspecified", (bySource.get(r.source ?? "Unspecified") ?? 0) + 1);
+  const avgGrowth = rows.length ? rows.reduce((n, r) => n + r.growth, 0) / rows.length : null;
+  const qs = new URLSearchParams(Object.entries({ q: sp.q, source: sp.source, category: sp.category, country: sp.country, days: sp.days }).filter(([, v]) => v) as [string, string][]);
+  const topicHref = (id: string) => { const u = new URLSearchParams(qs); u.set("topic", id); return `?${u}`; };
+  const canEdit = Boolean(c?.canEdit);
+  const opt = (xs: string[]): [string, string][] => xs.map((x) => [x, x]);
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <PageHeader
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
         title="Trending Topics"
-        subtitle="Timely topics — turn them into content opportunities."
+        subtitle="Track timely topics and turn relevant trends into content opportunities."
         actions={
           <>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line bg-white px-4 text-[13px] font-semibold text-ink"><Download className="h-3.5 w-3.5" /> Export</button>
-            <button className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-grad-cta px-4 text-[13px] font-bold text-white shadow-violet"><Sparkles className="h-3.5 w-3.5" /> Generate Content</button>
+            <FormDialog
+              title="Track Topic"
+              label="Track Topic"
+              className={headerPrimary}
+              action={trackTopic}
+              disabled={!canEdit}
+              submitLabel="Track topic"
+              note="No trend data provider is connected, so topics and figures are entered from your own research."
+              fields={[
+                { name: "topic", label: "Topic", kind: "text", required: true },
+                { name: "source", label: "Source", kind: "text", placeholder: "e.g. Google Trends, Reddit" },
+                { name: "category", label: "Industry / category", kind: "text" },
+                { name: "country", label: "Country", kind: "text" },
+                { name: "mentions", label: "Mentions", kind: "number" },
+                { name: "growth", label: "Velocity (% change)", kind: "number" },
+                { name: "relevance", label: "Relevance (0-100)", kind: "number" },
+                { name: "hashtags", label: "Related hashtags", kind: "text", placeholder: "#topic, #another" },
+              ]}
+            />
+            {rows.length ? <a href={`/api/trends/export${qs.size ? `?${qs}` : ""}`} className={headerOutline}>Export</a> : <span className={cn(headerOutline, "cursor-not-allowed opacity-50")} title="Nothing to export yet">Export</span>}
           </>
         }
       />
-      <IntelSubnav />
-
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={TrendingUp} label="Trending Topics" value={String(TRENDS.length)} tone="violet" />
-        <KpiCard icon={Zap} label="Avg. Velocity" value={null} tone="pink" />
-        <KpiCard icon={Globe} label="Sources" value={null} tone="blue" />
-        <KpiCard icon={MessageCircle} label="Mentions (24h)" value={null} tone="green" />
+      <FilterBar>
+        <input name="q" defaultValue={sp.q} placeholder="Search topics" aria-label="Search topics" className={filterSearch} />
+        <Select name="source" value={sp.source} all="All Sources" options={opt(facets.sources)} label="Source" />
+        <Select name="category" value={sp.category} all="All Industries" options={opt(facets.categories)} label="Industry" />
+        <Select name="country" value={sp.country} all="All Countries" options={opt(facets.countries)} label="Country" />
+        <Select name="days" value={sp.days} all="Date Range" options={[["7", "Last 7 days"], ["30", "Last 30 days"], ["90", "Last 90 days"]]} label="Date range" />
+      </FilterBar>
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <section className={giPanel}>
+          <PanelTitle hint="Mentions per tracked topic">Trend Activity</PanelTitle>
+          {rows.some((r) => r.mentions) ? <BarList rows={rows.filter((r) => r.mentions).map((r) => [r.topic, r.mentions ?? 0])} /> : <EmptyState icon={ArrowUpRight} title="No trend data available" body="Trend activity will appear after a data source is connected or topics are tracked." action={<Link href="/app/integrations#catalog" className={outlineSm}>Connect Data Sources</Link>} />}
+        </section>
+        <section className={giPanel}>
+          <PanelTitle hint="Average % change across the filtered topics">Velocity</PanelTitle>
+          <div className="mt-1 text-[24px] font-bold text-deep-navy">{avgGrowth != null ? `${avgGrowth >= 0 ? "+" : ""}${avgGrowth.toFixed(1)}%` : "—"}</div>
+          <div className="mt-2 text-[12px] text-ink-muted">{avgGrowth != null ? `Across ${rows.length} topics` : "No velocity data"}</div>
+        </section>
+        <section className={giPanel}>
+          <PanelTitle hint="Topics by source">Channel Mix</PanelTitle>
+          {bySource.size ? <BarList rows={[...bySource.entries()]} /> : <EmptyState icon={CircleDot} title="No channel mix available" body="Channel distribution will appear when source data is available." />}
+        </section>
       </div>
-
-      <div className="mb-4 flex flex-wrap gap-2">
-        {["All Sources", "X", "Reddit", "LinkedIn", "News", "TikTok"].map((s, i) => (
-          <button key={s} className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold ${i === 0 ? "border-violet/40 bg-violet/10 text-violet" : "border-line bg-white text-ink-soft"}`}>{s}</button>
-        ))}
-        <select className="ml-auto rounded-xl border border-line bg-white px-3 py-2 text-[12px]"><option>Industry: All</option><option>SaaS</option><option>Marketing</option><option>E-commerce</option><option>Sales</option></select>
-        <select className="rounded-xl border border-line bg-white px-3 py-2 text-[12px]"><option>Country: All</option><option>US</option><option>EU</option><option>Global</option></select>
-        <select className="rounded-xl border border-line bg-white px-3 py-2 text-[12px]"><option>Last 24h</option><option>Last 7 days</option><option>Last 30 days</option></select>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {TRENDS.map((t) => (
-          <div key={t.id} className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <div className="mb-2 flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <StatusPill tone={SOURCE_TONE[t.source]}>{t.source}</StatusPill>
-                <span className="text-[11px] text-ink-muted">{t.industry} · {t.country}</span>
-              </div>
-              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600">↑ {t.velocity}%</span>
-            </div>
-            <div className="text-[14px] font-bold text-ink">{t.topic}</div>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {t.hashtags.map((h) => <span key={h} className="rounded-md bg-violet/10 px-2 py-0.5 text-[10.5px] font-semibold text-violet">{h}</span>)}
-            </div>
-            <div className="mt-3 grid grid-cols-3 gap-2 border-t border-line pt-3 text-center text-[11px]">
-              <div><div className="text-ink-muted">Mentions</div><div className="font-bold text-ink">{t.mentions.toLocaleString()}</div></div>
-              <div><div className="text-ink-muted">Engagement</div><div className="font-bold text-ink">{t.engagement}%</div></div>
-              <div><div className="text-ink-muted">Updated</div><div className="font-bold text-ink">{t.updatedAt}</div></div>
-            </div>
-            <div className="mt-3 flex gap-2">
-              <button className="flex-1 rounded-xl border border-line py-1.5 text-[11.5px] font-semibold text-ink">Compare</button>
-              <button className="flex-1 rounded-xl bg-grad-cta py-1.5 text-[11.5px] font-bold text-white shadow-violet">Generate Content →</button>
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <section className={giPanel}>
+          <PanelTitle hint="Select a topic to see detail">Trending Topics</PanelTitle>
+          {rows.length ? (
+            <ul className="divide-y divide-line">
+              {rows.map((r) => (
+                <li key={r.id} className={cn("flex items-center justify-between gap-2 py-2.5", selected?.id === r.id && "bg-royal-tint/40")}>
+                  <Link href={topicHref(r.id)} className="min-w-0 px-2">
+                    <div className="truncate text-[13px] font-semibold text-deep-navy">{r.topic}</div>
+                    <div className="text-[11.5px] text-ink-muted">{[r.source, r.category, r.country].filter(Boolean).join(" · ") || "Manual"}</div>
+                  </Link>
+                  <span className={cn("shrink-0 px-2 text-[12.5px] font-semibold", r.growth >= 0 ? "text-emerald-600" : "text-red-500")}>{r.growth >= 0 ? "+" : ""}{r.growth}%</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState icon={TrendingUp} title="No topics found" body="Adjust filters or connect a trend source to populate topics." />
+          )}
+        </section>
+        <section className={giPanel}>
+          <PanelTitle hint="Figures as recorded for the topic" action={selected && canEdit ? <span className="flex gap-1.5"><ActButton action={trendToIdea.bind(null, selected.id)}>Save as idea</ActButton><ActButton action={deleteTrend.bind(null, selected.id)} confirm="Stop tracking this topic?">Remove</ActButton></span> : undefined}>Topic Detail{selected ? `: ${selected.topic}` : ""}</PanelTitle>
+          <KeyList
+            rows={[
+              ["Mentions", selected?.mentions != null ? selected.mentions.toLocaleString("en-US") : "—"],
+              ["Engagement", selected?.engagement != null ? selected.engagement.toLocaleString("en-US") : "—"],
+              ["Velocity", selected ? `${selected.growth >= 0 ? "+" : ""}${selected.growth}%` : "—"],
+              ["Relevance", selected?.relevance != null ? `${selected.relevance}/100` : "—"],
+              ["Related hashtags", selected?.hashtags.length ? selected.hashtags.join(" ") : "—"],
+            ]}
+          />
+        </section>
       </div>
     </div>
   );

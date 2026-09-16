@@ -631,6 +631,12 @@ model ContentIdea {
   channel     String?
   status      String    @default("idea")
   score       Int       @default(0)
+  /// blog_post | social | email | video | infographic | other
+  type        String?
+  goal        String?
+  /// manual | ai | event | news | trend
+  source      String    @default("manual")
+  saved       Boolean   @default(false)
   createdAt   DateTime  @default(now())
 }
 
@@ -642,6 +648,12 @@ model Trend {
   volume      Int       @default(0)
   growth      Float     @default(0)
   category    String?
+  source      String?
+  country     String?
+  mentions    Int?
+  engagement  Float?
+  relevance   Float?
+  hashtags    String[]  @default([])
   createdAt   DateTime  @default(now())
 }
 
@@ -653,6 +665,9 @@ model NewsItem {
   source      String
   url         String
   summary     String?   @db.Text
+  topic       String?
+  relevance   Float?
+  saved       Boolean   @default(false)
   publishedAt DateTime  @default(now())
 }
 
@@ -664,6 +679,10 @@ model EventItem {
   date        DateTime
   location    String?
   description String?   @db.Text
+  /// holiday | awareness | industry | company | seasonal | custom
+  type        String    @default("custom")
+  country     String?
+  goal        String?
   createdAt   DateTime  @default(now())
 }
 
@@ -701,6 +720,8 @@ model Goal {
   strategy     Strategy? @relation(fields: [strategyId], references: [id], onDelete: SetNull)
   deadline     DateTime?
   status       String    @default("in_progress")
+  ownerId      String?
+  campaignIds  String[]  @default([])
   createdAt    DateTime  @default(now())
 }
 
@@ -713,6 +734,14 @@ model Persona {
   demographics Json?
   painPoints   String[]
   goals        String[]
+  needs        String[]  @default([])
+  objections   String[]  @default([])
+  channels     String[]  @default([])
+  triggers     String[]  @default([])
+  notes        String?   @db.Text
+  segmentId    String?
+  /// draft | active | archived
+  status       String    @default("active")
   createdAt    DateTime  @default(now())
 }
 
@@ -724,6 +753,16 @@ model ChannelPlan {
   budget      Float     @default(0)
   strategy    String?   @db.Text
   status      String    @default("active")
+  plannedSpend   Float?
+  expectedReturn Float?
+  targetLeads    Int?
+  targetRevenue  Float?
+  assumptions    String?   @db.Text
+  /// draft | base | stretch
+  scenario       String    @default("draft")
+  /// not_submitted | pending | approved | changes_requested
+  approvalStatus String    @default("not_submitted")
+  approvedById   String?
   createdAt   DateTime  @default(now())
 }
 
@@ -747,6 +786,10 @@ model Strategy {
   status      String    @default("active")
   startDate   DateTime?
   endDate     DateTime?
+  /// Strategic pillars, one string per theme.
+  pillars     String[]  @default([])
+  /// { strengths, weaknesses, opportunities, threats } as string arrays.
+  swot        Json?
   goals       Goal[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -837,6 +880,10 @@ model Report {
   name        String
   type        String
   config      Json?
+  /// draft | final
+  status      String    @default("draft")
+  sharedAt    DateTime?
+  createdById String?
   createdAt   DateTime  @default(now())
 }
 
@@ -2615,4 +2662,25 @@ model Document {
   updatedAt       DateTime @updatedAt
 
   @@index([workspaceId, updatedAt])
+}
+
+/// A Growth Audit run: deterministic readiness checks over workspace data.
+model GrowthAudit {
+  id          String    @id @default(cuid())
+  workspaceId String
+  website     String
+  industry    String?
+  goal        String?
+  periodDays  Int       @default(30)
+  competitors String[]  @default([])
+  /// completed | failed
+  status      String    @default("completed")
+  /// 0-100 share of passed checks; null until run.
+  score       Int?
+  /// [{ key, dimension, label, passed, detail, href }]
+  checks      Json?
+  createdById String?
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, createdAt])
 }

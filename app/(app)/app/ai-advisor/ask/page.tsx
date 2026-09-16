@@ -1,53 +1,76 @@
 import type { Metadata } from "next";
-import { Clock, Sparkles } from "lucide-react";
-import { PageHeader } from "@/components/amplivanta/page-header";
-import { AdvisorTabs } from "@/components/amplivanta/advisor-tabs";
-import { AskAdvisorClient } from "@/components/amplivanta/ask-advisor-client";
-import { ASK_HISTORY, ASK_SUGGESTED } from "@/lib/advisor-data";
+import Link from "next/link";
+import { MessageSquare } from "lucide-react";
+import { db } from "@/lib/db";
+import { cn } from "@/lib/utils";
+import { isAiConfigured } from "@/lib/ai";
+import { EmptyState, ScreenHeader, TabBar, fmtDateTime } from "@/components/amplivanta/screen-kit";
+import { PanelTitle, giPanel } from "@/components/amplivanta/growth-kit";
+import { AskAdvisor } from "@/components/amplivanta/growth-ui";
+import { growthContext } from "@/lib/server/growth-screens";
+import { ADVISOR_TABS } from "@/lib/growth/advisor-tabs";
 
 export const metadata: Metadata = { title: "Ask AI Advisor" };
+export const dynamic = "force-dynamic";
 
-export default function AskAdvisorPage() {
+export default async function AskAdvisorPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
+  const sp = await searchParams;
+  const ctx = await growthContext();
+  const ai = isAiConfigured();
+  let conversations: { id: string; title: string; updatedAt: Date; _count: { messages: number } }[] = [];
+  let thread: { id: string; role: string; content: string; createdAt: Date }[] = [];
+  let active: string | undefined;
+  if (ctx) {
+    try {
+      const aiw = await db.aiWorkspace.findFirst({ where: { workspaceId: ctx.workspaceId }, select: { id: true } });
+      if (aiw) {
+        conversations = await db.aiConversation.findMany({ where: { aiWorkspaceId: aiw.id }, orderBy: { updatedAt: "desc" }, take: 30, select: { id: true, title: true, updatedAt: true, _count: { select: { messages: true } } } });
+        active = conversations.find((c) => c.id === sp.c)?.id;
+        if (active) thread = await db.aiMessage.findMany({ where: { conversationId: active }, orderBy: { createdAt: "asc" }, take: 200, select: { id: true, role: true, content: true, createdAt: true } });
+      }
+    } catch {
+      conversations = [];
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-      <div className="text-[12px] font-semibold uppercase tracking-wide text-violet">AI Advisor</div>
-      <PageHeader
-        title={<span className="inline-flex items-center gap-2"><Sparkles className="h-6 w-6 text-violet" /> Ask AI Advisor</span>}
-        subtitle="Ask anything about your data, performance, or growth strategy — get a scored answer with sources."
-      />
-
-      <AdvisorTabs />
-
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <div>
-          <AskAdvisorClient suggested={ASK_SUGGESTED} />
-        </div>
-
-        {/* Recent questions */}
-        <aside className="space-y-4">
-          <section className="rounded-2xl border border-line bg-white p-5 shadow-card">
-            <h2 className="mb-4 text-[14px] font-bold text-ink">Recent Questions</h2>
-            <ul className="space-y-2">
-              {ASK_HISTORY.map((h) => (
-                <li key={h.q} className="flex items-start gap-2.5 rounded-xl border border-line p-3">
-                  <Clock className="mt-0.5 h-4 w-4 text-ink-muted" />
-                  <span>
-                    <span className="block text-[12.5px] font-semibold text-ink">{h.q}</span>
-                    <span className="block text-[11px] text-ink-muted">{h.when}</span>
-                  </span>
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader crumbs={[["AI Advisor", "/app/ai-advisor"], ["Ask AI Advisor"]]} title="Ask AI Advisor" subtitle="Ask growth questions and keep every answer in your conversation history." />
+      <TabBar tabs={ADVISOR_TABS} active="/app/ai-advisor/ask" />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className={giPanel}>
+          <PanelTitle action={active ? <Link href="/app/ai-advisor/ask" className="text-[12px] font-semibold text-[#0B5CFF]">New</Link> : undefined}>Conversations</PanelTitle>
+          {conversations.length ? (
+            <ul className="space-y-1">
+              {conversations.map((c) => (
+                <li key={c.id}>
+                  <Link href={`/app/ai-advisor/ask?c=${c.id}`} className={cn("block rounded-md px-2.5 py-2 text-[12.5px]", c.id === active ? "bg-royal-tint text-[#0B5CFF]" : "text-deep-navy hover:bg-bg-soft")}>
+                    <div className="truncate font-semibold">{c.title}</div>
+                    <div className="text-[11px] text-ink-muted">{c._count.messages} messages · {fmtDateTime(c.updatedAt)}</div>
+                  </Link>
                 </li>
               ))}
             </ul>
-          </section>
-
-          <section className="rounded-2xl border border-violet/20 bg-gradient-to-br from-violet/[0.07] to-orange-brand/[0.05] p-5">
-            <h2 className="text-[14px] font-bold text-ink">Pro tip</h2>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-ink-soft">
-              Ask follow-ups like &quot;show me by channel&quot; or &quot;compare to last quarter&quot; — the Advisor keeps
-              your question&apos;s context.
-            </p>
-          </section>
+          ) : (
+            <p className="text-[12.5px] text-ink-soft">No conversations yet.</p>
+          )}
         </aside>
+        <section className={giPanel}>
+          <PanelTitle>{active ? conversations.find((c) => c.id === active)?.title : "New conversation"}</PanelTitle>
+          {thread.length ? (
+            <ol className="mb-4 space-y-3">
+              {thread.map((m) => (
+                <li key={m.id} className={cn("max-w-[85%] rounded-lg px-3 py-2.5 text-[13px]", m.role === "user" ? "ml-auto bg-[#0B5CFF] text-white" : "bg-bg-soft/70 text-deep-navy")}>
+                  <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                  <div className={cn("mt-1 text-[10.5px]", m.role === "user" ? "text-white/70" : "text-ink-muted")}>{fmtDateTime(m.createdAt)}</div>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            !active && <EmptyState compact icon={MessageSquare} title="Ask your first question" body={ai ? "Answers use only your question and this conversation." : "AI Advisor is not available yet: no AI provider is configured."} />
+          )}
+          <AskAdvisor available={ai} canUse={Boolean(ctx)} conversationId={active} onReplyRefresh />
+        </section>
       </div>
     </div>
   );

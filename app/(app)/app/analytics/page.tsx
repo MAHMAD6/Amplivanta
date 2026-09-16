@@ -28,7 +28,7 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
         providerMetric(c.workspaceId, "google_analytics", "conversions", range),
         campaignPerformance(c.workspaceId, range),
         crmFunnel(c.workspaceId, range),
-        db.report.findMany({ where: { workspaceId: c.workspaceId }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, name: true, type: true, createdAt: true } }),
+        db.report.findMany({ where: { workspaceId: c.workspaceId, NOT: { type: { startsWith: "strategy_" } } }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, name: true, type: true, createdAt: true } }),
       ]);
       d = { sessions, users, conversions, campaigns, crm, reports };
     } catch {

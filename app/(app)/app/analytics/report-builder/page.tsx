@@ -30,7 +30,7 @@ export default async function ReportBuilderPage({ searchParams }: { searchParams
   if (c) {
     try {
       [reports, exports] = await Promise.all([
-        db.report.findMany({ where: { workspaceId: c.workspaceId }, orderBy: { createdAt: "desc" }, take: 50, select: { id: true, name: true, type: true, createdAt: true } }),
+        db.report.findMany({ where: { workspaceId: c.workspaceId, NOT: { type: { startsWith: "strategy_" } } }, orderBy: { createdAt: "desc" }, take: 50, select: { id: true, name: true, type: true, createdAt: true } }),
         db.auditLog.findMany({ where: { workspaceId: c.workspaceId, action: "report.exported" }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, createdAt: true, resourceId: true } }),
       ]);
     } catch {

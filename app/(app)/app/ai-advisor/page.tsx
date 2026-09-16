@@ -1,167 +1,137 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sparkles, Search, Target, ClipboardCheck, BarChart3, Users2, MousePointerClick, MessageSquare, CircleDollarSign, TrendingUp, Mail, ArrowRight, ChevronRight, Cloud, Zap, Megaphone, Package, Briefcase } from "lucide-react";
-import { StatusPill } from "@/components/amplivanta/status-pill";
+import { ArrowUpRight, CircleDot, Sparkles } from "lucide-react";
+import { db } from "@/lib/db";
+import { isAiConfigured } from "@/lib/ai";
+import { EmptyState, Pill, ScreenHeader } from "@/components/amplivanta/screen-kit";
+import { MetricCards, PanelTitle, Progress, RowList, giPanel, headerPrimary, outlineSm } from "@/components/amplivanta/growth-kit";
+import { AskAdvisor, GenerateRecommendations } from "@/components/amplivanta/growth-ui";
+import { connectedProviders, growthContext } from "@/lib/server/growth-screens";
+import { dimensionScores, parseChecks } from "@/lib/growth/audit-checks";
 
-export const metadata: Metadata = { title: "AI Advisor" };
+export const metadata: Metadata = { title: "AI Advisor – Growth Plan & Recommendations" };
+export const dynamic = "force-dynamic";
 
-const VALUES = [
-  { icon: Search, tone: "green", title: "Find opportunities", desc: "Surface high-impact growth opportunities across your marketing, sales, and customer data." },
-  { icon: Target, tone: "violet", title: "Prioritize what matters", desc: "Get AI-backed recommendations ranked by potential impact and effort so you focus on what moves the needle." },
-  { icon: ClipboardCheck, tone: "blue", title: "Take confident action", desc: "Follow clear, step-by-step action plans to implement changes and drive results." },
-  { icon: BarChart3, tone: "orange", title: "Measure & improve", desc: "Track progress over time and continuously improve with smarter insights." },
-];
-const OPP_AREAS = [
-  { icon: Users2, title: "Traffic & Acquisition", desc: "Improve channel mix and attract more qualified visitors." },
-  { icon: MousePointerClick, title: "Conversion Optimization", desc: "Optimize key pages and journeys to convert more users." },
-  { icon: MessageSquare, title: "Engagement & Retention", desc: "Build stronger relationships and increase repeat business." },
-  { icon: CircleDollarSign, title: "Revenue Growth", desc: "Increase average order value and expand revenue." },
-];
-const ACTIONS = [
-  { icon: TrendingUp, title: "Optimize landing page conversion", meta: "High impact  •  Estimated uplift: High", tag: "High", tone: "green" as const },
-  { icon: Mail, title: "Re-engage inactive leads", meta: "Medium impact  •  Estimated uplift: Medium", tag: "Medium", tone: "amber" as const },
-  { icon: Users2, title: "Expand high-performing audience", meta: "High impact  •  Estimated uplift: High", tag: "High", tone: "green" as const },
-];
-const INTEL = [
-  { icon: Search, tone: "green", title: "Deep data analysis", desc: "Uncover patterns and opportunities across marketing, sales, and product data." },
-  { icon: Target, tone: "violet", title: "Smart recommendations", desc: "Get prioritized, actionable recommendations tailored to your goals." },
-  { icon: ClipboardCheck, tone: "blue", title: "Actionable roadmaps", desc: "Turn insights into clear, step-by-step plans that drive results." },
-  { icon: BarChart3, tone: "orange", title: "Measure & improve", desc: "Track progress and get continuous guidance to improve outcomes." },
-];
-const STEPS = [
-  { icon: Cloud, tone: "blue", n: 1, title: "Connect & analyze", desc: "Connect your data sources. Our AI analyzes performance and market signals." },
-  { icon: Sparkles, tone: "violet", n: 2, title: "Get AI insights", desc: "See your growth opportunities, prioritized by impact, effort, and confidence." },
-  { icon: Zap, tone: "green", n: 3, title: "Take action & grow", desc: "Implement recommended actions, track results, and keep improving." },
-];
-const TEAMS = [
-  { icon: Megaphone, title: "Marketing Teams", desc: "Optimize campaigns, improve ROI, and drive more qualified leads." },
-  { icon: CircleDollarSign, title: "Sales Teams", desc: "Increase pipeline, improve win rates, and forecast accurately." },
-  { icon: Package, title: "Product Teams", desc: "Understand user behavior and build what drives growth." },
-  { icon: TrendingUp, title: "Growth Managers", desc: "Prioritize what matters and align efforts across channels." },
-  { icon: Briefcase, title: "Executives", desc: "Make data-backed decisions that drive sustainable growth." },
-];
-const TONE: Record<string, string> = { green: "bg-emerald-500/10 text-emerald-600", violet: "bg-violet/10 text-violet", blue: "bg-blue-500/10 text-blue-600", orange: "bg-orange-brand/10 text-orange-brand" };
+const OPEN = ["new", "pending", "saved", "ready"];
 
-export default function AiAdvisorPage() {
+export default async function AiAdvisorPage() {
+  const c = await growthContext();
+  const ai = isAiConfigured();
+  let data: null | {
+    audit: { score: number | null; checks: ReturnType<typeof parseChecks>; createdAt: Date } | null;
+    open: number;
+    high: number;
+    sources: number;
+    recs: { id: string; title: string; body: string | null; category: string; impact: string; confidence: number | null }[];
+  } = null;
+  if (c) {
+    try {
+      const w = c.workspaceId;
+      const [audit, open, high, sources, recs] = await Promise.all([
+        db.growthAudit.findFirst({ where: { workspaceId: w }, orderBy: { createdAt: "desc" } }),
+        db.recommendation.count({ where: { workspaceId: w, status: { in: OPEN } } }),
+        db.recommendation.count({ where: { workspaceId: w, status: { in: OPEN }, impact: "high" } }),
+        connectedProviders(w),
+        db.recommendation.findMany({ where: { workspaceId: w, status: { in: OPEN } }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, title: true, body: true, category: true, impact: true, confidence: true } }),
+      ]);
+      data = { audit: audit ? { score: audit.score, checks: parseChecks(audit.checks), createdAt: audit.createdAt } : null, open, high, sources: sources.length, recs };
+    } catch {
+      data = null;
+    }
+  }
+  const failed = data?.audit?.checks.filter((x) => !x.passed) ?? [];
+  const canEdit = Boolean(c?.canEdit);
+
   return (
-    <div className="mx-auto max-w-[1200px]">
-      {/* Hero */}
-      <section className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.5fr_1fr]">
-        <div>
-          <h1 className="font-display text-[34px] font-extrabold leading-[1.1] text-ink lg:text-[40px]">AI Advisor for Smarter Growth Decisions</h1>
-          <p className="mt-4 max-w-[520px] text-[15px] leading-relaxed text-ink-soft">Get AI-powered insights, tailored recommendations, and clear action steps to accelerate your growth.</p>
-        </div>
-        <div className="rounded-2xl border border-line bg-gradient-to-br from-violet/[0.05] to-orange-brand/[0.05] p-5 shadow-card">
-          <div className="flex items-start gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-grad-brand-2 text-white shadow-violet"><Sparkles className="h-6 w-6" /></span>
-            <div className="flex-1 space-y-1.5">
-              {[80, 60, 70].map((w, i) => <div key={i} className="flex items-center gap-2"><span className="flex h-4 w-4 items-center justify-center rounded-full bg-violet/15 text-[8px] text-violet">✓</span><div className="h-2 rounded bg-line" style={{ width: `${w}%` }} /></div>)}
-            </div>
-          </div>
-          <div className="mt-4 flex items-end gap-1.5">{[40, 65, 50, 80, 70].map((h, i) => <div key={i} className="flex-1 rounded-t bg-violet/60" style={{ height: `${h}px` }} />)}</div>
-        </div>
-      </section>
-
-      {/* Value props */}
-      <div className="mt-8 grid grid-cols-1 gap-4 rounded-2xl border border-line bg-white p-6 shadow-card sm:grid-cols-2 lg:grid-cols-4">
-        {VALUES.map((v) => (
-          <div key={v.title} className="text-center">
-            <span className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${TONE[v.tone]}`}><v.icon className="h-6 w-6" /></span>
-            <div className="mt-3 text-[14px] font-bold text-ink">{v.title}</div>
-            <p className="mt-1 text-[11.5px] leading-snug text-ink-soft">{v.desc}</p>
-          </div>
-        ))}
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        title="AI Advisor – Growth Plan & Recommendations"
+        subtitle="Turn connected workspace data and business questions into prioritized growth actions."
+        actions={<a href="#ask" className={headerPrimary}>Ask AI Advisor</a>}
+      />
+      <MetricCards
+        items={[
+          { label: "Growth Score", value: data?.audit?.score != null ? `${data.audit.score}/100` : null, caption: data?.audit ? "Setup readiness from the latest Growth Audit" : "No analysis yet", hint: "Share of Growth Audit readiness checks passed" },
+          { label: "Opportunities", value: data?.open ? String(data.open) : null, caption: data?.open ? "Open recommendations" : "No opportunities yet" },
+          { label: "Potential Impact", value: data?.high ? `${data.high} high` : null, caption: data?.high ? "High-impact recommendations open" : "No impact estimate yet" },
+          { label: "Connected Sources", value: data?.sources ? String(data.sources) : null, caption: data?.sources ? "Live integrations" : "Connect data to begin" },
+        ]}
+      />
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <section id="ask" className={giPanel}>
+          <PanelTitle hint="Questions go to the AI Advisor and are saved in your history">Ask About Growth</PanelTitle>
+          <AskAdvisor available={ai} canUse={Boolean(c)} />
+        </section>
+        <section className={giPanel}>
+          <PanelTitle hint="Pass rate per audit dimension">Growth Health</PanelTitle>
+          {data?.audit ? (
+            <ul className="space-y-3 py-2">
+              {dimensionScores(data.audit.checks).map(([d, v]) => (
+                <li key={d}>
+                  <div className="mb-1 flex justify-between text-[12.5px]"><span className="text-deep-navy">{d}</span><span className="text-ink-soft">{v}%</span></div>
+                  <Progress value={v} />
+                </li>
+              ))}
+              <li className="pt-1 text-[11.5px] text-ink-muted">From the Growth Audit run {data.audit.createdAt.toISOString().slice(0, 10)}. <Link href="/app/growth-audit" className="font-semibold text-[#0B5CFF]">Run again</Link></li>
+            </ul>
+          ) : (
+            <EmptyState icon={CircleDot} title="No analysis available" body="Connect data sources or run an analysis to populate growth health." action={<Link href="/app/integrations#catalog" className={outlineSm}>Connect Integrations</Link>} />
+          )}
+        </section>
       </div>
-
-      {/* Advisor Overview */}
-      <section className="mt-8 rounded-2xl border border-line bg-white p-5 shadow-card">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[16px] font-bold text-ink">Advisor Overview</h2>
-          <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[12.5px] font-semibold text-ink">Last 30 days ▾</button>
-        </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div>
-            <div className="mb-2 text-[12.5px] font-bold text-ink-soft">Opportunity Areas</div>
-            <div className="space-y-2">
-              {OPP_AREAS.map((o) => (
-                <div key={o.title} className="flex items-center gap-3 rounded-xl border border-line p-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet/10 text-violet"><o.icon className="h-4 w-4" /></span>
-                  <div className="min-w-0 flex-1"><div className="text-[13px] font-bold text-ink">{o.title}</div><p className="text-[11.5px] text-ink-soft">{o.desc}</p></div>
-                  <ChevronRight className="h-4 w-4 text-ink-muted" />
-                </div>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <section className={giPanel}>
+          <PanelTitle hint="Readiness gaps found by the latest Growth Audit">Top Opportunities</PanelTitle>
+          {failed.length ? (
+            <ul className="divide-y divide-line">
+              {failed.slice(0, 5).map((f) => (
+                <li key={f.key} className="py-2.5">
+                  <Link href={f.href} className="text-[13px] font-semibold text-deep-navy hover:text-[#0B5CFF]">{f.label}</Link>
+                  <p className="text-[12px] text-ink-soft">{f.detail}</p>
+                </li>
               ))}
-            </div>
-          </div>
-          <div>
-            <div className="mb-2 text-[12.5px] font-bold text-ink-soft">Top Recommended Actions</div>
-            <div className="space-y-2">
-              {ACTIONS.map((a) => (
-                <div key={a.title} className="flex items-center gap-3 rounded-xl border border-line p-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet/10 text-violet"><a.icon className="h-4 w-4" /></span>
-                  <div className="min-w-0 flex-1"><div className="text-[13px] font-bold text-ink">{a.title}</div><p className="text-[11px] text-ink-muted">{a.meta}</p></div>
-                  <StatusPill tone={a.tone}>{a.tag}</StatusPill>
-                  <ChevronRight className="h-4 w-4 text-ink-muted" />
-                </div>
+            </ul>
+          ) : (
+            <EmptyState icon={ArrowUpRight} title={data?.audit ? "No gaps found" : "No opportunities yet"} body={data?.audit ? "Every readiness check passed in the latest audit." : "Prioritized opportunities will appear after analysis."} action={<Link href="/app/growth-audit" className={outlineSm}>Run Analysis</Link>} />
+          )}
+        </section>
+        <section className={giPanel}>
+          <PanelTitle hint="Generated from aggregate workspace facts" action={data?.recs.length ? <Link href="/app/ai-advisor/history" className="text-[12px] font-semibold text-[#0B5CFF]">View all</Link> : undefined}>Recommendations</PanelTitle>
+          {data?.recs.length ? (
+            <ul className="divide-y divide-line">
+              {data.recs.map((r) => (
+                <li key={r.id} className="py-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[13px] font-semibold text-deep-navy">{r.title}</span>
+                    <Pill tone={r.impact === "high" ? "green" : r.impact === "medium" ? "amber" : "gray"}>{r.impact}</Pill>
+                  </div>
+                  <p className="line-clamp-2 text-[12px] text-ink-soft">{r.body}</p>
+                  <p className="text-[11px] text-ink-muted">{r.category}{r.confidence != null ? ` · ${Math.round(r.confidence * 100)}% confidence` : ""}</p>
+                </li>
               ))}
-            </div>
-            <Link href="/app/ai-advisor/history" className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold text-violet">View all recommendations <ArrowRight className="h-4 w-4" /></Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Growth intelligence */}
-      <Section title="AI-Powered Growth Intelligence" sub="Advanced AI models analyze your data to deliver the right insight at the right time.">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-          {INTEL.map((f) => (
-            <div key={f.title} className="flex gap-3">
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${TONE[f.tone]}`}><f.icon className="h-5 w-5" /></span>
-              <div><div className="text-[13.5px] font-bold text-ink">{f.title}</div><p className="mt-0.5 text-[11.5px] leading-relaxed text-ink-soft">{f.desc}</p></div>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* How it works */}
-      <Section title="How the Growth Advisor Works" sub="From insight to impact in three steps.">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {STEPS.map((s) => (
-            <div key={s.n} className="rounded-2xl border border-line bg-white p-5 shadow-card">
-              <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${TONE[s.tone]}`}><s.icon className="h-5 w-5" /></span>
-              <div className="mt-3 text-[14px] font-bold text-ink">{s.n}. {s.title}</div>
-              <p className="mt-1 text-[12.5px] text-ink-soft">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* Teams */}
-      <Section title="Built for Growth-Focused Teams" sub="Insights designed for every role that drives growth.">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {TEAMS.map((t) => (
-            <div key={t.title} className="rounded-2xl border border-line bg-white p-4 shadow-card">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet/10 text-violet"><t.icon className="h-4 w-4" /></span>
-              <div className="mt-2.5 text-[12.5px] font-bold text-ink">{t.title}</div>
-              <p className="mt-1 text-[11px] leading-snug text-ink-soft">{t.desc}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* CTA */}
-      <div className="mb-6 mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-grad-brand-2 p-6 text-white shadow-violet">
-        <div className="flex items-center gap-3"><Sparkles className="h-6 w-6" /><div><div className="text-[16px] font-bold">Ready to unlock your next growth opportunity?</div><div className="text-[13px] text-white/80">Let AI guide your next best move.</div></div></div>
-        <Link href="/app/ai-advisor/ask" className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-[13px] font-bold text-violet">Start Engineering Growth <ArrowRight className="h-4 w-4" /></Link>
+            </ul>
+          ) : (
+            <EmptyState
+              icon={Sparkles}
+              title="No recommendations yet"
+              body={ai ? "AI recommendations will appear with impact and confidence once generated." : "AI recommendations need an AI provider to be configured."}
+              action={<GenerateRecommendations available={ai} canUse={canEdit} className={outlineSm}>Ask AI Advisor</GenerateRecommendations>}
+            />
+          )}
+        </section>
+        <section className={giPanel}>
+          <PanelTitle hint="Start the draft in the module that executes it">Action Handoffs</PanelTitle>
+          <RowList
+            rows={[
+              { label: "Campaign", value: "Creates a draft", href: "/app/workspace/plan" },
+              { label: "Landing Page", value: "Creates a draft", href: "/app/marketing/landing-pages" },
+              { label: "Email Sequence", value: "Creates a draft", href: "/app/marketing/emails" },
+              { label: "Automation", value: "Creates a draft", href: "/app/workspace/automations" },
+              { label: "Social Post", value: "Creates a draft", href: "/app/social/compose" },
+            ]}
+          />
+        </section>
       </div>
     </div>
-  );
-}
-
-function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
-  return (
-    <section className="mt-10">
-      <h2 className="font-display text-[22px] font-extrabold text-ink">{title}</h2>
-      {sub && <p className="mt-1.5 max-w-3xl text-[13px] text-ink-soft">{sub}</p>}
-      <div className="mt-6">{children}</div>
-    </section>
   );
 }

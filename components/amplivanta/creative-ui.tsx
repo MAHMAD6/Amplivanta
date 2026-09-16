@@ -26,7 +26,9 @@ type Result = { ok: true; message: string; id?: string; text?: string } | { ok: 
 export type FieldSpec =
   | { name: string; label: string; kind: "text" | "number" | "color" | "date"; required?: boolean; placeholder?: string; defaultValue?: string }
   | { name: string; label: string; kind: "textarea"; required?: boolean; placeholder?: string; rows?: number; defaultValue?: string }
-  | { name: string; label: string; kind: "select"; options: [string, string][]; required?: boolean; placeholder?: string; defaultValue?: string };
+  | { name: string; label: string; kind: "select"; options: [string, string][]; required?: boolean; placeholder?: string; defaultValue?: string }
+  | { name: string; label: string; kind: "checkbox"; defaultChecked?: boolean }
+  | { name: string; kind: "hidden"; value: string };
 
 const control = "w-full rounded-md border border-line bg-white px-3 text-[13.5px] text-deep-navy focus:border-[#0B5CFF] focus:outline-none";
 const small = "rounded-md border border-line px-2.5 py-1 text-[12px] font-semibold text-deep-navy hover:bg-bg-soft disabled:opacity-50";
@@ -48,7 +50,15 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 export function Fields({ fields }: { fields: FieldSpec[] }) {
   return (
     <>
-      {fields.map((f) => (
+      {fields.map((f) =>
+        f.kind === "hidden" ? (
+          <input key={f.name} type="hidden" name={f.name} value={f.value} />
+        ) : f.kind === "checkbox" ? (
+          <label key={f.name} className="flex items-center gap-2 text-[13px] text-deep-navy">
+            <input type="checkbox" name={f.name} defaultChecked={f.defaultChecked} className="h-4 w-4 rounded border-line" />
+            {f.label}
+          </label>
+        ) : (
         <label key={f.name} className="block">
           <span className="mb-1 block text-[13px] font-semibold text-deep-navy">{f.label}{f.required && <span className="text-red-500"> *</span>}</span>
           {f.kind === "textarea" ? (
@@ -67,7 +77,8 @@ export function Fields({ fields }: { fields: FieldSpec[] }) {
             <input name={f.name} type={f.kind} required={f.required} placeholder={f.placeholder} defaultValue={f.defaultValue} className={cn(control, "h-10")} />
           )}
         </label>
-      ))}
+        ),
+      )}
     </>
   );
 }

@@ -1,123 +1,147 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Target, ClipboardCheck, Search, Users2, GitBranch, Database, Play, ArrowRight, CheckCircle2, Megaphone, Package, TrendingUp, Briefcase, Sparkles, BarChart3, PieChart } from "lucide-react";
+import { CheckCircle2, CircleDot, Columns3, Target, XCircle } from "lucide-react";
+import { db } from "@/lib/db";
+import { cn } from "@/lib/utils";
+import { EmptyState, ScreenHeader, fmtDate } from "@/components/amplivanta/screen-kit";
+import { MetricCards, PanelTitle, Progress, giPanel, headerPrimary } from "@/components/amplivanta/growth-kit";
+import { ActionForm, SubmitButton } from "@/components/amplivanta/growth-ui";
+import { runGrowthAudit } from "@/app/(app)/app/strategy/actions";
+import { growthContext } from "@/lib/server/growth-screens";
+import { dimensionScores, parseChecks } from "@/lib/growth/audit-checks";
+import { GROWTH_GOALS, INDUSTRIES, PERIODS, label } from "@/lib/growth/options";
 
-export const metadata: Metadata = { title: "Growth Audit" };
+export const metadata: Metadata = { title: "Growth Audit™ – Audit Setup & Results" };
+export const dynamic = "force-dynamic";
 
-const AREAS = [
-  { icon: Target, tone: "green", title: "Strategy & Positioning", desc: "Evaluate your value proposition, messaging, and market positioning." },
-  { icon: ClipboardCheck, tone: "violet", title: "Content & Messaging", desc: "Assess content quality, consistency, and alignment with audience needs." },
-  { icon: Search, tone: "blue", title: "Visibility & Traffic", desc: "Review SEO, channels, traffic sources, and audience reach." },
-  { icon: Users2, tone: "orange", title: "Conversion & Engagement", desc: "Analyze user experience, engagement, and conversion optimization." },
-  { icon: GitBranch, tone: "green", title: "Sales & Pipeline", desc: "Evaluate lead quality, pipeline health, and revenue opportunities." },
-  { icon: Database, tone: "violet", title: "Technology & Data", desc: "Assess your tools, data quality, and tracking infrastructure." },
-];
-const OPPS = ["High-impact opportunities to accelerate growth", "Quick wins you can implement now", "Priorities that deliver measurable results", "Strategic recommendations aligned to your goals", "A clear roadmap for sustainable growth"];
-const STEPS = [
-  { n: 1, title: "Answer a few questions", desc: "Share details about your business, goals, and current challenges." },
-  { n: 2, title: "We analyze everything", desc: "Our AI and growth experts evaluate your data across key growth areas." },
-  { n: 3, title: "Get your audit & roadmap", desc: "Receive a prioritized report with recommendations you can act on." },
-];
-const TEAMS = [
-  { icon: Megaphone, title: "Marketing Teams", desc: "Improve strategy, campaigns, and content performance." },
-  { icon: Users2, title: "Sales Teams", desc: "Better pipeline visibility and higher-quality leads." },
-  { icon: Package, title: "Product Teams", desc: "Align products with market needs and user feedback." },
-  { icon: TrendingUp, title: "Growth Managers", desc: "Prioritize initiatives that drive the biggest impact." },
-  { icon: Briefcase, title: "Executives", desc: "Make data-backed decisions with confidence." },
-];
-const DONUT = [["Strategy & Positioning", "#16A56A"], ["Content & Messaging", "#6A35F0"], ["Visibility & Traffic", "#3B82F6"], ["Conversion & Engagement", "#F97316"], ["Sales & Pipeline", "#8B5CF6"], ["Technology & Data", "#0EA5E9"]] as const;
-const TONE: Record<string, string> = { green: "bg-emerald-500/10 text-emerald-600", violet: "bg-violet/10 text-violet", blue: "bg-blue-500/10 text-blue-600", orange: "bg-orange-brand/10 text-orange-brand" };
+const field = "h-10 w-full rounded-md border border-line bg-white px-3 text-[13px] text-deep-navy placeholder:text-ink-muted focus:border-[#0B5CFF] focus:outline-none";
+const lbl = "mb-1 block text-[12.5px] font-semibold text-deep-navy";
 
-export default function GrowthAuditPage() {
-  const grad = DONUT.map(([, c], i) => `${c} ${(i * 100) / 6}% ${((i + 1) * 100) / 6}%`).join(", ");
+export default async function GrowthAuditPage({ searchParams }: { searchParams: Promise<{ audit?: string }> }) {
+  const sp = await searchParams;
+  const c = await growthContext();
+  let history: { id: string; website: string; score: number | null; createdAt: Date }[] = [];
+  let current: Awaited<ReturnType<typeof db.growthAudit.findFirst>> = null;
+  if (c) {
+    try {
+      history = await db.growthAudit.findMany({ where: { workspaceId: c.workspaceId }, orderBy: { createdAt: "desc" }, take: 12, select: { id: true, website: true, score: true, createdAt: true } });
+      current = history.length ? await db.growthAudit.findFirst({ where: { workspaceId: c.workspaceId, id: sp.audit && history.some((h) => h.id === sp.audit) ? sp.audit : history[0].id } }) : null;
+    } catch {
+      history = [];
+    }
+  }
+  const checks = parseChecks(current?.checks);
+  const passed = checks.filter((x) => x.passed);
+  const gaps = checks.filter((x) => !x.passed);
+  const previous = current ? history.find((h) => h.createdAt < current!.createdAt) : undefined;
+  const step = current ? 5 : 1;
+
   return (
-    <div className="mx-auto max-w-[1200px]">
-      {/* Hero */}
-      <section className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.4fr_1fr]">
-        <div>
-          <span className="inline-block rounded-full bg-violet/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-violet">Growth Audit™</span>
-          <h1 className="mt-4 font-display text-[34px] font-extrabold leading-[1.1] text-ink lg:text-[40px]">Growth Audit™ for Clearer, Faster Growth Decisions</h1>
-          <p className="mt-4 max-w-[520px] text-[15px] leading-relaxed text-ink-soft">Get a comprehensive, objective audit of your marketing, sales, and digital presence—so you can focus on what matters most and grow with confidence.</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/app/ai-advisor" className="inline-flex h-12 items-center gap-2 rounded-xl bg-grad-cta px-6 text-[14px] font-bold text-white shadow-violet">Start Your Free Audit <ArrowRight className="h-4 w-4" /></Link>
-            <button className="inline-flex h-12 items-center gap-2 rounded-xl border border-line px-6 text-[14px] font-bold text-ink hover:border-violet/40">See How It Works <Play className="h-4 w-4" /></button>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="text-[14px] font-bold text-ink">Your Audit Preview</div>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="relative h-28 w-28 shrink-0 rounded-full" style={{ background: `conic-gradient(${grad})` }}><div className="absolute inset-[26%] rounded-full bg-white" /></div>
-            <ul className="space-y-1 text-[11px]">
-              {DONUT.map(([label, c]) => <li key={label} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: c }} /><span className="text-ink-soft">{label}</span></li>)}
-            </ul>
-          </div>
-          <div className="mt-4 flex gap-2 rounded-xl bg-bg-soft/60 p-3"><Sparkles className="h-4 w-4 shrink-0 text-violet" /><p className="text-[11.5px] text-ink-soft">Get a clear view of what&apos;s working well, opportunities to improve, and the next best actions to drive growth.</p></div>
-        </div>
-      </section>
-
-      {/* Areas */}
-      <Section title="A complete audit. Focused on what drives growth." sub="Our Growth Audit evaluates the key areas that impact your business performance.">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
-          {AREAS.map((a) => (
-            <div key={a.title} className="rounded-2xl border border-line bg-white p-4 text-center shadow-card">
-              <span className={`mx-auto flex h-11 w-11 items-center justify-center rounded-full ${TONE[a.tone]}`}><a.icon className="h-5 w-5" /></span>
-              <div className="mt-2.5 text-[12.5px] font-bold text-ink">{a.title}</div>
-              <p className="mt-1 text-[10.5px] leading-snug text-ink-soft">{a.desc}</p>
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        title="Growth Audit™ – Audit Setup & Results"
+        subtitle="Configure and run an actionable growth audit for a website or business."
+        actions={<a href="#setup" className={headerPrimary}>Run Growth Audit</a>}
+      />
+      <ol className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-white px-5 py-3">
+        {["Business", "Goals", "Competitors", "Review", "Results"].map((s, i) => (
+          <li key={s} className="flex items-center gap-2 text-[12.5px] text-deep-navy">
+            <span className={cn("flex h-6 w-6 items-center justify-center rounded-full text-[11.5px] font-bold", i + 1 <= step ? "bg-[#0B5CFF] text-white" : "bg-royal-tint text-[#0B5CFF]")}>{i + 1}</span>
+            {s}
+          </li>
+        ))}
+      </ol>
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <section id="setup" className={giPanel}>
+          <PanelTitle hint="Inputs are stored with the audit in this workspace">Audit Setup</PanelTitle>
+          <ActionForm action={runGrowthAudit} className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label><span className={lbl}>Website or Business</span><input name="website" required maxLength={200} placeholder="Enter website or business" defaultValue={current?.website} className={field} /></label>
+            <label><span className={lbl}>Industry</span><select name="industry" defaultValue={current?.industry ?? ""} className={field}><option value="">Select industry</option>{INDUSTRIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            <label><span className={lbl}>Primary Goal</span><select name="goal" defaultValue={current?.goal ?? ""} className={field}><option value="">Select a growth goal</option>{GROWTH_GOALS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            <label><span className={lbl}>Date Range</span><select name="period" defaultValue={String(current?.periodDays ?? 30)} className={field}>{PERIODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+            <label className="md:col-span-2"><span className={lbl}>Competitors</span><textarea name="competitors" rows={3} placeholder="Add competitor domains or names, one per line" defaultValue={current?.competitors.join("\n")} className="w-full rounded-md border border-line px-3 py-2 font-mono text-[12.5px] text-deep-navy placeholder:font-sans placeholder:text-ink-muted focus:border-[#0B5CFF] focus:outline-none" /></label>
+            <p className="rounded-md bg-royal-tint/50 px-3 py-2 text-[11.5px] text-ink-soft md:col-span-2">Audit inputs are workspace-scoped. The audit checks your connected integrations and workspace records; it does not crawl the website or compare against external benchmarks.</p>
+            <div className="md:col-span-2 flex justify-end">{c?.canEdit ? <SubmitButton>Run Growth Audit</SubmitButton> : <span className="text-[12px] text-ink-muted">Editors can run audits.</span>}</div>
+          </ActionForm>
+        </section>
+        <section className={giPanel}>
+          <PanelTitle hint="Latest run and history">Audit Status</PanelTitle>
+          {current ? (
+            <div>
+              <div className="flex items-center gap-3 rounded-lg bg-emerald-50 px-3 py-2.5 text-[13px] text-emerald-800"><CheckCircle2 className="h-4 w-4" /> Completed {fmtDate(current.createdAt)} for <strong>{current.website}</strong></div>
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-[12.5px]">
+                <div><dt className="text-ink-muted">Industry</dt><dd className="text-deep-navy">{label(INDUSTRIES, current.industry)}</dd></div>
+                <div><dt className="text-ink-muted">Primary goal</dt><dd className="text-deep-navy">{label(GROWTH_GOALS, current.goal)}</dd></div>
+                <div><dt className="text-ink-muted">Period</dt><dd className="text-deep-navy">{label(PERIODS, String(current.periodDays))}</dd></div>
+                <div><dt className="text-ink-muted">Competitors</dt><dd className="text-deep-navy">{current.competitors.length || "—"}</dd></div>
+              </dl>
+              {history.length > 1 && (
+                <ul className="mt-4 divide-y divide-line border-t border-line">
+                  {history.map((h) => (
+                    <li key={h.id}><Link href={`/app/growth-audit?audit=${h.id}`} className={cn("flex justify-between py-2 text-[12.5px] hover:text-[#0B5CFF]", h.id === current!.id ? "font-semibold text-[#0B5CFF]" : "text-deep-navy")}><span>{h.website} · {fmtDate(h.createdAt)}</span><span>{h.score ?? "—"}/100</span></Link></li>
+                  ))}
+                </ul>
+              )}
             </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* Opportunities */}
-      <Section title="Spot growth opportunities. Take action with confidence." sub="We highlight what's working, where to improve, and the opportunities with the greatest impact.">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {OPPS.map((o) => (
-            <div key={o} className="rounded-xl border border-line bg-white p-4 shadow-card"><CheckCircle2 className="h-5 w-5 text-emerald-600" /><p className="mt-2 text-[12px] leading-snug text-ink-soft">{o}</p></div>
-          ))}
-        </div>
-      </Section>
-
-      {/* How it works */}
-      <Section title="How the Growth Audit works" sub="Three simple steps from insight to impact.">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {STEPS.map((s, i) => (
-            <div key={s.n} className="relative rounded-2xl border border-line bg-white p-5 shadow-card">
-              <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet/10 text-[13px] font-bold text-violet">{s.n}</span><div className="text-[14px] font-bold text-ink">{s.title}</div></div>
-              <p className="mt-2 text-[12.5px] text-ink-soft">{s.desc}</p>
-              <div className="mt-3 flex items-center gap-2 text-ink-muted">{i === 1 ? <><BarChart3 className="h-5 w-5" /><PieChart className="h-5 w-5" /></> : <div className="h-1 w-16 rounded bg-line" />}</div>
+          ) : (
+            <EmptyState icon={Target} title="No audit results yet" body="Complete the setup and run a Growth Audit to generate findings." action={<a href="#setup" className="inline-flex h-9 items-center rounded-md border border-line px-4 text-[12.5px] font-semibold text-[#0B5CFF]">Run Growth Audit</a>} />
+          )}
+        </section>
+      </div>
+      <MetricCards
+        items={[
+          { label: "Overall Score", value: current?.score != null ? `${current.score}/100` : null, caption: current ? "Share of readiness checks passed" : "No score yet" },
+          { label: "Strengths", value: current ? String(passed.length) : null, caption: current ? "Checks passed" : "No findings yet" },
+          { label: "Opportunities", value: current ? String(gaps.length) : null, caption: current ? "Gaps to close" : "No findings yet" },
+          { label: "Benchmark", value: null, caption: "No external benchmark source connected" },
+        ]}
+      />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <section className={giPanel}>
+          <PanelTitle hint="Pass rate per dimension, with each check">Score Breakdown</PanelTitle>
+          {current ? (
+            <div className="space-y-4">
+              {dimensionScores(checks).map(([d, v]) => (
+                <div key={d}>
+                  <div className="mb-1 flex justify-between text-[13px] font-semibold text-deep-navy"><span>{d}</span><span>{v}%</span></div>
+                  <Progress value={v} />
+                  <ul className="mt-2 space-y-1">
+                    {checks.filter((x) => x.dimension === d).map((x) => (
+                      <li key={x.key} className="flex items-start gap-2 text-[12px]">
+                        {x.passed ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" /> : <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" />}
+                        <span className="text-ink-soft"><Link href={x.href} className="font-semibold text-deep-navy hover:text-[#0B5CFF]">{x.label}</Link> — {x.detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* Teams */}
-      <Section title="Built for growth-focused teams" sub="Whether you're scaling a startup or leading an enterprise, the Growth Audit gives your team the clarity to move forward.">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {TEAMS.map((t) => (
-            <div key={t.title} className="rounded-2xl border border-line bg-white p-4 shadow-card">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet/10 text-violet"><t.icon className="h-4 w-4" /></span>
-              <div className="mt-2.5 text-[12.5px] font-bold text-ink">{t.title}</div>
-              <p className="mt-1 text-[11px] leading-snug text-ink-soft">{t.desc}</p>
+          ) : (
+            <EmptyState icon={Columns3} title="No score breakdown" body="Audit dimensions will populate after a completed run." />
+          )}
+        </section>
+        <section className={giPanel}>
+          <PanelTitle hint="Your own audit history over time">Benchmark & Trend</PanelTitle>
+          {history.length > 1 ? (
+            <div>
+              <div className="flex h-44 items-end gap-2 border-b border-line pb-1">
+                {[...history].reverse().map((h) => (
+                  <div key={h.id} className="flex flex-1 flex-col items-center justify-end gap-1" title={`${fmtDate(h.createdAt)}: ${h.score ?? 0}/100`}>
+                    <span className="text-[10.5px] text-ink-soft">{h.score ?? 0}</span>
+                    <div className="w-full max-w-[36px] rounded-t bg-[#0B5CFF]" style={{ height: `${Math.max(2, (h.score ?? 0) * 1.4)}px` }} />
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[12px] text-ink-soft">
+                {previous && current?.score != null && previous.score != null ? `${current.score - previous.score >= 0 ? "+" : ""}${current.score - previous.score} points since the previous run. ` : ""}
+                External benchmarks are not shown because no benchmark source is connected.
+              </p>
             </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* CTA */}
-      <div className="mb-6 mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-grad-brand-2 p-6 text-white shadow-violet">
-        <div className="flex items-center gap-3"><Sparkles className="h-6 w-6" /><div><div className="text-[16px] font-bold">Ready to uncover your next growth opportunity?</div><div className="text-[13px] text-white/80">Start your free Growth Audit today—no credit card required.</div></div></div>
-        <Link href="/app/ai-advisor" className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-[13px] font-bold text-violet">Start Your Free Audit <ArrowRight className="h-4 w-4" /></Link>
+          ) : (
+            <EmptyState icon={CircleDot} title="No benchmark trend" body="Historical comparisons appear after more than one audit run." />
+          )}
+        </section>
       </div>
     </div>
-  );
-}
-
-function Section({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
-  return (
-    <section className="mt-10">
-      <h2 className="font-display text-[22px] font-extrabold text-ink">{title}</h2>
-      {sub && <p className="mt-1.5 max-w-3xl text-[13px] text-ink-soft">{sub}</p>}
-      <div className="mt-6">{children}</div>
-    </section>
   );
 }
