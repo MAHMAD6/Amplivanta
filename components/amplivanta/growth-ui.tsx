@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { toastResult } from "@/lib/action-toast";
+import { recommendationToTask, setRecommendationStatus } from "@/app/(app)/app/strategy/actions";
 
 type Result = { ok: true; message: string; id?: string } | { ok: false; error: string };
 
@@ -184,5 +185,24 @@ export function PrintButton({ className, children }: { className?: string; child
     <button type="button" onClick={() => window.print()} className={className}>
       {children}
     </button>
+  );
+}
+
+/** Opportunity controls: open the affected screen, turn it into a task, or dismiss it. */
+export function OpportunityActions({ id, href, canEdit }: { id: string; href: string | null; canEdit: boolean }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {href && (
+        <Link href={href} className="inline-flex items-center rounded-md border border-line px-2.5 py-1 text-[12px] font-semibold text-[#0B5CFF] hover:bg-bg-soft">
+          Open
+        </Link>
+      )}
+      <ActButton action={recommendationToTask.bind(null, id)} disabled={!canEdit} title={canEdit ? "Create a task from this opportunity" : "Viewers cannot create tasks"}>
+        Create task
+      </ActButton>
+      <ActButton action={setRecommendationStatus.bind(null, id, "dismissed")} disabled={!canEdit} confirm="Dismiss this opportunity? It comes back only if the data changes and it is detected again.">
+        Dismiss
+      </ActButton>
+    </div>
   );
 }

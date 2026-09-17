@@ -10,6 +10,9 @@ import { CAMPAIGN_CHANNELS, CAMPAIGN_GOALS } from "@/lib/marketing/options";
 import { rangeDays } from "@/lib/server/marketing-screens";
 import { actionLabel, workspaceContext } from "@/lib/server/workspace-screens";
 import { change, loadPlatformHome, type PlatformHome } from "@/lib/server/platform-home";
+import { RecalculateScoreButton } from "@/components/amplivanta/growth-score-ui";
+import { OpportunityActions } from "@/components/amplivanta/growth-ui";
+import { fmtDateTime as fmtWhen } from "@/components/amplivanta/screen-kit";
 
 export const metadata: Metadata = { title: "Platform Home" };
 export const dynamic = "force-dynamic";
@@ -109,6 +112,84 @@ export default async function PlatformHomePage({ searchParams }: { searchParams:
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <section className="min-w-0 rounded-xl border border-line bg-white p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[16.5px] font-semibold text-deep-navy">Growth Score</h2>
+                  <p className="mt-0.5 text-[12px] text-ink-soft">Measured over the last 30 days{d.growth.lastRun ? ` · last run ${fmtWhen(d.growth.lastRun)}` : ""}</p>
+                </div>
+                <RecalculateScoreButton />
+              </div>
+              {d.growth.status === "scored" ? (
+                <>
+                  <div className="mt-4 flex items-end gap-3">
+                    <span className="text-[38px] font-bold leading-none text-deep-navy">{d.growth.score}</span>
+                    <span className="pb-1 text-[13px] font-semibold text-ink-soft">{d.growth.band}</span>
+                    {d.growth.previous != null && d.growth.score != null && d.growth.previous !== d.growth.score && (
+                      <span className={cn("pb-1 text-[12.5px] font-semibold", d.growth.score > d.growth.previous ? "text-emerald-600" : "text-amber-600")}>
+                        {d.growth.score > d.growth.previous ? "+" : ""}{d.growth.score - d.growth.previous} since last run
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-[12px] text-ink-muted">Average of the dimensions with enough data ({Math.round(d.growth.coverage * 100)}% coverage).</p>
+                </>
+              ) : (
+                <div className="mt-4">
+                  <div className="text-[20px] font-bold text-ink-soft">Not enough data to score</div>
+                  <p className="mt-1 text-[12.5px] text-ink-soft">At least two of the four dimensions need data. A score is never estimated.</p>
+                </div>
+              )}
+              <ul className="mt-4 space-y-3">
+                {d.growth.dimensions.map((dim) => (
+                  <li key={dim.key}>
+                    <div className="flex items-baseline justify-between gap-2 text-[12.5px]">
+                      <span className="font-semibold text-deep-navy">{dim.label}</span>
+                      <span className={dim.covered ? "font-semibold text-deep-navy" : "text-ink-muted"}>{dim.covered ? dim.score : "No data"}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 rounded-full bg-bg-soft">
+                      <div className="h-1.5 rounded-full bg-[#0B5CFF]" style={{ width: `${dim.covered ? dim.score ?? 0 : 0}%` }} />
+                    </div>
+                    {!dim.covered && <p className="mt-1 text-[11px] text-ink-muted">Needs: {dim.requirement}</p>}
+                    {dim.covered && (
+                      <ul className="mt-1.5 space-y-0.5 text-[11px] text-ink-soft">
+                        {dim.signals.map((sig) => <li key={sig.label}>{sig.label}: <span className="font-medium text-deep-navy">{sig.value}</span> <span className="text-ink-muted">(target {sig.target})</span></li>)}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="min-w-0 rounded-xl border border-line bg-white p-5">
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="text-[16.5px] font-semibold text-deep-navy">Top Opportunities</h2>
+                <Link href="/app/ai-advisor" className="text-[12.5px] font-semibold text-[#0B5CFF]">AI Advisor</Link>
+              </div>
+              {d.opportunities.length ? (
+                <ul className="mt-3 divide-y divide-line">
+                  {d.opportunities.slice(0, 3).map((o) => (
+                    <li key={o.id} className="py-3">
+                      <div className="flex flex-wrap items-center gap-2 text-[11.5px] text-ink-muted">
+                        <Pill tone={o.impact === "high" ? "red" : o.impact === "medium" ? "amber" : "gray"}>{o.impact} impact</Pill>
+                        <span>{o.effort} effort</span>
+                        {o.confidence != null && <span>· {Math.round(o.confidence * 100)}% confidence</span>}
+                        <span>· {o.source === "rules" ? "Detected from your data" : "AI Advisor"}</span>
+                      </div>
+                      <div className="mt-1 text-[14px] font-semibold text-deep-navy">{o.title}</div>
+                      {o.metric && <div className="text-[12px] text-ink-soft">Affects {o.metric}</div>}
+                      {o.evidence && <p className="mt-1 text-[12.5px] text-ink-soft">{o.evidence}</p>}
+                      {o.action && <p className="mt-1 text-[12.5px] text-deep-navy">{o.action}</p>}
+                      <div className="mt-2"><OpportunityActions id={o.id} href={o.href} canEdit={c.canEdit} /></div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState icon={Star} title="No opportunities detected" body={d.growth.status === "scored" ? "Nothing is below target in the measured period. New findings appear after each recalculation." : "Connect data so acquisition and conversion can be measured, then recalculate."} />
+              )}
+            </section>
           </div>
 
           <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1fr)]">

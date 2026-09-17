@@ -139,3 +139,83 @@ describe("two-factor codes", () => {
     expect(codes.every((c) => /^[a-z2-7]{5}-[a-z2-7]{5}$/.test(c))).toBe(true);
   });
 });
+
+import { computeGrowthScore, scoreBand, type GrowthFacts } from "@/lib/growth/score";
+import { detectOpportunities } from "@/lib/growth/opportunities";
+
+const emptyFacts: GrowthFacts = {
+  visits: 0, conversions: 0, formSubmissions: 0, newContacts: 0, totalContacts: 0,
+  openDeals: 0, wonDeals: 0, lostDeals: 0,
+  emailsSent: 0, emailsOpened: 0, emailsClicked: 0, unsubscribes: 0,
+  activeCampaigns: 0, campaignClicks: 0, campaignImpressions: 0, campaignSpend: 0, campaignRevenue: 0,
+  publishedPages: 0, activeForms: 0, activeWorkflows: 0, workflowRuns: 0, workflowFailures: 0,
+  socialPostsPublished: 0, connectedIntegrations: 0, windowDays: 30,
+};
+
+describe("growth score", () => {
+  it("withholds a score until two dimensions have data", () => {
+    const blank = computeGrowthScore(emptyFacts);
+    expect(blank.score).toBeNull();
+    expect(blank.status).toBe("insufficient_data");
+    expect(blank.coverage).toBe(0);
+    expect(blank.missing).toHaveLength(4);
+    expect(scoreBand(null)).toBe("Not scored");
+
+    const oneDimension = computeGrowthScore({ ...emptyFacts, visits: 300, conversions: 0, totalContacts: 0 });
+    // Visits cover both acquisition and conversion, so a score is defensible.
+    expect(oneDimension.status).toBe("scored");
+    expect(oneDimension.dimensions.find((d) => d.key === "retention")?.score).toBeNull();
+  });
+
+  it("scores each dimension from its signals and targets", () => {
+    const strong = computeGrowthScore({
+      ...emptyFacts,
+      visits: 1200, conversions: 40, formSubmissions: 30, newContacts: 50, totalContacts: 500,
+      openDeals: 10, wonDeals: 5, lostDeals: 5,
+      emailsSent: 400, emailsOpened: 120, emailsClicked: 16, unsubscribes: 0,
+      activeCampaigns: 3, campaignClicks: 300, campaignImpressions: 10000, campaignSpend: 500, campaignRevenue: 2000,
+      publishedPages: 3, activeForms: 2, activeWorkflows: 2, workflowRuns: 100, workflowFailures: 2,
+      socialPostsPublished: 20, connectedIntegrations: 3,
+    });
+    expect(strong.status).toBe("scored");
+    expect(strong.coverage).toBe(1);
+    expect(strong.score).toBeGreaterThan(60);
+    expect(scoreBand(strong.score)).toMatch(/Healthy|Strong/);
+    for (const d of strong.dimensions) expect(d.signals.every((s) => s.points <= s.max)).toBe(true);
+  });
+
+  it("is reproducible", () => {
+    const f = { ...emptyFacts, visits: 500, conversions: 10, totalContacts: 100, emailsSent: 100, emailsOpened: 20 };
+    expect(computeGrowthScore(f)).toEqual(computeGrowthScore(f));
+  });
+});
+
+describe("opportunity detection", () => {
+  it("only reports findings the numbers support, with evidence", () => {
+    const facts = { ...emptyFacts, visits: 1000, conversions: 5, totalContacts: 200, emailsSent: 1000, emailsOpened: 100, unsubscribes: 20, publishedPages: 1, activeForms: 1, connectedIntegrations: 1 };
+    const found = detectOpportunities(facts, computeGrowthScore(facts));
+    const keys = found.map((o) => o.key);
+    expect(keys).toContain("low-page-conversion");
+    expect(keys).toContain("low-open-rate");
+    expect(keys).toContain("high-unsubscribes");
+    expect(keys).not.toContain("no-data-source");
+    expect(keys).not.toContain("no-capture-surface");
+    const conv = found.find((o) => o.key === "low-page-conversion")!;
+    expect(conv.evidence).toContain("1,000 visits");
+    expect(conv.confidence).toBeGreaterThan(0.4);
+    expect(conv.confidence).toBeLessThanOrEqual(0.9);
+  });
+
+  it("stays quiet without enough samples", () => {
+    const facts = { ...emptyFacts, visits: 40, conversions: 0, emailsSent: 50, emailsOpened: 1, connectedIntegrations: 2, publishedPages: 1 };
+    const keys = detectOpportunities(facts, computeGrowthScore(facts)).map((o) => o.key);
+    expect(keys).not.toContain("low-page-conversion");
+    expect(keys).not.toContain("low-open-rate");
+  });
+
+  it("flags a workspace with nothing connected", () => {
+    const keys = detectOpportunities(emptyFacts, computeGrowthScore(emptyFacts)).map((o) => o.key);
+    expect(keys).toContain("no-data-source");
+    expect(keys).toContain("no-capture-surface");
+  });
+});

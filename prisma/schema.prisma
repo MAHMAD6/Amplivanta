@@ -129,6 +129,7 @@ model Workspace {
   audiences            Audience[]
   channels             Channel[]
   dataTransferJobs     DataTransferJob[]
+  growthScores         GrowthScoreSnapshot[]
 }
 
 model Membership {
@@ -968,6 +969,16 @@ model Recommendation {
   id          String    @id @default(cuid())
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  /// Detection rule that produced it; null for AI-generated recommendations.
+  ruleKey     String?
+  /// Metric the finding is about, e.g. "Email open rate".
+  metric      String?
+  /// Measured figures the finding was derived from.
+  evidence    String?   @db.Text
+  /// In-app destination for the action.
+  actionHref  String?
+  /// ai | rules
+  source      String    @default("ai")
   title       String
   body        String?   @db.Text
   description String?   @db.Text
@@ -2952,4 +2963,24 @@ model AuthToken {
   createdAt DateTime  @default(now())
 
   @@index([userId, kind])
+}
+
+/// Growth Score history: one row per recalculation, so a score can be traced.
+model GrowthScoreSnapshot {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  /// 0-100, null when coverage was insufficient.
+  score       Int?
+  /// scored | insufficient_data
+  status      String
+  /// Share of dimensions with enough data, 0-1.
+  coverage    Float
+  /// [{ key, label, score, covered, requirement, signals }]
+  dimensions  Json
+  windowDays  Int       @default(30)
+  createdById String?
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId, createdAt])
 }

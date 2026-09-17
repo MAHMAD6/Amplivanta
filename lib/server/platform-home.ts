@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { emailProvider } from "@/lib/email";
 import { isStripeConfigured } from "@/lib/stripe";
 import { dailySeries } from "@/lib/server/marketing-screens";
+import { loadGrowthScore, type GrowthScoreView } from "@/lib/server/growth-score";
+import { scoreBand } from "@/lib/growth/score";
 
 /**
  * Platform Home / Executive Dashboard data. Every figure is computed from
@@ -12,7 +14,13 @@ import { dailySeries } from "@/lib/server/marketing-screens";
 
 export type Kpi = { value: number | null; previous: number | null; hint?: string };
 
+export type TopOpportunity = { id: string; title: string; metric: string | null; evidence: string | null; action: string | null; href: string | null; impact: string; effort: string; confidence: number | null; source: string };
+
 export type PlatformHome = {
+  /** Growth Score with its dimensions and coverage; the score is null until coverage is enough. */
+  growth: { score: number | null; band: string; status: string; coverage: number; missing: string[]; dimensions: GrowthScoreView["score"]["dimensions"]; previous: number | null; lastRun: Date | null };
+  /** Ranked open opportunities with their evidence. */
+  opportunities: TopOpportunity[];
   kpis: { revenue: Kpi; pipeline: Kpi & { currency: string }; conversion: Kpi; campaigns: Kpi; pages: Kpi; roi: Kpi };
   performance: { leads: [string, number][]; visits: [string, number][]; totals: { leads: number; visits: number; conversions: number; submissions: number } } | null;
   pipeline: { stages: { name: string; count: number; value: number }[]; open: number; won: number; lost: number; currency: string } | null;
@@ -32,6 +40,7 @@ export async function loadPlatformHome(workspaceId: string, days: number): Promi
   const w = workspaceId;
 
   const [
+    growth, openRecommendations,
     metrics, prevMetrics, openDeals, wonDeals, lostDeals, prevWon,
     visits, conversions, prevVisits, prevConversions,
     activeCampaigns, publishedPages, pagesPublishedPrev,
@@ -39,6 +48,8 @@ export async function loadPlatformHome(workspaceId: string, days: number): Promi
     integrations, failedRuns, webhookFails, draftPages, scheduledNoProvider, idleForms, unverifiedDomains, campaignsTotal, contactsTotal,
     logs, campaignsList,
   ] = await Promise.all([
+    loadGrowthScore(w).catch(() => null),
+    db.recommendation.findMany({ where: { workspaceId: w, status: { in: ["pending", "ready", "in_progress"] } }, orderBy: [{ impact: "asc" }, { createdAt: "desc" }], take: 6, select: { id: true, title: true, metric: true, evidence: true, description: true, actionHref: true, impact: true, effort: true, confidence: true, source: true } }),
     db.campaignMetric.findMany({ where: { campaign: { workspaceId: w }, date: { gte: from } }, select: { campaignId: true, revenue: true, spend: true, conversions: true, clicks: true } }),
     db.campaignMetric.aggregate({ where: { campaign: { workspaceId: w }, date: { gte: prevFrom, lt: from } }, _sum: { revenue: true, spend: true }, _count: true }),
     db.deal.findMany({ where: { workspaceId: w, status: "open" }, select: { value: true, currency: true, stageId: true } }),
@@ -129,7 +140,23 @@ export async function loadPlatformHome(workspaceId: string, days: number): Promi
 
   const hasPerformance = leads.length > 0 || visits.length > 0 || submissions > 0;
 
+  const impactRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const opportunities: TopOpportunity[] = openRecommendations
+    .map((r) => ({ id: r.id, title: r.title, metric: r.metric, evidence: r.evidence, action: r.description, href: r.actionHref, impact: r.impact, effort: r.effort, confidence: r.confidence, source: r.source }))
+    .sort((a, b) => (impactRank[a.impact] ?? 3) - (impactRank[b.impact] ?? 3) || (b.confidence ?? 0) - (a.confidence ?? 0));
+
   return {
+    growth: {
+      score: growth?.score.score ?? null,
+      band: scoreBand(growth?.score.score ?? null),
+      status: growth?.score.status ?? "insufficient_data",
+      coverage: growth?.score.coverage ?? 0,
+      missing: growth?.score.missing ?? [],
+      dimensions: growth?.score.dimensions ?? [],
+      previous: growth?.previous?.score ?? null,
+      lastRun: growth?.lastRun ?? null,
+    },
+    opportunities,
     kpis: {
       revenue: { value: revenue, previous: prevRevenue, hint: revenue == null ? undefined : `From recorded campaign results · ${wonDeals} deal${wonDeals === 1 ? "" : "s"} won${prevWon ? ` (${prevWon} previous)` : ""}` },
       pipeline: { value: openDeals.length ? sumBy(inCurrency, (d) => d.value) : null, previous: null, currency, hint: openDeals.length ? `${inCurrency.length} open deal${inCurrency.length === 1 ? "" : "s"}${otherCurrency ? ` · ${otherCurrency} in other currencies not included` : ""}` : undefined },
