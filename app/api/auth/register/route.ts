@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { TURNSTILE_FIELD, requestIp, verifyTurnstile } from "@/lib/turnstile";
+import { sendVerificationEmail } from "@/lib/server/auth-tokens";
+import { emailProvider } from "@/lib/email";
 
 const registerSchema = z.object({
   name: z.string().min(1).max(120),
@@ -61,13 +63,13 @@ export async function POST(req: Request) {
       return newUser;
     });
 
+    // Confirmation link; a missing email provider is reported, never hidden.
+    await sendVerificationEmail({ id: user.id, email: user.email, name: user.name });
+
     return NextResponse.json(
       {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-        },
+        user: { id: user.id, email: user.email, name: user.name },
+        verificationEmailSent: Boolean(emailProvider()),
       },
       { status: 201 }
     );

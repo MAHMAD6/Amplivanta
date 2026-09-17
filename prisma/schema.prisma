@@ -25,17 +25,25 @@ enum ContactStatus {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  password    String
-  name        String
-  role        Role         @default(EDITOR)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  memberships Membership[]
-  activities  Activity[]
-  tasks       Task[]
-  auditLogs   AuditLog[]
+  id                     String       @id @default(cuid())
+  email                  String       @unique
+  password               String
+  name                   String
+  role                   Role         @default(EDITOR)
+  /// Set when the address was confirmed from a verification link.
+  emailVerifiedAt        DateTime?
+  /// Encrypted TOTP secret; only set while two-factor is enrolled.
+  twoFactorSecret        String?
+  twoFactorEnabledAt     DateTime?
+  /// SHA-256 hashes of single-use recovery codes.
+  twoFactorRecoveryCodes String[]     @default([])
+  authTokens             AuthToken[]
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  memberships            Membership[]
+  activities             Activity[]
+  tasks                  Task[]
+  auditLogs              AuditLog[]
 
   // Super Admin governance
   adminAssignments  AdminAssignment[]  @relation("AdminAssignmentSubject")
@@ -2929,4 +2937,19 @@ model DataTransferJob {
   completedAt  DateTime?
 
   @@index([workspaceId, startedAt])
+}
+
+/// Single-use email verification and password reset tokens (stored hashed).
+model AuthToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// email_verify | password_reset
+  kind      String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, kind])
 }

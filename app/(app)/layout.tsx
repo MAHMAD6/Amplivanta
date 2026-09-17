@@ -22,9 +22,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   // Bell badge: the member's real unread count; null (no badge) when unknown.
   let unreadNotifications: number | null = null;
+  let emailVerified = true;
   try {
     const ctx = await getSessionContext();
-    unreadNotifications = await prisma.notification.count({ where: unreadWhere(ctx.workspaceId, ctx.userId) });
+    const [unread, me] = await Promise.all([
+      prisma.notification.count({ where: unreadWhere(ctx.workspaceId, ctx.userId) }),
+      prisma.user.findUnique({ where: { id: ctx.userId }, select: { emailVerifiedAt: true } }),
+    ]);
+    unreadNotifications = unread;
+    emailVerified = Boolean(me?.emailVerifiedAt);
   } catch {
     unreadNotifications = null;
   }
@@ -34,6 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       navVisibility={navVisibility}
       user={{ name: viewer.name, email: viewer.email }}
       unreadNotifications={unreadNotifications}
+      emailVerified={emailVerified}
     >
       {children}
     </AppShell>

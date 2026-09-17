@@ -101,3 +101,41 @@ describe("data import", () => {
     expect(toCsv(["A", "B"], [["=cmd()", -5], [["x", "y"], null]])).toBe("A,B\r\n'=cmd(),-5\r\nx; y,\r\n");
   });
 });
+
+import { base32Decode, base32Encode, generateRecoveryCodes, generateTotpSecret, otpauthUri, totpCode, verifyTotp } from "@/lib/totp";
+
+describe("two-factor codes", () => {
+  it("round-trips base32", () => {
+    const buf = Buffer.from("amplivanta-2fa!");
+    expect(base32Decode(base32Encode(buf)).equals(buf)).toBe(true);
+    expect(() => base32Decode("not base32 !!")).toThrow();
+  });
+
+  it("matches RFC 6238 SHA-1 test vectors", () => {
+    // RFC 6238 uses the ASCII secret "12345678901234567890".
+    const secret = base32Encode(Buffer.from("12345678901234567890"));
+    expect(totpCode(secret, Math.floor(59 / 30))).toBe("287082");
+    expect(totpCode(secret, Math.floor(1111111109 / 30))).toBe("081804");
+    expect(totpCode(secret, Math.floor(1234567890 / 30))).toBe("005924");
+  });
+
+  it("accepts the current code and one step of drift, rejects others", () => {
+    const secret = generateTotpSecret();
+    const now = 1_700_000_000_000;
+    expect(verifyTotp(secret, totpCode(secret, Math.floor(now / 30000)), now)).toBe(true);
+    expect(verifyTotp(secret, totpCode(secret, Math.floor(now / 30000) - 1), now)).toBe(true);
+    expect(verifyTotp(secret, totpCode(secret, Math.floor(now / 30000) + 5), now)).toBe(false);
+    expect(verifyTotp(secret, "12345", now)).toBe(false);
+    expect(verifyTotp(secret, "", now)).toBe(false);
+  });
+
+  it("builds an otpauth uri and unique recovery codes", () => {
+    const uri = otpauthUri("ABCDEFGH", "user@example.com");
+    expect(uri.startsWith("otpauth://totp/Amplivanta%3Auser%40example.com?")).toBe(true);
+    expect(uri).toContain("secret=ABCDEFGH");
+    const codes = generateRecoveryCodes();
+    expect(codes).toHaveLength(10);
+    expect(new Set(codes).size).toBe(10);
+    expect(codes.every((c) => /^[a-z2-7]{5}-[a-z2-7]{5}$/.test(c))).toBe(true);
+  });
+});

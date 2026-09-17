@@ -4,6 +4,9 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import bcrypt from "bcryptjs";
+import { createHash } from "node:crypto";
+import { decryptSecret } from "@/lib/crypto";
+import { verifyTotp } from "@/lib/totp";
 import { db } from "@/lib/db";
 
 /**
@@ -24,15 +27,34 @@ export const oauthSignInProviders = {
 
 const providers: Provider[] = [
   Credentials({
-    credentials: { email: {}, password: {} },
+    credentials: { email: {}, password: {}, code: {} },
     async authorize(credentials) {
       if (!credentials?.email || !credentials?.password) return null;
       const user = await db.user.findUnique({
-        where: { email: credentials.email as string },
+        where: { email: String(credentials.email).toLowerCase() },
       });
       if (!user) return null;
       const valid = await bcrypt.compare(credentials.password as string, user.password);
       if (!valid) return null;
+      // Two-factor: an enrolled account also needs a current code or a recovery code.
+      if (user.twoFactorEnabledAt && user.twoFactorSecret) {
+        const code = String(credentials.code ?? "").trim();
+        if (!code) return null;
+        let ok = false;
+        try {
+          ok = verifyTotp(decryptSecret(user.twoFactorSecret), code);
+        } catch {
+          ok = false;
+        }
+        if (!ok) {
+          const hash = createHash("sha256").update(code.toLowerCase().replace(/\s+/g, "")).digest("hex");
+          if (user.twoFactorRecoveryCodes.includes(hash)) {
+            await db.user.update({ where: { id: user.id }, data: { twoFactorRecoveryCodes: user.twoFactorRecoveryCodes.filter((c) => c !== hash) } });
+            ok = true;
+          }
+        }
+        if (!ok) return null;
+      }
       return { id: user.id, email: user.email, name: user.name, role: user.role };
     },
   }),

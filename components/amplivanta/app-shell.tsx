@@ -8,6 +8,7 @@ import { Toaster } from "sonner";
 import { AppSidebar } from "./app-sidebar";
 import { AppTopbar } from "./app-topbar";
 import { RouteAnalytics } from "./route-analytics";
+import { VerifyEmailBanner } from "./verify-email-banner";
 
 const FOOTER_LINKS: [string, string][] = [
   ["Privacy Policy", "/legal/privacy"],
@@ -21,11 +22,14 @@ export function AppShell({
   navVisibility,
   user,
   unreadNotifications,
+  emailVerified = true,
 }: {
   children: React.ReactNode;
   navVisibility?: Record<string, boolean>;
   user?: { name?: string | null; email?: string | null };
   unreadNotifications?: number | null;
+  /** False shows the confirm-your-email banner. */
+  emailVerified?: boolean;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -66,6 +70,7 @@ export function AppShell({
         <Suspense fallback={<div className="h-16 border-b border-line bg-white" />}>
           <AppTopbar user={user} unreadNotifications={unreadNotifications} />
         </Suspense>
+        {!emailVerified && <VerifyEmailBanner />}
         <main id="main" className="flex-1 p-4 sm:p-6 lg:px-9 lg:py-7">{children}</main>
         <footer className="flex flex-wrap items-center justify-between gap-3 px-4 pb-6 pt-2 text-[12px] text-ink-soft sm:px-6 lg:px-9">
           <span>© {new Date().getFullYear()} Amplivanta Inc. All rights reserved.</span>

@@ -4,24 +4,38 @@ import { db } from "@/lib/db";
 import { SettingsHeader } from "@/components/amplivanta/settings-header";
 import { DataTable, EmptyState, StatGrid, fmtDateTime, fmtInt } from "@/components/amplivanta/screen-kit";
 import { settingsContext } from "@/lib/server/settings-screens";
+import { auth } from "@/lib/auth";
+import { fmtDate } from "@/components/amplivanta/screen-kit";
+import { RevokeSessionButton, TwoFactorPanel } from "@/components/amplivanta/security-ui";
 
 export const metadata: Metadata = { title: "Security & 2FA" };
 export const dynamic = "force-dynamic";
 
 /**
- * Multi-factor enrollment and login alerts are not implemented in the auth
- * stack yet, so this screen states that plainly instead of offering controls
- * that would not be enforced. Sessions are shown only from recorded rows.
+ * Two-factor enrolment is real: the TOTP secret is stored encrypted, recovery
+ * codes as hashes, and sign-in requires a code once enrolled. Sessions are
+ * shown from recorded rows and can be ended by workspace admins.
  */
 export default async function SecurityPage() {
   const c = await settingsContext();
+  const session = await auth();
+  const userId = (session?.user as { id?: string } | undefined)?.id ?? c?.userId ?? null;
+  let me: { twoFactorEnabledAt: Date | null; twoFactorRecoveryCodes: string[] } | null = null;
+  let enrolled = 0;
+  let members = 0;
   let sessions: { id: string; user: string; device: string; ip: string; lastActive: Date }[] = [];
   let reachable = Boolean(c);
   if (c) {
     try {
-      const members = await db.membership.findMany({ where: { workspaceId: c.workspaceId }, select: { userId: true } });
+      const memberRows = await db.membership.findMany({ where: { workspaceId: c.workspaceId }, select: { userId: true } });
+      members = memberRows.length;
+      const ids = memberRows.map((m) => m.userId);
+      [me, enrolled] = await Promise.all([
+        userId ? db.user.findUnique({ where: { id: userId }, select: { twoFactorEnabledAt: true, twoFactorRecoveryCodes: true } }) : Promise.resolve(null),
+        db.user.count({ where: { id: { in: ids }, twoFactorEnabledAt: { not: null } } }),
+      ]);
       const rows = await db.userSession.findMany({
-        where: { userId: { in: members.map((m) => m.userId) }, revokedAt: null },
+        where: { userId: { in: ids }, revokedAt: null },
         orderBy: { lastActiveAt: "desc" },
         take: 50,
         include: { user: { select: { name: true, email: true } } },
@@ -41,30 +55,28 @@ export default async function SecurityPage() {
       />
       <StatGrid
         stats={[
-          { label: "MFA Enrollment", icon: KeyRound, value: null },
+          { label: "MFA Enrollment", icon: KeyRound, value: members ? `${enrolled} of ${members}` : null, hint: members ? "Members with two-factor on" : undefined },
           { label: "Active Sessions", icon: MonitorSmartphone, value: sessions.length ? fmtInt(sessions.length) : null },
-          { label: "Login Alerts", icon: AlertCircle, value: null },
-          { label: "Security Policy", icon: Diamond, value: null },
+          { label: "Two-factor on your account", icon: AlertCircle, value: me ? (me.twoFactorEnabledAt ? "On" : "Off") : null },
+          { label: "Recovery codes", icon: Diamond, value: me?.twoFactorEnabledAt ? String(me.twoFactorRecoveryCodes.length) : null, hint: me?.twoFactorEnabledAt ? "Unused codes" : undefined },
         ]}
       />
       <div className="mb-5 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_1.3fr]">
         <section className="flex flex-col rounded-xl border border-line bg-white p-6">
           <h2 className="text-[18px] font-semibold text-deep-navy">Multi-Factor Authentication</h2>
-          <dl className="mt-4 grid grid-cols-[180px_1fr] items-center gap-y-4 text-[13.5px]">
-            <dt className="font-semibold text-deep-navy">Enrollment status</dt>
-            <dd className="text-ink-soft">Not available yet</dd>
-            <dt className="font-semibold text-deep-navy">Workspace requirement</dt>
-            <dd><div className="flex h-10 max-w-[290px] items-center rounded-md border border-line bg-bg-soft/50 px-3 text-ink-muted">Not configured</div></dd>
-          </dl>
-          <p className="mt-6 flex-1 text-[13px] text-ink-soft">Authenticator setup and recovery options appear only when enrollment is available. Role-based MFA requirements are enforced by workspace policy once multi-factor sign-in is enabled for your account.</p>
-          <button type="button" disabled className="mt-6 h-11 w-fit rounded-md border border-line px-14 text-[14px] font-semibold text-ink-muted">Configure MFA</button>
+          <p className="mt-1 text-[13px] text-ink-soft">Protect sign-in with a time-based code from an authenticator app. Recovery codes cover a lost device.</p>
+          {me ? (
+            <TwoFactorPanel enabled={Boolean(me.twoFactorEnabledAt)} enabledAt={me.twoFactorEnabledAt ? fmtDate(me.twoFactorEnabledAt) : null} recoveryLeft={me.twoFactorRecoveryCodes.length} />
+          ) : (
+            <p className="mt-4 text-[13px] text-ink-muted">Sign in to manage two-factor authentication for your account.</p>
+          )}
         </section>
         <section className="rounded-xl border border-line bg-white p-6">
           <h2 className="mb-3 text-[18px] font-semibold text-deep-navy">Sessions &amp; Devices</h2>
           <DataTable
-            columns={["Member", "Device", "IP address", "Last active"]}
-            minWidth={560}
-            rows={sessions.map((s) => [s.user, s.device, s.ip, fmtDateTime(s.lastActive)])}
+            columns={["Member", "Device", "IP address", "Last active", ""]}
+            minWidth={620}
+            rows={sessions.map((s) => [s.user, s.device, s.ip, fmtDateTime(s.lastActive), <RevokeSessionButton key="r" id={s.id} canRevoke={Boolean(c?.isAdmin)} />])}
             empty={<EmptyState icon={MonitorSmartphone} title={reachable ? "No session inventory available" : "Sessions unavailable"} body="Active sessions and revoke controls appear when session data is available." />}
           />
         </section>

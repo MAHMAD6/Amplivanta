@@ -4,15 +4,16 @@ import { signIn as nextAuthSignIn, signOut as nextAuthSignOut, useSession as nex
 
 export const authClient = {
   signIn: {
-    email: async ({ email, password }: { email: string; password: string }) => {
+    email: async ({ email, password, code }: { email: string; password: string; code?: string }) => {
       try {
         const res = await nextAuthSignIn("credentials", {
           email,
           password,
+          code: code ?? "",
           redirect: false,
         });
         if (res?.error) {
-          return { error: { message: "Invalid email or password." } };
+          return { error: { message: code ? "Invalid email, password, or authentication code." : "Invalid email or password. If two-factor is on, add your authentication code." } };
         }
         return { data: res, error: null };
       } catch (err: unknown) {

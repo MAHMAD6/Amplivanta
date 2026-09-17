@@ -25,6 +25,7 @@ export function AuthSignInForm({ oauth }: { oauth?: OAuthAvailability }) {
   const rawNext = params.get("next") || params.get("callbackUrl") || "/app";
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/app";
   const [showPw, setShowPw] = useState(false);
+  const [showCode, setShowCode] = useState(false);
   const [loading, setLoading] = useState(false);
   const oauthError = params.get("error");
   const [error, setError] = useState<string | null>(oauthError ? (OAUTH_ERRORS[oauthError] ?? "Sign-in failed. Please try again.") : null);
@@ -38,13 +39,16 @@ export function AuthSignInForm({ oauth }: { oauth?: OAuthAvailability }) {
     setLoading(true);
     setError(null);
     const fd = new FormData(e.currentTarget);
+    const code = String(fd.get("code") ?? "").trim();
     const { error: authError } = await authClient.signIn.email({
       email: String(fd.get("email")),
       password: String(fd.get("password")),
+      code,
     });
     setLoading(false);
     if (authError) {
       setError(authError.message || "Invalid email or password.");
+      if (!code) setShowCode(true);
       return;
     }
     router.push(next);
@@ -78,6 +82,19 @@ export function AuthSignInForm({ oauth }: { oauth?: OAuthAvailability }) {
             <Link href="/forgot-password" className="text-[12.5px] font-semibold text-royal-blue hover:underline">Forgot password?</Link>
           </div>
         </div>
+
+        {showCode ? (
+          <div>
+            <label className="mb-1.5 block text-[13px] font-semibold text-deep-navy" htmlFor="signin-code">Authentication code</label>
+            <div className="flex h-12 items-center gap-2 rounded-xl border border-line bg-white px-3 focus-within:border-royal-blue focus-within:ring-2 focus-within:ring-royal-blue/20">
+              <ShieldCheck className="h-4 w-4 text-ink-muted" />
+              <input id="signin-code" name="code" inputMode="text" autoComplete="one-time-code" placeholder="6-digit code or recovery code" className="min-w-0 flex-1 bg-transparent text-[14px] tracking-widest focus:outline-none" />
+            </div>
+            <p className="mt-1.5 text-[12px] text-ink-muted">Only needed when two-factor authentication is on for your account.</p>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setShowCode(true)} className="text-[12.5px] font-semibold text-royal-blue hover:underline">I have a two-factor code</button>
+        )}
 
         {providers.length > 0 && (
           <div className="space-y-2.5">
