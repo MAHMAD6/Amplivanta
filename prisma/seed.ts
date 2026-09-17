@@ -7,9 +7,9 @@ import {
   MOCK_REVIEWS,
   MOCK_TEAM,
 } from "../lib/mock-data";
-import { CONTACTS, DEALS, ACTIVITIES, CRM_TASKS } from "../lib/crm-data";
-import { INTEGRATIONS } from "../lib/integrations-data";
-import { COMPANIES } from "../lib/part2-data";
+import { CONTACTS, DEALS, ACTIVITIES, CRM_TASKS } from "./seed-data/crm-data";
+import { INTEGRATIONS } from "./seed-data/integrations-data";
+import { COMPANIES } from "./seed-data/part2-data";
 
 const db = new PrismaClient();
 

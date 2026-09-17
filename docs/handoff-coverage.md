@@ -393,3 +393,24 @@ shown as connections.
 `CRON_SECRET` plus crontab entries for the two cron routes, `FAL_KEY` with
 per-task `FAL_MODEL_*`/`FAL_CREDITS_*`, `OPENAI_API_KEY`,
 `GOOGLE_INTEGRATIONS_CLIENT_ID/SECRET` with the four redirect URIs.
+
+## Shell and navigation (2026-09-17 audit)
+
+A full pass over the User Dashboard handoff (127 records) confirmed every
+`production_route` resolves to a real page. Changes from that pass:
+
+- Sidebar now follows `primary_navigation` exactly: ROOT Dashboard, GROWTH,
+  CRM (Contacts, Companies, Deals, Pipeline, Activities & Tasks), MARKETING,
+  CREATIVE, SOCIAL, MARKETPLACE (conditional seller items), ANALYTICS,
+  WORKSPACE. Every other approved screen is a sub-destination of its parent;
+  Resources sit under Help & Support.
+- Shell uses the approved logo (`public/brand/amplivanta-approved-logo-*.png`)
+  and `#071F45`, with the top bar's global search (`/app/search`), help,
+  notification bell and account menu with Log out, and the legal footer.
+- Landing Page Templates and Landing Page Analytics redirects now go to their
+  own pages instead of Automation Templates / Automation Analytics.
+- Usage & Credits reads limits from plan entitlements and measures usage from
+  workspace records; module usage and history come from the credit ledger.
+- Integrations → Documentation opens `/app/integrations/api-docs`.
+- Mock-data fixtures and the unused `/app/crm/deals/[id]` mock page were
+  removed; the remaining fixtures live in `prisma/seed-data/` for local seeding.

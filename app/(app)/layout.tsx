@@ -20,22 +20,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const viewer = await getMarketplaceViewer();
   const navVisibility = marketplaceNavVisibility(viewer);
 
-  // Real workspaces for the switcher; an unreachable database yields none
-  // rather than placeholder organizations.
-  let workspaces: { id: string; name: string; plan: string }[] = [];
-  try {
-    if (viewer.userId) {
-      const rows = await prisma.membership.findMany({
-        where: { userId: viewer.userId },
-        select: { workspace: { select: { id: true, name: true, planTier: true } } },
-        orderBy: { createdAt: "asc" },
-      });
-      workspaces = rows.map((r) => ({ id: r.workspace.id, name: r.workspace.name, plan: r.workspace.planTier }));
-    }
-  } catch {
-    workspaces = [];
-  }
-
   // Bell badge: the member's real unread count; null (no badge) when unknown.
   let unreadNotifications: number | null = null;
   try {
@@ -48,7 +32,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AppShell
       navVisibility={navVisibility}
-      workspaces={workspaces}
       user={{ name: viewer.name, email: viewer.email }}
       unreadNotifications={unreadNotifications}
     >

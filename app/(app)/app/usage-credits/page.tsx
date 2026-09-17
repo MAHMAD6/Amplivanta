@@ -161,7 +161,9 @@ export default async function UsageCreditsPage({
               {METRICS.map(({ key, label, icon: Icon, tone }) => {
                 const used = usage.used[key];
                 const limit = usage.limits[key];
+                const unlimited = usage.unlimited.includes(key);
                 const pct = used != null && limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+                const unit = key === "storage" ? " GB" : "";
                 return (
                   <MpCard key={key} className="p-4">
                     <div className="flex items-center gap-2 text-[12px] font-bold text-deep-navy">
@@ -169,12 +171,12 @@ export default async function UsageCreditsPage({
                       {label}
                     </div>
                     <div className="mt-3 text-[20px] font-extrabold leading-none text-deep-navy">{fmt(used)}</div>
-                    <div className="mt-2 text-[12px] text-ink-muted">{used == null ? "Not available yet" : `${pct}% of limit`}</div>
+                    <div className="mt-2 text-[12px] text-ink-muted">{used == null ? "Not available yet" : unlimited ? "Unlimited on this plan" : limit == null ? "No limit configured" : limit === 0 ? "Not included in plan" : `${pct}% of limit`}</div>
                     <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-bg-soft" aria-hidden>
                       <div className="h-full rounded-full bg-royal-blue" style={{ width: `${pct}%` }} />
                     </div>
                     <div className="mt-3 text-[11.5px] text-ink-muted">
-                      {fmt(used)} used of {fmt(limit)}
+                      {fmt(used)}{unit} used{unlimited ? "" : ` of ${limit == null ? "—" : `${fmt(limit)}${unit}`}`}
                     </div>
                   </MpCard>
                 );
@@ -241,13 +243,13 @@ export default async function UsageCreditsPage({
                   <div key={key} className="flex justify-between py-2 text-[12.5px]">
                     <dt className="text-deep-navy">{label}</dt>
                     <dd className="text-ink-muted">
-                      {fmt(usage.used[key])} / {fmt(usage.limits[key])}
+                      {fmt(usage.used[key])} / {usage.unlimited.includes(key) ? "Unlimited" : fmt(usage.limits[key])}
                     </dd>
                   </div>
                 ))}
               </dl>
               <Link
-                href={BILLING}
+                href="/app/settings/billing/plans"
                 className="flex items-center justify-between border-t border-line px-5 py-3.5 text-[12.5px] font-bold text-royal-blue hover:bg-bg-soft"
               >
                 View full plan details
@@ -262,20 +264,23 @@ export default async function UsageCreditsPage({
                 <Info aria-hidden className="h-4 w-4 text-ink-muted" />
               </h2>
               <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                {MODULES.map(({ label, icon: Icon, tone }) => (
-                  <div key={label} className="rounded-xl border border-line p-3">
-                    <div className="flex items-center gap-2 text-[11.5px] font-bold leading-tight text-deep-navy">
-                      <Icon aria-hidden className={cn("h-4 w-4 shrink-0", tone)} />
-                      {label}
+                {MODULES.map(({ label, icon: Icon, tone }) => {
+                  const credits = usage.moduleCredits?.[label];
+                  return (
+                    <div key={label} className="rounded-xl border border-line p-3">
+                      <div className="flex items-center gap-2 text-[11.5px] font-bold leading-tight text-deep-navy">
+                        <Icon aria-hidden className={cn("h-4 w-4 shrink-0", tone)} />
+                        {label}
+                      </div>
+                      <div className="mt-4 text-[15px] font-extrabold text-deep-navy">{credits == null ? "—" : fmt(credits)}</div>
+                      <div className="mt-1 text-[11px] text-ink-muted">{credits == null ? "Not available yet" : "credits this period"}</div>
                     </div>
-                    <div className="mt-4 text-[15px] font-extrabold text-deep-navy">—</div>
-                    <div className="mt-1 text-[11px] text-ink-muted">Not available yet</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="mt-4">
                 <Banner action={<TextLink href={HELP} external>Learn how usage is calculated</TextLink>}>
-                  Module usage will display here once metering is active.
+                  {usage.moduleCredits ? "Module usage counts AI and generation credits spent in this period, net of refunds." : "Module usage will display here once credits are in use."}
                 </Banner>
               </div>
             </MpCard>
@@ -290,20 +295,31 @@ export default async function UsageCreditsPage({
                     <p className="text-[12px] text-ink-soft">Track your usage trend over time.</p>
                   </div>
                 </div>
-                <select
-                  disabled
-                  aria-label="History range"
-                  title="Available once usage history exists"
-                  className="h-10 rounded-xl border border-line bg-white px-3 text-[12.5px] text-deep-navy disabled:opacity-60"
-                >
-                  <option>Last 6 months</option>
-                </select>
+                <span className="rounded-xl border border-line px-3 py-2 text-[12.5px] text-deep-navy">Last 6 months</span>
               </div>
-              <div className="mt-5 flex flex-col items-center rounded-xl border border-line bg-bg-soft px-6 py-12 text-center">
-                <TrendingUp aria-hidden className="h-9 w-9 text-royal-blue/60" />
-                <h3 className="mt-4 text-[15px] font-extrabold text-deep-navy">No usage history yet.</h3>
-                <p className="mt-2 text-[12.5px] text-ink-soft">History will appear once usage data is available.</p>
-              </div>
+              {usage.history && usage.history.some(([, v]) => v > 0) ? (
+                <div className="mt-5">
+                  <div className="flex h-44 items-end gap-3" role="img" aria-label="Credits used per month">
+                    {usage.history.map(([m, v]) => {
+                      const peak = Math.max(1, ...usage.history!.map(([, x]) => x));
+                      return (
+                        <div key={m} className="flex flex-1 flex-col items-center gap-1">
+                          <span className="text-[11px] font-semibold text-deep-navy">{fmt(v)}</span>
+                          <div className="w-full rounded-t bg-royal-blue/80" style={{ height: `${Math.max(2, (v / peak) * 140)}px` }} title={`${m}: ${v} credits`} />
+                          <span className="text-[11px] text-ink-muted">{new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" }).format(new Date(`${m}-01T00:00:00Z`))}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-[11.5px] text-ink-muted">Credits used per month, net of refunds.</p>
+                </div>
+              ) : (
+                <div className="mt-5 flex flex-col items-center rounded-xl border border-line bg-bg-soft px-6 py-12 text-center">
+                  <TrendingUp aria-hidden className="h-9 w-9 text-royal-blue/60" />
+                  <h3 className="mt-4 text-[15px] font-extrabold text-deep-navy">No usage history yet.</h3>
+                  <p className="mt-2 text-[12.5px] text-ink-soft">History will appear once usage data is available.</p>
+                </div>
+              )}
             </MpCard>
           </div>
 

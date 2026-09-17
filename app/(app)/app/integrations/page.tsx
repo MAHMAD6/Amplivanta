@@ -115,7 +115,7 @@ export default async function IntegrationsHomePage({ searchParams }: { searchPar
             {([
               ["Webhooks", "Create and manage outbound event endpoints.", "/app/integrations/webhooks"],
               ["API Keys", "Manage developer access, scopes, and key lifecycle.", "/app/integrations/api-keys"],
-              ["Documentation", "Open developer guidance when published.", null],
+              ["Documentation", "Authentication, endpoints and webhook verification.", "/app/integrations/api-docs"],
             ] as [string, string, string | null][]).map(([title, body, href]) => {
               const inner = (
                 <span className="flex items-start gap-3">

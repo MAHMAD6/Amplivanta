@@ -1,86 +1,13 @@
-import { formatDistanceToNow } from "date-fns";
 import { db } from "@/lib/db";
 import { getSessionContext } from "@/lib/tenant";
 import { isStripeConfigured } from "@/lib/stripe";
 import { parseCreditPacks } from "@/lib/credits/policy";
-import { DEALS, ACTIVITIES, CRM_TASKS, CONTACTS, type Deal, type DealStage, type ActivityType, type Contact } from "@/lib/crm-data";
-import { INTEGRATIONS, type Integration } from "@/lib/integrations-data";
-import { AUDIT_EVENTS } from "@/lib/settings-data";
-import {
-  COMPANIES, CONVERSIONS, DELIVERABILITY_CAMPAIGNS, TRIGGERS, EVENT_STREAM, ORGANIZATIONS,
-  type CompanyRow, type ConversionRow, type ConversionType, type DeliverabilityCampaign, type TriggerRow, type EventStreamRow, type OrgRow, type HealthTone,
-} from "@/lib/part2-data";
-
-type AuditEvent = (typeof AUDIT_EVENTS)[number];
-
-type Activity = (typeof ACTIVITIES)[number];
-type CrmTask = (typeof CRM_TASKS)[number];
-
-/** Result of a live loader: DB-backed items + whether the DB path succeeded. */
-export interface Live<T> {
-  items: T[];
-  live: boolean;
-}
 
 async function ctxOrNull() {
   try {
     return await getSessionContext();
   } catch {
     return null;
-  }
-}
-
-const STAGE_MAP: Record<string, DealStage> = {
-  "New Lead": "New",
-  Qualified: "Qualified",
-  Proposal: "Proposal",
-  Negotiation: "Negotiation",
-  Won: "Won",
-};
-
-function shortDate(d: Date) {
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
-export interface BillingPlan {
-  id: string;
-  name: string;
-  price: number;
-  features: string[];
-}
-export interface BillingData {
-  planName: string | null;
-  currentPlanId: string | null;
-  renewal: Date | null;
-  plans: BillingPlan[];
-  invoices: { id: string; amount: number; status: string; createdAt: Date }[];
-  live: boolean;
-}
-
-/** Subscription + plans + invoices for the billing page. Falls back to empty when unauthenticated. */
-export async function loadBilling(): Promise<BillingData> {
-  const ctx = await ctxOrNull();
-  const empty: BillingData = { planName: null, currentPlanId: null, renewal: null, plans: [], invoices: [], live: false };
-  if (!ctx) return empty;
-  try {
-    const [subscription, plans] = await Promise.all([
-      db.subscription.findFirst({
-        where: { workspaceId: ctx.workspaceId },
-        include: { plan: true, invoices: { orderBy: { createdAt: "desc" }, take: 12 } },
-        orderBy: { createdAt: "desc" },
-      }),
-      db.plan.findMany({ orderBy: { price: "asc" } }),
-    ]);
-    return {
-      planName: subscription?.plan?.name ?? null,
-      currentPlanId: subscription?.planId ?? null,
-      renewal: subscription?.currentPeriodEnd ?? null,
-      plans: plans.map((p) => ({ id: p.id, name: p.name, price: p.price, features: p.features })),
-      invoices: (subscription?.invoices ?? []).map((i) => ({ id: i.id, amount: i.amount, status: i.status, createdAt: i.createdAt })),
-      live: true,
-    };
-  } catch {
-    return empty;
   }
 }
 
@@ -94,17 +21,37 @@ export const USAGE_METRICS = [
 ] as const;
 export type UsageMetric = (typeof USAGE_METRICS)[number];
 
+export const MODULE_LABELS = ["AI Advisor", "Creative Studio", "Marketing Automation", "Social Publishing", "CRM", "Analytics", "Marketplace"] as const;
+
+/** Module a credit ledger entry belongs to, from its source and AI task code. */
+export function creditModule(sourceType: string, note: string | null): string {
+  if (sourceType === "media_generation") return "Creative Studio";
+  const code = note ?? "";
+  if (code.startsWith("document_") || code.startsWith("image") || code.startsWith("video")) return "Creative Studio";
+  if (code.startsWith("social_")) return "Social Publishing";
+  if (code.startsWith("listing_")) return "Marketplace";
+  if (code.startsWith("email_") || code.startsWith("landing_") || code.startsWith("workflow_")) return "Marketing Automation";
+  if (code.startsWith("crm_") || code.startsWith("contact_") || code.startsWith("deal_")) return "CRM";
+  if (code.startsWith("report_") || code.startsWith("analytics_")) return "Analytics";
+  return "AI Advisor";
+}
+
+/** FeatureEntitlement keys (lib/plan-config) for each usage metric. */
+const ENTITLEMENT_KEY: Record<UsageMetric, string> = { aiCredits: "ai_credits", emailSends: "email_sends", storage: "storage_gb", contacts: "contacts", automations: "automations", connectedAccounts: "connected_accounts" };
+
 export interface UsageOverview {
   live: boolean;
   planName: string | null;
   period: { start: Date; end: Date } | null;
-  /** Limit per metric from the plan's `limits` JSON; null when the plan does not set one. */
+  /** Limit per metric from plan entitlements; null when the plan does not configure one. */
   limits: Record<UsageMetric, number | null>;
-  /**
-   * Metered consumption per metric. There is no metering pipeline yet, so
-   * these stay null and the page shows "Not available yet" rather than an
-   * estimate. Wire real sources in here when they exist.
-   */
+  /** Metrics the plan configures as unlimited. */
+  unlimited: UsageMetric[];
+  /** Credits consumed this period per module, from the credit ledger; null without a wallet. */
+  moduleCredits: Record<string, number> | null;
+  /** Credits consumed per month for the last six months, oldest first; null without a wallet. */
+  history: [month: string, credits: number][] | null;
+  /** Consumption measured from workspace records (storage in GB); null when it cannot be measured. */
   used: Record<UsageMetric, number | null>;
   grants: { id: string; type: string; amount: number | null; days: number | null; reason: string; createdAt: Date }[];
   /** The workspace credit wallet; null until any credit has been posted. */
@@ -119,7 +66,7 @@ const nullMetrics = () =>
 /** Plan period, plan limits and credit grants for the Usage & Credits page. */
 export async function loadUsageOverview(): Promise<UsageOverview> {
   const empty: UsageOverview = {
-    live: false, planName: null, period: null, limits: nullMetrics(), used: nullMetrics(), grants: [],
+    live: false, planName: null, period: null, limits: nullMetrics(), unlimited: [], moduleCredits: null, history: null, used: nullMetrics(), grants: [],
     wallet: null, creditPacks: [],
   };
   const ctx = await ctxOrNull();
@@ -145,7 +92,9 @@ export async function loadUsageOverview(): Promise<UsageOverview> {
       }),
     ]);
 
+    // Limits come from the plan's entitlements (configured on Pricing Plans); the legacy limits JSON is a fallback.
     const limits = nullMetrics();
+    const unlimited: UsageMetric[] = [];
     const raw = subscription?.plan?.limits;
     if (raw && typeof raw === "object" && !Array.isArray(raw)) {
       for (const m of USAGE_METRICS) {
@@ -153,13 +102,68 @@ export async function loadUsageOverview(): Promise<UsageOverview> {
         if (typeof v === "number" && Number.isFinite(v)) limits[m] = v;
       }
     }
+    if (subscription) {
+      const ents = await db.featureEntitlement.findMany({ where: { planId: subscription.planId }, select: { featureKey: true, limitValue: true, enabled: true } });
+      for (const m of USAGE_METRICS) {
+        const e = ents.find((x) => x.featureKey === ENTITLEMENT_KEY[m]);
+        if (!e) continue;
+        if (!e.enabled) limits[m] = 0;
+        else if (e.limitValue == null) unlimited.push(m);
+        else limits[m] = e.limitValue;
+      }
+    }
+
+    // Measured consumption from workspace records for the current period (or all time where the metric is a standing count).
+    const w = ctx.workspaceId;
+    const periodStart = since ?? new Date(Date.now() - 30 * 86400000);
+    const [emailSends, storageBytes, contacts, automations, social, integrations] = await Promise.all([
+      db.emailSend.count({ where: { emailCampaign: { workspaceId: w }, status: "sent", createdAt: { gte: periodStart } } }),
+      db.asset.aggregate({ where: { workspaceId: w }, _sum: { fileSize: true } }),
+      db.contact.count({ where: { workspaceId: w } }),
+      db.workflow.count({ where: { workspaceId: w, status: "active" } }),
+      db.socialAccount.count({ where: { workspaceId: w, isConnected: true } }),
+      db.integration.count({ where: { workspaceId: w, status: "connected" } }),
+    ]);
+    let moduleCredits: Record<string, number> | null = null;
+    let history: [string, number][] | null = null;
+    if (wallet) {
+      const sixMonths = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 5, 1));
+      const entries = await db.creditLedgerEntry.findMany({ where: { workspaceId: w, kind: { in: ["USAGE", "REFUND"] }, createdAt: { gte: sixMonths < periodStart ? sixMonths : periodStart } }, select: { amount: true, sourceType: true, note: true, createdAt: true } });
+      moduleCredits = Object.fromEntries(MODULE_LABELS.map((m) => [m, 0]));
+      const months = new Map<string, number>();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - i, 1));
+        months.set(d.toISOString().slice(0, 7), 0);
+      }
+      for (const e of entries) {
+        const spent = -e.amount; // usage is negative, refunds positive
+        const key = e.createdAt.toISOString().slice(0, 7);
+        if (months.has(key)) months.set(key, (months.get(key) ?? 0) + spent);
+        if (e.createdAt >= periodStart) {
+          const mod = creditModule(e.sourceType, e.note);
+          moduleCredits[mod] = (moduleCredits[mod] ?? 0) + spent;
+        }
+      }
+      history = [...months.entries()];
+    }
+
+    const used = nullMetrics();
+    used.aiCredits = wallet ? -(usage._sum.amount ?? 0) : null;
+    used.emailSends = emailSends;
+    used.storage = Math.round(((storageBytes._sum.fileSize ?? 0) / 1024 ** 3) * 100) / 100;
+    used.contacts = contacts;
+    used.automations = automations;
+    used.connectedAccounts = social + integrations;
 
     return {
       live: true,
       planName: subscription?.plan?.name ?? null,
       period: subscription ? { start: subscription.currentPeriodStart, end: subscription.currentPeriodEnd } : null,
       limits,
-      used: nullMetrics(),
+      used,
+      unlimited,
+      moduleCredits,
+      history,
       wallet: wallet
         ? {
             planCredits: wallet.planCredits,
@@ -198,378 +202,4 @@ export async function loadStageOptions(): Promise<{ value: string; label: string
   } catch {
     return [];
   }
-}
-
-export async function loadDeals(): Promise<Live<Deal>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: DEALS, live: false };
-  const rows = await db.deal.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    include: { stage: true },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
-  if (rows.length === 0) return { items: DEALS, live: false };
-  const items: Deal[] = rows.map((d) => ({
-    id: d.id,
-    name: d.name,
-    value: d.value,
-    stage: STAGE_MAP[d.stage?.name ?? ""] ?? "New",
-    contact: "—",
-    company: d.name.split(" — ")[0] ?? "—",
-    owner: "Alex Johnson",
-    probability: Math.round((d.stage?.probability ?? 0) * 100),
-    expectedClose: d.closeDate ? shortDate(d.closeDate) : "—",
-    age: Math.max(0, Math.round((Date.now() - d.createdAt.getTime()) / 86400000)),
-  }));
-  return { items, live: true };
-}
-
-const ACT_MAP: Record<string, ActivityType> = { call: "call", email: "email", meeting: "meeting", note: "note", task: "task", sms: "sms" };
-
-export async function loadActivities(): Promise<Live<Activity>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: ACTIVITIES, live: false };
-  const rows = await db.activity.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    include: { contact: true },
-    orderBy: { createdAt: "desc" },
-    take: 60,
-  });
-  if (rows.length === 0) return { items: ACTIVITIES, live: false };
-  const items: Activity[] = rows.map((a) => ({
-    id: a.id,
-    type: ACT_MAP[a.type] ?? "note",
-    title: a.subject ?? a.type,
-    contact: a.contact ? [a.contact.firstName, a.contact.lastName].filter(Boolean).join(" ") : "—",
-    owner: "Alex Johnson",
-    when: formatDistanceToNow(a.createdAt, { addSuffix: true }),
-  }));
-  return { items, live: true };
-}
-
-export async function loadContacts(): Promise<Live<Contact>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: CONTACTS, live: false };
-  const rows = await db.contact.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    orderBy: { createdAt: "desc" },
-    take: 60,
-  });
-  if (rows.length === 0) return { items: CONTACTS, live: false };
-  const items: Contact[] = rows.map((c) => ({
-    id: c.id,
-    name: [c.firstName, c.lastName].filter(Boolean).join(" ") || "Unknown",
-    role: c.jobTitle ?? "—",
-    company: "—",
-    email: c.email ?? "—",
-    phone: c.phone ?? "—",
-    leadScore: Math.round(Math.random() * 50 + 50),
-    stage: "New",
-    owner: "Alex Johnson",
-    lastActivity: "2h ago",
-    tags: [],
-    location: "—",
-    timezone: "—",
-    createdAt: shortDate(c.createdAt),
-    source: "Import",
-    avatar: undefined
-  }));
-  return { items, live: true };
-}
-
-const TASK_STATUS: Record<string, CrmTask["status"]> = { open: "Todo", in_progress: "In Progress", done: "Done" };
-
-export async function loadCrmTasks(): Promise<Live<CrmTask>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: CRM_TASKS, live: false };
-  const rows = await db.task.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    orderBy: { createdAt: "desc" },
-    take: 60,
-  });
-  if (rows.length === 0) return { items: CRM_TASKS, live: false };
-  const items: CrmTask[] = rows.map((t) => ({
-    id: t.id,
-    title: t.title,
-    status: TASK_STATUS[t.status] ?? "Todo",
-    priority: (t.priority.charAt(0).toUpperCase() + t.priority.slice(1)) as CrmTask["priority"],
-    owner: "Alex Johnson",
-    related: "—",
-    dueDate: t.dueDate ? shortDate(t.dueDate) : "—",
-  }));
-  return { items, live: true };
-}
-
-/* ------------------------------------------------------------ integrations */
-
-const PROVIDER_META: Record<string, { name: string; category: Integration["category"]; logo: string }> = {
-  hubspot: { name: "HubSpot", category: "CRM", logo: "🧡" },
-  google: { name: "Google", category: "Analytics", logo: "🟨" },
-  salesforce: { name: "Salesforce", category: "CRM", logo: "☁️" },
-  slack: { name: "Slack", category: "Communication", logo: "💬" },
-  stripe: { name: "Stripe", category: "Payments", logo: "💳" },
-  meta: { name: "Meta Business Suite", category: "Ads", logo: "📘" },
-};
-
-export async function loadIntegrations(): Promise<Live<Integration>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: INTEGRATIONS, live: false };
-  const rows = await db.integration.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    orderBy: { createdAt: "desc" },
-    take: 60,
-  });
-  if (rows.length === 0) return { items: INTEGRATIONS, live: false };
-  const items: Integration[] = rows.map((i) => {
-    const meta = PROVIDER_META[i.provider] ?? { name: i.provider, category: "Data" as const, logo: "🔌" };
-    return {
-      id: i.id,
-      provider: i.provider,
-      name: meta.name,
-      category: meta.category,
-      logo: meta.logo,
-      status: i.status === "connected" ? "Connected" : "Available",
-      scopes: i.scopes.length,
-      lastSync: i.lastSyncAt ? formatDistanceToNow(i.lastSyncAt, { addSuffix: true }) : "—",
-      connectedBy: "Alex Johnson",
-    };
-  });
-  return { items, live: true };
-}
-
-/* -------------------------------------------------------------- audit log */
-
-export async function loadAuditEvents(): Promise<Live<AuditEvent>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: AUDIT_EVENTS, live: false };
-  let rows;
-  try {
-    rows = await db.auditLog.findMany({
-      where: { workspaceId: ctx.workspaceId },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
-  } catch {
-    return { items: AUDIT_EVENTS, live: false };
-  }
-  if (rows.length === 0) return { items: AUDIT_EVENTS, live: false };
-  const userIds = [...new Set(rows.map((r) => r.actorUserId).filter(Boolean) as string[])];
-  const users = await db.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } });
-  const nameById = new Map(users.map((u) => [u.id, u.name]));
-  const sevMap: Record<string, AuditEvent["severity"]> = { delete: "critical", revoke: "warn" };
-  const items: AuditEvent[] = rows.map((r) => ({
-    actor: (r.actorUserId && nameById.get(r.actorUserId)) || "System",
-    action: r.action,
-    target: [r.resourceType, r.resourceId].filter(Boolean).join(" ") || "—",
-    ip: r.ipAddress ?? "—",
-    when: formatDistanceToNow(r.createdAt, { addSuffix: true }),
-    severity: sevMap[r.action.split(".").pop() ?? ""] ?? "info",
-  }));
-  return { items, live: true };
-}
-
-/* -------------------------------------------------------------- companies */
-
-function healthFromScore(score: number): HealthTone {
-  if (score >= 80) return "Healthy";
-  if (score >= 65) return "Neutral";
-  if (score >= 45) return "At Risk";
-  return "Critical";
-}
-
-export async function loadCompanies(): Promise<Live<CompanyRow>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: COMPANIES, live: false };
-  const rows = await db.company.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    include: { _count: { select: { contacts: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
-  if (rows.length === 0) return { items: COMPANIES, live: false };
-  const items: CompanyRow[] = rows.map((c, i) => {
-    // Deal/company FK not modelled in the schema — derive display fields
-    // deterministically from stable inputs so the same row always renders the same.
-    const seed = c.name.charCodeAt(0) + i * 7;
-    const score = 60 + (seed % 38);
-    return {
-      id: c.id,
-      name: c.name,
-      domain: c.domain ?? "—",
-      industry: c.industry ?? "—",
-      owner: "Alex Johnson",
-      plan: c.size === "enterprise" ? "Enterprise" : "Growth",
-      arr: 40000 + (seed % 30) * 8000,
-      openDeals: 1 + (seed % 5),
-      contacts: c._count.contacts,
-      health: healthFromScore(score),
-      lastActivity: formatDistanceToNow(c.updatedAt, { addSuffix: true }),
-    };
-  });
-  return { items, live: true };
-}
-
-/* ------------------------------------------------------------ conversions */
-
-export async function loadConversions(): Promise<Live<ConversionRow>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: CONVERSIONS, live: false };
-  const rows = await db.eventDefinition.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
-  if (rows.length === 0) return { items: CONVERSIONS, live: false };
-  const aggs = await db.dailyEventAggregate.groupBy({
-    by: ["eventName"],
-    where: { workspaceId: ctx.workspaceId },
-    _sum: { count: true },
-  }).catch(() => [] as { eventName: string; _sum: { count: number | null } }[]);
-  const countBy = new Map(aggs.map((a) => [a.eventName, a._sum.count ?? 0]));
-  const items: ConversionRow[] = rows.map((e, i) => {
-    const props = (e.properties as { type?: ConversionType; source?: string; value?: number; status?: string } | null) ?? {};
-    const conversions = countBy.get(e.name) ?? 100 + i * 137;
-    return {
-      id: e.id,
-      name: e.name,
-      hint: e.description ?? "—",
-      type: props.type ?? "Event",
-      source: props.source ?? "All Pages",
-      status: props.status === "paused" ? "Paused" : "Active",
-      conversions,
-      rate: Math.round((2 + ((i * 13) % 80) / 10) * 100) / 100,
-      delta: Math.round(((i % 3) - 0.5) * 90) / 100,
-      value: props.value ?? 0,
-      lastTriggered: `${(i + 1) * 2}m ago`,
-    };
-  });
-  return { items, live: true };
-}
-
-/* --------------------------------------------------------- deliverability */
-
-export async function loadDeliverability(): Promise<Live<DeliverabilityCampaign>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: DELIVERABILITY_CAMPAIGNS, live: false };
-  const rows = await db.emailCampaign.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    include: { _count: { select: { sends: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  });
-  const withSends = rows.filter((r) => r._count.sends > 0);
-  if (withSends.length === 0) return { items: DELIVERABILITY_CAMPAIGNS, live: false };
-  const items: DeliverabilityCampaign[] = [];
-  for (const c of withSends) {
-    const [sent, delivered, opened, bounced] = await Promise.all([
-      db.emailSend.count({ where: { emailCampaignId: c.id } }),
-      db.emailSend.count({ where: { emailCampaignId: c.id, deliveredAt: { not: null } } }),
-      db.emailSend.count({ where: { emailCampaignId: c.id, openedAt: { not: null } } }),
-      db.emailSend.count({ where: { emailCampaignId: c.id, bouncedAt: { not: null } } }),
-    ]);
-    const pct = (n: number, d: number) => (d ? Math.round((n / d) * 1000) / 10 : 0);
-    items.push({
-      id: c.id,
-      name: c.name,
-      sent,
-      delivered,
-      inboxRate: pct(delivered, sent),
-      openRate: pct(opened, delivered),
-      bounceRate: pct(bounced, sent),
-      spamRate: Math.round((bounced / Math.max(sent, 1)) * 10) / 100,
-      status: pct(bounced, sent) > 3 ? "Warning" : "Good",
-    });
-  }
-  return { items, live: true };
-}
-
-/* ------------------------------------------------------------ triggers */
-
-export async function loadTriggers(): Promise<Live<TriggerRow>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: TRIGGERS, live: false };
-  const rows = await db.eventDefinition.findMany({
-    where: { workspaceId: ctx.workspaceId },
-    orderBy: { createdAt: "desc" },
-    take: 40,
-  });
-  if (rows.length === 0) return { items: TRIGGERS, live: false };
-  const prio: TriggerRow["priority"][] = ["High", "Medium", "Medium", "High", "Low"];
-  const items: TriggerRow[] = rows.map((e, i) => {
-    const props = (e.properties as { source?: string; status?: string } | null) ?? {};
-    return {
-      id: e.id,
-      name: e.name,
-      status: props.status === "paused" ? "Paused" : "Active",
-      priority: prio[i % prio.length],
-      source: props.source ?? "Web Forms",
-      lastFired: formatDistanceToNow(e.createdAt, { addSuffix: true }),
-    };
-  });
-  return { items, live: true };
-}
-
-export async function loadTriggerEvents(): Promise<Live<EventStreamRow>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: EVENT_STREAM, live: false };
-  const rows = await db.workflowExecution.findMany({
-    where: { workflow: { workspaceId: ctx.workspaceId } },
-    include: { workflow: { select: { name: true } } },
-    orderBy: { startedAt: "desc" },
-    take: 25,
-  }).catch(() => []);
-  if (rows.length === 0) return { items: EVENT_STREAM, live: false };
-  const resMap: Record<string, EventStreamRow["result"]> = { completed: "Success", failed: "Failed", running: "Retrying" };
-  const items: EventStreamRow[] = rows.map((r) => ({
-    id: r.id,
-    when: r.startedAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-    event: "Workflow Triggered",
-    source: "Automation",
-    subject: "—",
-    workflow: r.workflow?.name ?? "—",
-    result: resMap[r.status] ?? "Success",
-  }));
-  return { items, live: true };
-}
-
-/* ------------------------------------------------- super admin: organizations */
-
-export async function loadOrganizations(): Promise<Live<OrgRow>> {
-  const ctx = await ctxOrNull();
-  if (!ctx) return { items: ORGANIZATIONS, live: false };
-  let rows;
-  try {
-    rows = await db.workspace.findMany({
-      include: { _count: { select: { memberships: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    });
-  } catch {
-    return { items: ORGANIZATIONS, live: false };
-  }
-  if (rows.length === 0) return { items: ORGANIZATIONS, live: false };
-  // Subscription has no back-relation on Workspace — fetch latest per workspace separately.
-  const subs = await db.subscription.findMany({
-    where: { workspaceId: { in: rows.map((r) => r.id) } },
-    include: { plan: true },
-    orderBy: { createdAt: "desc" },
-  }).catch(() => [] as { workspaceId: string; status: string; plan: { name: string; price: number } | null }[]);
-  const subBy = new Map<string, (typeof subs)[number]>();
-  for (const s of subs) if (!subBy.has(s.workspaceId)) subBy.set(s.workspaceId, s);
-  const items: OrgRow[] = rows.map((w, i) => {
-    const sub = subBy.get(w.id);
-    const health = 55 + ((w.name.charCodeAt(0) + i * 11) % 44);
-    return {
-      id: w.id,
-      name: w.name,
-      domain: w.domain ?? `${w.slug}.amplivanta.app`,
-      plan: sub?.plan?.name ?? (w.planTier.charAt(0) + w.planTier.slice(1).toLowerCase()),
-      users: w._count.memberships,
-      health,
-      mrr: Math.round(sub?.plan?.price ?? 0),
-      status: sub?.status === "suspended" ? "Suspended" : health < 60 ? "Warning" : "Active",
-    };
-  });
-  return { items, live: true };
 }
