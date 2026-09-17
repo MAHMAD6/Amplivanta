@@ -65,3 +65,39 @@ describe("pricing benchmark", () => {
     expect(csvCell(null)).toBe("");
   });
 });
+
+import { checkMapping, parseCsv, suggestMapping, validateRow, toCsv } from "@/lib/data-transfer";
+
+describe("data import", () => {
+  it("parses quoted CSV with BOM, CRLF and embedded newlines", () => {
+    const rows = parseCsv('﻿Email,Name,Notes\r\na@x.com,"Doe, Jane","line1\nline2"\r\n\r\nb@x.com,Bob,"say ""hi"""\r\n');
+    expect(rows).toEqual([["Email", "Name", "Notes"], ["a@x.com", "Doe, Jane", "line1\nline2"], ["b@x.com", "Bob", 'say "hi"']]);
+  });
+
+  it("suggests mappings from common header names, once per field", () => {
+    expect(suggestMapping("contacts", ["E-mail", "First Name", "Company Name", "Email", "Random"])).toEqual(["email", "firstName", "companyName", null, null]);
+    expect(suggestMapping("deals", ["Opportunity", "Amount", "Deal Stage", "Close Date"])).toEqual(["name", "value", "stage", "closeDate"]);
+  });
+
+  it("validates and normalises rows", () => {
+    const map = ["email", "firstName", "lastName", "tags", "status"];
+    expect(validateRow("contacts", ["A@X.com", "Ann", "Lee", "vip; beta,vip", "Qualified"], map)).toEqual({ ok: true, data: { email: "a@x.com", firstName: "Ann", lastName: "Lee", tags: ["vip", "beta"], status: "qualified", name: "Ann Lee" } });
+    expect(validateRow("contacts", ["not-an-email", "", "", "", ""], map)).toMatchObject({ ok: false });
+    expect(validateRow("contacts", ["", "", "", "", ""], map)).toMatchObject({ ok: false, message: "A contact needs an email or a name" });
+    expect(validateRow("contacts", ["", "Ann", "", "", "boss"], map)).toMatchObject({ ok: false });
+    expect(validateRow("deals", ["Big deal", "$12,500.50", "eur", "WON"], ["name", "value", "currency", "status"])).toEqual({ ok: true, data: { name: "Big deal", value: 12500.5, currency: "EUR", status: "won" } });
+    expect(validateRow("companies", ["Acme", "HTTPS://www.Acme.com/about"], ["name", "domain"])).toEqual({ ok: true, data: { name: "Acme", domain: "acme.com" } });
+  });
+
+  it("rejects incomplete or duplicate mappings", () => {
+    expect(checkMapping("companies", ["a", "b"], ["domain", null])).toBe("Map a column to Name.");
+    expect(checkMapping("contacts", ["a", "b"], ["email", "email"])).toBe("Each field can be mapped from one column only.");
+    expect(checkMapping("contacts", ["a"], ["phone"])).toBe("Map a column to Email or a name field.");
+    expect(checkMapping("contacts", ["a"], ["email", null])).toBe("The column mapping does not match the file.");
+    expect(checkMapping("deals", ["a"], ["name"])).toBeNull();
+  });
+
+  it("writes spreadsheet-safe CSV", () => {
+    expect(toCsv(["A", "B"], [["=cmd()", -5], [["x", "y"], null]])).toBe("A,B\r\n'=cmd(),-5\r\nx; y,\r\n");
+  });
+});

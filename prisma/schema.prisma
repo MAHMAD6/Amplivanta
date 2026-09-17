@@ -120,6 +120,7 @@ model Workspace {
   dailyEventAggregates DailyEventAggregate[]
   audiences            Audience[]
   channels             Channel[]
+  dataTransferJobs     DataTransferJob[]
 }
 
 model Membership {
@@ -2900,4 +2901,32 @@ model Experiment {
   updatedAt     DateTime  @updatedAt
 
   @@index([workspaceId])
+}
+
+/// Import and export jobs from the Integrations Import / Export center.
+model DataTransferJob {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  /// import | export
+  kind         String
+  /// contacts | companies | deals | campaign_metrics | audit_log | workspace_backup
+  entity       String
+  fileName     String?
+  format       String    @default("csv")
+  /// completed | completed_with_errors | failed
+  status       String    @default("completed")
+  totalRows    Int       @default(0)
+  createdCount Int       @default(0)
+  updatedCount Int       @default(0)
+  skippedCount Int       @default(0)
+  errorCount   Int       @default(0)
+  /// First validation errors: [{ row, message }]
+  errors       Json?
+  options      Json?
+  createdById  String?
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+
+  @@index([workspaceId, startedAt])
 }

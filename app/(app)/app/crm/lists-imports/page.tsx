@@ -26,7 +26,7 @@ export default async function ListsImportsPage({ searchParams }: { searchParams:
     try {
       const w = ctx.workspaceId;
       const created = since(sp.created);
-      const [lists, all] = await Promise.all([
+      const [lists, all, importJobs] = await Promise.all([
         db.segment.findMany({
           where: {
             workspaceId: w,
@@ -38,6 +38,7 @@ export default async function ListsImportsPage({ searchParams }: { searchParams:
           select: { id: true, name: true, filterCriteria: true, memberCount: true, updatedAt: true },
         }),
         db.segment.findMany({ where: { workspaceId: w }, select: { filterCriteria: true } }),
+        db.dataTransferJob.count({ where: { workspaceId: w, kind: "import" } }),
       ]);
       total = all.length;
       const smart = all.filter((s) => isSmart(s.filterCriteria)).length;
@@ -50,8 +51,7 @@ export default async function ListsImportsPage({ searchParams }: { searchParams:
         crmDate(l.updatedAt),
         "—",
       ]);
-      // Import jobs have no production record type yet, so that figure stays neutral.
-      stats = total > 0 ? [total.toLocaleString("en-US"), smart.toLocaleString("en-US"), (total - smart).toLocaleString("en-US"), null] : [null, null, null, null];
+      stats = [total ? total.toLocaleString("en-US") : null, total ? smart.toLocaleString("en-US") : null, total ? (total - smart).toLocaleString("en-US") : null, importJobs ? importJobs.toLocaleString("en-US") : null];
     } catch {
       reachable = false;
     }
