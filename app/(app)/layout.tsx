@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/amplivanta/app-shell";
 import { getMarketplaceViewer, marketplaceNavVisibility } from "@/lib/server/marketplace-access";
 import { prisma } from "@/lib/prisma";
+import { getSessionContext } from "@/lib/tenant";
+import { unreadWhere } from "@/lib/notifications";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   // Authoritative server-side guard for the product app. The edge middleware
@@ -34,11 +36,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     workspaces = [];
   }
 
+  // Bell badge: the member's real unread count; null (no badge) when unknown.
+  let unreadNotifications: number | null = null;
+  try {
+    const ctx = await getSessionContext();
+    unreadNotifications = await prisma.notification.count({ where: unreadWhere(ctx.workspaceId, ctx.userId) });
+  } catch {
+    unreadNotifications = null;
+  }
+
   return (
     <AppShell
       navVisibility={navVisibility}
       workspaces={workspaces}
       user={{ name: viewer.name, email: viewer.email }}
+      unreadNotifications={unreadNotifications}
     >
       {children}
     </AppShell>

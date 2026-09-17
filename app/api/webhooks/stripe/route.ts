@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { Prisma } from "@prisma/client";
+import { notify } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { getStripe, isStripeConfigured, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe";
 import { paymentCovers } from "@/lib/credits/policy";
@@ -61,6 +62,19 @@ async function handle(event: Stripe.Event) {
         where: { stripeSubscriptionId: sub.id },
         data: { status: sub.status, cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end) },
       });
+      const local = await db.subscription.findFirst({ where: { stripeSubscriptionId: sub.id }, select: { workspaceId: true, plan: { select: { name: true } } } });
+      const ended = event.type === "customer.subscription.deleted";
+      if (local && (ended || sub.cancel_at_period_end || ["past_due", "unpaid"].includes(sub.status))) {
+        await notify({
+          workspaceId: local.workspaceId,
+          category: "billing",
+          severity: ended || sub.status !== "active" ? "critical" : "warning",
+          title: ended ? `${local.plan.name} subscription ended` : sub.status !== "active" ? `${local.plan.name} subscription is ${sub.status.replace(/_/g, " ")}` : `${local.plan.name} subscription will cancel at period end`,
+          link: "/app/settings/billing",
+          resourceType: "Subscription",
+          dedupeKey: `sub:${sub.id}:${ended ? "deleted" : sub.status}:${sub.cancel_at_period_end}`,
+        });
+      }
       return;
     }
     case "invoice.paid":
@@ -82,6 +96,9 @@ async function handle(event: Stripe.Event) {
           pdfUrl: inv.invoice_pdf ?? null,
         },
       });
+      const paid = event.type === "invoice.paid";
+      const amount = new Intl.NumberFormat("en-US", { style: "currency", currency: (inv.currency || "usd").toUpperCase() }).format(((paid ? inv.amount_paid : inv.amount_due) ?? 0) / 100);
+      await notify({ workspaceId: sub.workspaceId, category: "billing", severity: paid ? "success" : "critical", title: paid ? "Invoice paid" : "Payment failed", body: paid ? `${amount} was paid.` : `${amount} could not be charged. Update the payment method to keep the subscription active.`, link: "/app/settings/billing", resourceType: "Invoice", dedupeKey: `invoice:${inv.id}:${event.type}` });
       return;
     }
     case "account.updated": {

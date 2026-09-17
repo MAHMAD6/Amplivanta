@@ -70,6 +70,7 @@ export default async function BillingPage() {
           ) : (
             <EmptyState icon={Diamond} title="Plan information is not available yet" body="Current plan, renewal, entitlement, and usage information will appear when billing data is connected." />
           )}
+          <Link href="/app/settings/billing/plans" className="mt-5 mr-2.5 inline-flex h-10 items-center rounded-md border border-line px-5 text-[13.5px] font-semibold text-deep-navy hover:bg-bg-soft">Compare Plans</Link>
           {c?.isAdmin && data && data.plans.length > 0 && (
             <UpgradeDialog plans={data.plans} currentPlanId={sub?.planId} trigger={<button type="button" className="mt-5 inline-flex h-10 items-center rounded-md bg-[#0B5CFF] px-5 text-[13.5px] font-semibold text-white">{sub ? "Change Plan" : "Choose a Plan"}</button>} />
           )}

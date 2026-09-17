@@ -1,5 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { notify } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { buildFalPayload, extractOutputs, FAL_TASKS, validateMediaInput, type FalTaskCode, type MediaInput } from "@/lib/media/fal-tasks";
 import { falTask, pollFalJob, submitFalJob } from "@/lib/providers/fal";
@@ -84,6 +85,7 @@ export async function createMediaJob(ctx: { workspaceId: string; userId: string 
 
 async function failJob(jobId: string, error: string) {
   const job = await db.mediaGenerationJob.update({ where: { id: jobId }, data: { status: "failed", error: error.slice(0, 500), completedAt: new Date() } });
+  await notify({ workspaceId: job.workspaceId, userId: job.userId, category: "system", severity: "warning", title: "Media generation failed", body: `${error.slice(0, 200)}${job.creditsCharged > 0 ? " Credits charged for it are refunded." : ""}`, link: "/app/creative-studio/images", resourceType: "MediaGenerationJob", resourceId: job.id });
   if (job.creditsCharged > 0 && !job.creditsRefunded) {
     const r = await refundUsage(job.workspaceId, { type: CREDIT_SOURCE, id: job.id, note: "generation failed" });
     if (r.ok) await db.mediaGenerationJob.update({ where: { id: jobId }, data: { creditsRefunded: true } });

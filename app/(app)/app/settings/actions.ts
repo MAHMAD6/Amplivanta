@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { resolveTxt } from "node:dns/promises";
 import { revalidatePath } from "next/cache";
 import type { Role } from "@prisma/client";
+import { notify } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { getSessionContext } from "@/lib/tenant";
 import { parsePreferences, PREFERENCE_SCOPES } from "@/lib/preferences";
@@ -71,6 +72,7 @@ export async function changeMemberRole(membershipId: string, role: string): Prom
   }
   await db.membership.update({ where: { id: member.id }, data: { role: role as Role } });
   await audit(ctx, "member.role_changed", "Membership", member.id, { from: member.role, to: role });
+  await notify({ workspaceId: ctx.workspaceId, userId: member.userId, category: "security", title: "Your workspace role changed", body: `Your role is now ${role.toLowerCase().replace(/_/g, " ")}.`, link: "/app/settings/users", resourceType: "Membership", resourceId: member.id });
   revalidatePath("/app/settings/users");
   return { ok: true, message: "Role updated." };
 }

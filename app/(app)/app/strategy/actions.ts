@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { notify } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { getSessionContext } from "@/lib/tenant";
 import { runAiTask } from "@/lib/ai";
@@ -606,6 +607,7 @@ export async function submitChannelPlan(): Promise<Result> {
   const r = await db.channelPlan.updateMany({ where: { workspaceId: c.workspaceId, approvalStatus: { in: ["not_submitted", "changes_requested"] } }, data: { approvalStatus: "pending" } });
   if (!r.count) return { ok: false, error: "There are no allocations waiting to be submitted." };
   await audit(c, "growth.channel_plan_submitted", "ChannelPlan", "", { count: r.count });
+  await notify({ workspaceId: c.workspaceId, category: "approvals", title: "Channel plan submitted for approval", body: `${r.count} allocation${r.count === 1 ? "" : "s"} waiting for an admin decision.`, link: "/app/strategy/channels", resourceType: "ChannelPlan" });
   revalidatePath("/app/strategy/channels");
   return { ok: true, message: "Channel plan submitted for approval." };
 }
@@ -617,6 +619,7 @@ export async function reviewChannelPlan(decision: string): Promise<Result> {
   const r = await db.channelPlan.updateMany({ where: { workspaceId: c.workspaceId, approvalStatus: "pending" }, data: { approvalStatus: decision, approvedById: decision === "approved" ? c.userId : null } });
   if (!r.count) return { ok: false, error: "Nothing is pending approval." };
   await audit(c, `growth.channel_plan_${decision}`, "ChannelPlan", "", { count: r.count });
+  await notify({ workspaceId: c.workspaceId, category: "approvals", severity: decision === "approved" ? "success" : "warning", title: decision === "approved" ? "Channel plan approved" : "Changes requested on the channel plan", link: "/app/strategy/channels", resourceType: "ChannelPlan" });
   revalidatePath("/app/strategy/channels");
   return { ok: true, message: decision === "approved" ? "Channel plan approved." : "Changes requested." };
 }

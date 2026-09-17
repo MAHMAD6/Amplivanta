@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { notify } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { getSessionContext } from "@/lib/tenant";
 import { nextStatusForReview, SOCIAL_PLATFORM_IDS } from "@/lib/social/platforms";
@@ -85,6 +86,7 @@ export async function submitForApproval(postId: string): Promise<Result> {
   const r = await db.socialPost.updateMany({ where: { id: postId, workspaceId: c.workspaceId, status: { in: ["draft", "changes_requested"] } }, data: { status: "pending_approval" } }).catch(() => null);
   if (!r?.count) return { ok: false, error: "Only drafts or posts with requested changes can be submitted." };
   await audit(c, "social.post.submitted", postId);
+  await notify({ workspaceId: c.workspaceId, category: "approvals", title: "A social post is waiting for approval", body: `Submitted by ${c.email || "a workspace member"}.`, link: "/app/social/approvals", resourceType: "SocialPost", resourceId: postId });
   refresh();
   return { ok: true, message: "Submitted for approval." };
 }
@@ -102,6 +104,7 @@ export async function reviewPost(postId: string, decision: "approve" | "changes"
   const r = await db.socialPost.updateMany({ where: { id: postId, workspaceId: c.workspaceId, status: "pending_approval" }, data: { status: next } });
   if (!r.count) return { ok: false, error: "This post was already reviewed." };
   await audit(c, `social.post.${decision === "approve" ? "approved" : decision === "changes" ? "changes_requested" : "rejected"}`, postId, { note: note.slice(0, 500) });
+  await notify({ workspaceId: c.workspaceId, category: "approvals", severity: decision === "approve" ? "success" : "warning", title: decision === "approve" ? "Social post approved" : decision === "changes" ? "Changes requested on a social post" : "Social post rejected", body: note.trim() ? note.trim().slice(0, 300) : undefined, link: "/app/social/approvals", resourceType: "SocialPost", resourceId: postId });
   refresh();
   return { ok: true, message: decision === "approve" ? "Approved." : decision === "changes" ? "Changes requested." : "Rejected." };
 }

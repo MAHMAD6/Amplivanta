@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Search, Bell, HelpCircle, Gift, Sparkles } from "lucide-react";
-import { NotificationDrawer } from "./notification-drawer";
+import { Search, HelpCircle, Gift, Sparkles } from "lucide-react";
+import { NotificationBell } from "./notification-ui";
 import { cn } from "@/lib/utils";
 
-export function AppTopbar({ user }: { user?: { name?: string | null; email?: string | null } }) {
+export function AppTopbar({ user, unreadNotifications }: { user?: { name?: string | null; email?: string | null }; unreadNotifications?: number | null }) {
   const pathname = usePathname();
-  const [notifOpen, setNotifOpen] = useState(false);
   const crumbs = buildCrumbs(pathname);
 
   return (
@@ -50,7 +48,7 @@ export function AppTopbar({ user }: { user?: { name?: string | null; email?: str
             AI Workspace
           </Link>
           <IconBtn icon={Gift} label="Rewards" />
-          <IconBtn icon={Bell} onClick={() => setNotifOpen(true)} label="Notifications" />
+          <NotificationBell unread={unreadNotifications ?? null} />
           <IconBtn icon={HelpCircle} label="Help" />
           <button className="ml-2 flex items-center gap-2 rounded-xl border border-line bg-white p-1 pr-3 transition hover:border-ink/30">
             <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-violet to-orange-brand" />
@@ -61,7 +59,6 @@ export function AppTopbar({ user }: { user?: { name?: string | null; email?: str
           </button>
         </div>
       </header>
-      <NotificationDrawer open={notifOpen} onClose={() => setNotifOpen(false)} />
     </>
   );
 }

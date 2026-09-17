@@ -1,3 +1,4 @@
+import { notify } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { enqueueWorkflowRun } from "@/lib/queue";
@@ -78,7 +79,20 @@ export async function processSendQueue(limit = 200) {
   }
   for (const id of touched) {
     const left = await db.emailSend.count({ where: { emailCampaignId: id, status: "queued" } });
-    if (!left) await db.emailCampaign.update({ where: { id }, data: { status: "sent", sentAt: new Date() } });
+    if (left) continue;
+    const ec = await db.emailCampaign.update({ where: { id }, data: { status: "sent", sentAt: new Date() }, select: { id: true, name: true, workspaceId: true } });
+    const by = await db.emailSend.groupBy({ by: ["status"], where: { emailCampaignId: id }, _count: true });
+    const n = (s: string) => by.find((g) => g.status === s)?._count ?? 0;
+    await notify({
+      workspaceId: ec.workspaceId,
+      category: "campaigns",
+      severity: n("sent") === 0 || n("failed") + n("not_sent") > 0 ? "warning" : "success",
+      title: `Email campaign "${ec.name}" finished sending`,
+      body: `${n("sent")} sent, ${n("suppressed")} suppressed, ${n("failed")} failed, ${n("not_sent")} not sent${n("not_sent") ? " (no email provider is configured)" : ""}.`,
+      link: `/app/marketing/emails?campaign=${ec.id}`,
+      resourceType: "EmailCampaign",
+      resourceId: ec.id,
+    });
   }
   return batch.length;
 }
@@ -97,7 +111,8 @@ export async function marketingTick() {
   for (const p of pages) {
     const last = await db.landingPageVersion.findFirst({ where: { landingPageId: p.id }, orderBy: { version: "desc" }, select: { version: true } });
     await db.landingPageVersion.create({ data: { landingPageId: p.id, version: (last?.version ?? 0) + 1, content: (p.content ?? []) as never } });
-    await db.landingPage.update({ where: { id: p.id }, data: { status: "published", isPublished: true, publishedAt: now, scheduledAt: null } });
+    const page = await db.landingPage.update({ where: { id: p.id }, data: { status: "published", isPublished: true, publishedAt: now, scheduledAt: null }, select: { id: true, title: true } });
+    await notify({ workspaceId: p.workspaceId, category: "publishing", severity: "success", title: `Scheduled page "${page.title}" is live`, body: "The landing page was published at its scheduled time.", link: `/app/marketing/publishing?page=${page.id}`, resourceType: "LandingPage", resourceId: page.id });
   }
   return { scheduledCampaigns: scheduled.length, emailsProcessed: sent, workflowRuns: due.length, pagesPublished: pages.length };
 }

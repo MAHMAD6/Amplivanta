@@ -14,11 +14,13 @@ export function AppShell({
   navVisibility,
   workspaces,
   user,
+  unreadNotifications,
 }: {
   children: React.ReactNode;
   navVisibility?: Record<string, boolean>;
   workspaces?: { id: string; name: string; plan: string }[];
   user?: { name?: string | null; email?: string | null };
+  unreadNotifications?: number | null;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -61,7 +63,7 @@ export function AppShell({
 
       <div className="lg:pl-[248px]">
         <div className="hidden lg:block">
-          <AppTopbar user={user} />
+          <AppTopbar user={user} unreadNotifications={unreadNotifications} />
         </div>
         <main className={cn("p-4 sm:p-6 lg:p-8")}>{children}</main>
       </div>

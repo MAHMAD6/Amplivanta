@@ -1,3 +1,4 @@
+import { notify } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { assertPublicEndpoint } from "@/lib/webhook-delivery";
@@ -110,6 +111,9 @@ export async function runWorkflowExecution(executionId: string): Promise<void> {
       const message = e instanceof Error ? e.message.slice(0, 500) : "Step failed";
       await done("failed", { error: message });
       await finish(executionId, { status: "failed", cursor: i, error: `${node.name}: ${message}` });
+      if (!test && execution.attempt > wf.maxRetries) {
+        await notify({ workspaceId: wf.workspaceId, category: "campaigns", preference: "automation", severity: "critical", title: `Workflow "${wf.name}" failed`, body: `${node.name}: ${message}. No retries are left.`, link: `/app/marketing/execution-logs?workflow=${wf.id}`, resourceType: "Workflow", resourceId: wf.id, dedupeKey: `workflow-failed:${wf.id}` });
+      }
       if (!test && execution.attempt <= wf.maxRetries) {
         // Retries resume at the failed node so earlier steps (emails) are not repeated.
         await db.workflowExecution.create({

@@ -211,7 +211,7 @@ const IMPORTABLE = {
   },
   "plans-and-pricing-pricing-benchmark-and-positioning": {
     label: "pricing benchmarks",
-    headers: ["competitor", "planName", "price", "currency", "interval", "sourceUrl"],
+    headers: ["competitor", "planName", "price", "currency", "interval", "sourceUrl", "benchmarkSet", "effectiveDate", "dimensions", "notes"],
     model: "pricingBenchmark",
     create: (row: Record<string, string>) => {
       const price = Number(row.price);
@@ -222,7 +222,11 @@ const IMPORTABLE = {
         price,
         currency: row.currency || "USD",
         interval: row.interval || "month",
-        sourceUrl: row.sourceUrl || null,
+        sourceUrl: /^https?:\/\//i.test(row.sourceUrl ?? "") ? row.sourceUrl : null,
+        benchmarkSet: row.benchmarkSet?.slice(0, 80) || "Default",
+        effectiveDate: /^\d{4}-\d{2}-\d{2}$/.test(row.effectiveDate ?? "") ? new Date(`${row.effectiveDate}T00:00:00Z`) : null,
+        dimensions: row.dimensions?.slice(0, 300) || null,
+        notes: row.notes?.slice(0, 2000) || null,
       };
     },
   },

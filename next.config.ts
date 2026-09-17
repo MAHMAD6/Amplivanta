@@ -75,7 +75,7 @@ const nextConfig: NextConfig = {
       { source: "/super/:path*", destination: "/admin/:path*", permanent: false },
       { source: "/app/platform-experience-pricing/platform-home-executive-dashboard", destination: "/app", permanent: false },
       { source: "/app/platform-experience-pricing/notification-center", destination: "/app/notifications", permanent: false },
-      { source: "/app/platform-experience-pricing/pricing-plans-overview", destination: "/app/settings/billing", permanent: false },
+      { source: "/app/platform-experience-pricing/pricing-plans-overview", destination: "/app/settings/billing/plans", permanent: false },
       { source: "/app/platform-experience-pricing/pricing-benchmark-and-positioning", destination: "/app/pricing-benchmark", permanent: false },
       { source: "/app/growth-intelligence/strategy-dashboard", destination: "/app/strategy", permanent: false },
       { source: "/app/growth-intelligence/marketing-goals", destination: "/app/strategy/goals", permanent: false },

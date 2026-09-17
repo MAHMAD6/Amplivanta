@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomBytes, createHash } from "crypto";
+import { notify } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { route, parseBody, listParams, requireRole } from "@/lib/tenant";
 import { writeAudit } from "@/lib/audit";
@@ -40,5 +41,6 @@ export const POST = route(async (ctx, req) => {
     },
   });
   await writeAudit(ctx, "apikey.create", { resourceType: "ApiKey", resourceId: key.id, metadata: { name: key.name } });
+  await notify({ workspaceId: ctx.workspaceId, category: "security", title: `API key "${key.name}" created`, body: `Scopes: ${key.scopes.join(", ")}. Created by ${ctx.email || "a workspace admin"}.`, link: "/app/integrations/api-keys", resourceType: "ApiKey", resourceId: key.id });
   return NextResponse.json({ id: key.id, name: key.name, key: raw, note: "Store this key now — it won't be shown again." }, { status: 201 });
 });

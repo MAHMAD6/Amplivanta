@@ -1,214 +1,265 @@
 import type { Metadata } from "next";
-import { ChartPlaceholder } from "@/components/amplivanta/chart-placeholder";
 import Link from "next/link";
-import { Building2, BarChart3, Crosshair, Clock, GitBranch, Database, Target, TrendingUp, Megaphone, Sparkles, Bell, Users2, ArrowRight, ChevronRight, Info } from "lucide-react";
-import { loadCommandCenter } from "@/lib/server/command-center";
-import { LiveBadge } from "@/components/amplivanta/live-badge";
+import { Activity, ArrowRight, ArrowUpRight, BarChart3, DollarSign, Diamond, FileText, Megaphone, ServerCrash, Star, Store, TrendingUp, Triangle, Users2 } from "lucide-react";
 import { db } from "@/lib/db";
-import { getSessionContext } from "@/lib/tenant";
-import { Store } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { BarList, EmptyState, Pill, ScreenHeader, TrendColumns, fmtDateTime, fmtMoney, kitOutline, type Stat } from "@/components/amplivanta/screen-kit";
+import { FormDialog } from "@/components/amplivanta/creative-ui";
+import { createCampaign } from "@/app/(app)/app/marketing/actions";
+import { CAMPAIGN_CHANNELS, CAMPAIGN_GOALS } from "@/lib/marketing/options";
+import { rangeDays } from "@/lib/server/marketing-screens";
+import { actionLabel, workspaceContext } from "@/lib/server/workspace-screens";
+import { change, loadPlatformHome, type PlatformHome } from "@/lib/server/platform-home";
 
-export const metadata: Metadata = { title: "Growth Command Center" };
+export const metadata: Metadata = { title: "Platform Home" };
 export const dynamic = "force-dynamic";
 
-const STEPS = [
-  { n: 1, title: "Diagnose", desc: "Understand your growth health", icon: Building2 },
-  { n: 2, title: "Recommend", desc: "AI identifies your best opportunities", icon: BarChart3 },
-  { n: 3, title: "Execute", desc: "Move from insight to action with built-in automation", icon: Crosshair },
-  { n: 4, title: "Measure", desc: "Track performance and impact", icon: Clock },
-  { n: 5, title: "Optimize", desc: "Continuously improve for better results", icon: GitBranch },
+const VIEWS: [string, string][] = [
+  ["all", "All modules"],
+  ["revenue", "Revenue & pipeline"],
+  ["marketing", "Marketing & campaigns"],
 ];
 
-/** Real counts for the Competitor Watch and Marketplace entry cards; null when unknown. */
-async function loadEntryCounts(): Promise<{ competitors: number | null; products: number | null }> {
-  try {
-    const ctx = await getSessionContext();
-    const [competitors, products] = await Promise.all([
-      db.competitor.count({ where: { workspaceId: ctx.workspaceId, trackingEnabled: true } }),
-      db.marketplaceProduct.count({ where: { status: "PUBLISHED" } }),
-    ]);
-    return { competitors, products };
-  } catch {
-    return { competitors: null, products: null };
+type SP = { days?: string; compare?: string; view?: string };
+
+const HEALTH_TONE = { ok: "green", warn: "amber", down: "red", off: "gray" } as const;
+const HEALTH_LABEL = { ok: "Healthy", warn: "Attention", down: "Failing", off: "Not set up" } as const;
+
+export default async function PlatformHomePage({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const days = rangeDays(sp.days ?? "30");
+  const compare = sp.compare === "1";
+  const view = VIEWS.some(([v]) => v === sp.view) ? sp.view! : "all";
+  const c = await workspaceContext();
+
+  let d: PlatformHome | null = null;
+  let entry = { competitors: null as number | null, products: null as number | null };
+  if (c) {
+    try {
+      const [home, competitors, products] = await Promise.all([
+        loadPlatformHome(c.workspaceId, days),
+        db.competitor.count({ where: { workspaceId: c.workspaceId, trackingEnabled: true } }).catch(() => null),
+        db.marketplaceProduct.count({ where: { status: "PUBLISHED" } }).catch(() => null),
+      ]);
+      d = home;
+      entry = { competitors, products };
+    } catch {
+      d = null;
+    }
   }
-}
 
-export default async function CommandCenterPage() {
-  const [cc, entry] = await Promise.all([loadCommandCenter(), loadEntryCounts()]);
-  const attentionCount = cc.attention.length;
+  const withChange = (hint: string | undefined, cur: number | null, prev: number | null) => {
+    if (!compare) return hint;
+    const ch = change(cur, prev);
+    return ch ? `${ch} vs previous ${days} days` : cur == null ? hint : "No previous period to compare";
+  };
+  const k = d?.kpis;
+  const stats: Stat[] = [
+    { label: "Revenue Influenced", icon: DollarSign, value: k?.revenue.value != null ? fmtMoney(k.revenue.value) : null, hint: withChange(k?.revenue.hint, k?.revenue.value ?? null, k?.revenue.previous ?? null) },
+    { label: "Pipeline Value", icon: Diamond, value: k?.pipeline.value != null ? fmtMoney(k.pipeline.value, k.pipeline.currency) : null, hint: k?.pipeline.hint },
+    { label: "Conversion Rate", icon: ArrowUpRight, value: k?.conversion.value != null ? `${k.conversion.value.toFixed(1)}%` : null, hint: withChange(k?.conversion.hint, k?.conversion.value ?? null, k?.conversion.previous ?? null) },
+    { label: "Active Campaigns", icon: Megaphone, value: k?.campaigns.value != null ? String(k.campaigns.value) : null, hint: k?.campaigns.hint },
+    { label: "Published Pages", icon: FileText, value: k?.pages.value != null ? String(k.pages.value) : null, hint: withChange(k?.pages.hint, k?.pages.value ?? null, k?.pages.previous ?? null) },
+    { label: "Marketing ROI", icon: TrendingUp, value: k?.roi.value != null ? `${k.roi.value.toFixed(0)}%` : null, hint: withChange(k?.roi.hint, k?.roi.value ?? null, k?.roi.previous ?? null) },
+  ];
+  const showRevenue = view !== "marketing";
+  const showMarketing = view !== "revenue";
 
   return (
-    <div className="mx-auto max-w-[1400px]">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-[26px] font-extrabold text-ink">Growth Command Center</h1>
-          <p className="mt-1 text-sm text-ink-soft">Your command center to drive measurable growth.</p>
-        </div>
-      </div>
+    <div className="mx-auto max-w-[1600px]">
+      <ScreenHeader
+        crumbs={[["Platform Experience"], ["Executive Dashboard"]]}
+        title="Platform Home"
+        subtitle="Executive command center for cross-platform performance, execution, and next actions."
+        actions={
+          <form method="get" action="/app" className="flex flex-wrap items-center gap-2.5">
+            {view !== "all" && <input type="hidden" name="view" value={view} />}
+            <label className="sr-only" htmlFor="ph-days">Date Range</label>
+            <select id="ph-days" name="days" defaultValue={String(days)} className="h-10 rounded-md border border-line bg-white px-3 text-[13.5px] font-semibold text-deep-navy">
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+            <label className={cn(kitOutline, "cursor-pointer gap-2")}>
+              <input type="checkbox" name="compare" value="1" defaultChecked={compare} className="h-4 w-4 rounded border-line" /> Compare
+            </label>
+            <label className="sr-only" htmlFor="ph-view">View</label>
+            <select id="ph-view" name="view" defaultValue={view} className="h-10 rounded-md border border-line bg-white px-3 text-[13.5px] font-semibold text-deep-navy">
+              {VIEWS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+            <button type="submit" className={kitOutline}>Apply</button>
+          </form>
+        }
+      />
 
-      {/* Diagnose → Optimize flow */}
-      <div className="mb-6 rounded-2xl border border-line bg-white p-4 shadow-card">
-        <div className="flex flex-wrap items-center gap-2">
-          {STEPS.map((s, i) => (
-            <div key={s.n} className="flex flex-1 items-center gap-2">
-              <div className="flex min-w-[150px] items-center gap-2.5">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-royal-tint text-royal-blue"><s.icon className="h-5 w-5" /></span>
-                <div><div className="text-[12.5px] font-bold text-ink">{s.n} {s.title}</div><div className="text-[10.5px] leading-snug text-ink-muted">{s.desc}</div></div>
+      {!c || !d ? (
+        <section className="rounded-xl border border-line bg-white p-5">
+          <EmptyState icon={ServerCrash} tone="orange" title={c ? "Dashboard data is unavailable" : "Sign in to a workspace"} body={c ? "Workspace data could not be loaded. Try again shortly." : "Platform Home shows data for the workspace you are signed in to."} />
+        </section>
+      ) : (
+        <>
+          <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+            {stats.map((s) => (
+              <div key={s.label} className="flex gap-4 rounded-xl border border-line bg-white px-5 py-5">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><s.icon className="h-5 w-5" /></span>
+                <div className="min-w-0">
+                  <div className="text-[14px] font-semibold text-deep-navy">{s.label}</div>
+                  <div className="mt-1.5 text-[21px] font-bold leading-tight text-deep-navy">{s.value ?? "—"}</div>
+                  <div className="mt-1.5 text-[12px] text-ink-muted">{s.value == null && !s.hint?.startsWith("No ") ? "Not available yet" : s.hint}</div>
+                </div>
               </div>
-              {i < STEPS.length - 1 && <ChevronRight className="hidden h-4 w-4 shrink-0 text-ink-muted lg:block" />}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {cc.live && <LiveBadge label="Live · reflecting your real workspace state" />}
-
-      {/* KPI cards — truthful empty states */}
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-4">
-        <KpiEmpty icon={Target} title="Growth Score" heading="No score yet" body="Connect your data to get your Growth Score and insights." cta="Connect Data" href="/app/integrations" ring />
-        <KpiEmpty icon={Crosshair} title="Top Opportunity" heading="Connect your data" body="We'll analyze your performance to identify your highest-priority opportunity." />
-        <KpiEmpty icon={TrendingUp} title="Potential Impact" heading="—" body="Impact will be shown here once we analyze your data." />
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-2 flex items-center justify-between"><span className="text-[13px] font-bold text-ink">Active Campaigns</span><Megaphone className="h-4 w-4 text-violet" /></div>
-          {cc.activeCampaigns > 0 ? (
-            <div className="text-[26px] font-extrabold text-ink">{cc.activeCampaigns}</div>
-          ) : (
-            <><div className="text-[20px] font-extrabold text-ink-soft">—</div><p className="mt-1 text-[11.5px] leading-snug text-ink-muted">Your active campaigns will appear here.</p></>
-          )}
-          <Link href="/app/marketing/campaigns" className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold text-royal-blue">Go to Campaigns <ArrowRight className="h-3.5 w-3.5" /></Link>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
-        {/* AI Recommended Next Action */}
-        <div className="rounded-2xl border border-line bg-white p-6 shadow-card">
-          <div className="mb-2 flex items-center gap-2"><Sparkles className="h-5 w-5 text-violet" /><div><div className="text-[15px] font-bold text-ink">AI Recommended Next Action</div><div className="text-[11.5px] text-ink-muted">AI insight based on your data and goals</div></div></div>
-          <div className="flex flex-col items-center py-8 text-center">
-            <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-violet/10 text-violet"><Sparkles className="h-7 w-7" /></span>
-            <div className="text-[15px] font-bold text-ink">Connect your data to get AI recommendations</div>
-            <p className="mt-1 max-w-md text-[12.5px] text-ink-soft">Once we have enough data, Amplivanta AI will recommend the next best action to drive the most impact for your business.</p>
-            <Link href="/app/integrations" className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-royal-blue px-5 text-[13px] font-bold text-white hover:bg-royal-soft"><Database className="h-4 w-4" /> Connect Data</Link>
-            <Link href="/app/growth-audit" className="mt-2 text-[12px] font-semibold text-royal-blue">Learn how it works →</Link>
-          </div>
-        </div>
-
-        {/* Needs Your Attention */}
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-[14px] font-bold text-ink"><Bell className="h-4 w-4" /> Needs Your Attention</div>
-            {attentionCount > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{attentionCount}</span>}
-          </div>
-          {attentionCount === 0 ? (
-            <p className="py-6 text-center text-[12.5px] text-ink-muted">You&apos;re all caught up.</p>
-          ) : (
-            <div className="space-y-2">
-              {cc.attention.map((a) => (
-                <Link key={a.key} href={a.href} className="flex items-center gap-3 rounded-xl border border-line p-3 hover:border-royal-blue/40">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-royal-tint text-royal-blue"><Info className="h-4 w-4" /></span>
-                  <div className="min-w-0 flex-1"><div className="text-[13px] font-bold text-ink">{a.title}</div><p className="text-[11.5px] text-ink-soft">{a.detail}</p></div>
-                  <ChevronRight className="h-4 w-4 text-ink-muted" />
-                </Link>
-              ))}
-            </div>
-          )}
-          <Link href="/app/notifications" className="mt-3 block text-center text-[12px] font-semibold text-royal-blue">View all alerts →</Link>
-        </div>
-      </div>
-
-      {/* Bottom row */}
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Performance Overview */}
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-1 flex items-center justify-between"><span className="text-[14px] font-bold text-ink">Performance Overview</span><span className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-ink-soft">Last 7 days</span></div>
-          <p className="text-[11.5px] text-ink-soft">Connect your data to see performance trends across your key metrics.</p>
-          <div className="my-4 flex h-28 items-end gap-1 opacity-40">
-            <ChartPlaceholder />
-          </div>
-          <div className="flex items-center justify-between"><span className="text-[11.5px] text-ink-muted">No data connected</span><Link href="/app/integrations" className="rounded-lg border border-line px-3 py-1 text-[12px] font-semibold text-royal-blue">Connect Data</Link></div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 flex items-center justify-between"><span className="text-[14px] font-bold text-ink">Recent Activity</span><Link href="/app/workspace/activity" className="text-[12px] font-semibold text-royal-blue">View all</Link></div>
-          {cc.recentActivity.length > 0 ? (
-            <div className="space-y-3">
-              {cc.recentActivity.map((a) => (
-                <div key={a.id} className="flex items-start gap-2.5"><span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-violet/10 text-violet"><Sparkles className="h-3.5 w-3.5" /></span><div className="min-w-0 flex-1"><div className="text-[12.5px] font-medium text-ink">{a.title}</div><div className="text-[10.5px] text-ink-muted">{new Date(a.when).toLocaleDateString()}</div></div></div>
-              ))}
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {[["Connect your first data source", "Get real-time insights"], ["Create your first campaign", "Start reaching your audience"], ["Set up your team", "Invite members and set roles"], ["Explore AI Advisor", "Get personalized growth advice"]].map(([t, d]) => (
-                <li key={t} className="flex items-start justify-between gap-2 text-[12.5px]"><div><div className="font-semibold text-ink">{t}</div><div className="text-[10.5px] text-ink-muted">{d}</div></div><span className="text-ink-muted">—</span></li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Get Started */}
-        <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-          <div className="mb-3 flex items-center justify-between"><span className="text-[14px] font-bold text-ink">Get Started</span><span className="text-[13px] font-bold text-violet">{cc.completion}%</span></div>
-          <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-bg-soft"><div className="h-full rounded-full bg-grad-brand transition-all" style={{ width: `${cc.completion}%` }} /></div>
-          <ul className="space-y-2.5">
-            {cc.getStarted.map((g) => (
-              <li key={g.key} className="flex items-center gap-2.5 text-[12.5px]">
-                <span className={`flex h-4 w-4 items-center justify-center rounded-full border ${g.done ? "border-emerald-500 bg-emerald-500 text-white" : "border-ink/30"}`}>{g.done && "✓"}</span>
-                <span className={g.done ? "text-ink-muted line-through" : "text-ink"}>{g.label}</span>
-              </li>
             ))}
-          </ul>
-          <Link href="/app/onboarding" className="mt-4 block text-center text-[12px] font-semibold text-royal-blue">View onboarding guide →</Link>
-        </div>
-      </div>
-
-      {/* Growth Intelligence and Marketplace entry points */}
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Link href="/app/content-intelligence/competitors" className="group flex items-center gap-4 rounded-2xl border border-line bg-white p-5 shadow-card transition hover:border-royal-blue/40">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-royal-tint text-royal-blue"><Users2 className="h-6 w-6" /></span>
-          <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-bold text-ink">Competitor Watch</div>
-            <p className="mt-0.5 text-[12px] text-ink-muted">
-              {entry.competitors === null
-                ? "Discover and monitor competitors to find opportunities."
-                : entry.competitors === 0
-                  ? "No competitors tracked yet. Find or add your first competitor."
-                  : `${entry.competitors} competitor${entry.competitors === 1 ? "" : "s"} tracked.`}
-            </p>
           </div>
-          <ArrowRight className="h-4 w-4 text-ink-muted transition group-hover:text-royal-blue" />
-        </Link>
-        <Link href="/app/marketplace" className="group flex items-center gap-4 rounded-2xl border border-line bg-white p-5 shadow-card transition hover:border-royal-blue/40">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet/10 text-violet"><Store className="h-6 w-6" /></span>
-          <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-bold text-ink">Marketplace</div>
-            <p className="mt-0.5 text-[12px] text-ink-muted">
-              {entry.products === null
-                ? "Templates, graphics, playbooks and tools from Marketplace sellers."
-                : entry.products === 0
-                  ? "No products are published yet."
-                  : `${entry.products} published product${entry.products === 1 ? "" : "s"} to browse.`}
-            </p>
-          </div>
-          <ArrowRight className="h-4 w-4 text-ink-muted transition group-hover:text-royal-blue" />
-        </Link>
-      </div>
-    </div>
-  );
-}
 
-function KpiEmpty({ icon: Icon, title, heading, body, cta, href, ring }: { icon: typeof Target; title: string; heading: string; body: string; cta?: string; href?: string; ring?: boolean }) {
-  return (
-    <div className="rounded-2xl border border-line bg-white p-5 shadow-card">
-      <div className="mb-2 flex items-center justify-between"><span className="text-[13px] font-bold text-ink">{title}</span><Icon className="h-4 w-4 text-violet" /></div>
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="text-[18px] font-extrabold text-ink-soft">{heading}</div>
-          <p className="mt-1 text-[11.5px] leading-snug text-ink-muted">{body}</p>
-          {cta && href && <Link href={href} className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-royal-blue/40 px-3 py-1.5 text-[11.5px] font-semibold text-royal-blue"><Database className="h-3.5 w-3.5" /> {cta}</Link>}
-        </div>
-        {ring && <svg viewBox="0 0 40 40" className="h-12 w-12 shrink-0"><circle cx="20" cy="20" r="15" stroke="#e9e7f0" strokeWidth="5" fill="none" /></svg>}
-      </div>
+          <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1fr)]">
+            {showMarketing && (
+              <section className="min-w-0 rounded-xl border border-line bg-white p-5">
+                <h2 className="text-[16.5px] font-semibold text-deep-navy">Performance Overview</h2>
+                {d.performance ? (
+                  <>
+                    <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {([["Leads", d.performance.totals.leads], ["Page visits", d.performance.totals.visits], ["Conversions", d.performance.totals.conversions], ["Form submissions", d.performance.totals.submissions]] as const).map(([l, v]) => (
+                        <div key={l}><div className="text-[18px] font-bold text-deep-navy">{v.toLocaleString("en-US")}</div><div className="text-[11.5px] text-ink-soft">{l}</div></div>
+                      ))}
+                    </div>
+                    <div className="mt-4"><TrendColumns points={d.performance.totals.leads ? d.performance.leads : d.performance.visits} label={d.performance.totals.leads ? "New leads" : "Page visits"} /></div>
+                  </>
+                ) : (
+                  <EmptyState icon={BarChart3} title="No performance data yet" body="Connected analytics and campaign data will appear here for the selected date range." />
+                )}
+              </section>
+            )}
+            {showRevenue && (
+              <section className="min-w-0 rounded-xl border border-line bg-white p-5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-[16.5px] font-semibold text-deep-navy">Pipeline Summary</h2>
+                  <Link href="/app/crm/deals" className="text-[12.5px] font-semibold text-[#0B5CFF]">Open deals</Link>
+                </div>
+                {d.pipeline ? (
+                  <>
+                    <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
+                      <Pill tone="blue">{d.pipeline.open} open</Pill>
+                      <Pill tone="green">{d.pipeline.won} won in range</Pill>
+                      <Pill tone="gray">{d.pipeline.lost} lost in range</Pill>
+                    </div>
+                    <div className="mt-4">
+                      {d.pipeline.stages.length ? <BarList rows={d.pipeline.stages.map((s) => [`${s.name} (${s.count})`, s.value])} format={(n) => fmtMoney(n, d!.pipeline!.currency) ?? ""} /> : <p className="text-[12.5px] text-ink-soft">No open deals right now.</p>}
+                    </div>
+                  </>
+                ) : (
+                  <EmptyState icon={Triangle} title="No pipeline data yet" body="CRM pipeline values will appear only when accessible data exists." />
+                )}
+              </section>
+            )}
+            {showMarketing && (
+              <section className="min-w-0 rounded-xl border border-line bg-white p-5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-[16.5px] font-semibold text-deep-navy">Top Campaigns</h2>
+                  <Link href="/app/analytics/campaigns" className="text-[12.5px] font-semibold text-[#0B5CFF]">Campaign analytics</Link>
+                </div>
+                {d.campaigns.length ? (
+                  <ul className="mt-3 divide-y divide-line">
+                    {d.campaigns.map((cp) => (
+                      <li key={cp.id} className="flex items-center justify-between gap-3 py-2.5">
+                        <div className="min-w-0">
+                          <Link href={`/app/marketing/campaigns?c=${cp.id}`} className="block truncate text-[13.5px] font-semibold text-deep-navy hover:text-[#0B5CFF]">{cp.name}</Link>
+                          <div className="text-[11.5px] text-ink-soft">{cp.conversions.toLocaleString("en-US")} conversions · {cp.clicks.toLocaleString("en-US")} clicks · spend {fmtMoney(cp.spend)}</div>
+                        </div>
+                        <div className="shrink-0 text-right text-[13.5px] font-semibold text-deep-navy">{fmtMoney(cp.revenue)}</div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <EmptyState icon={Megaphone} title="No campaign data yet" body="Campaign performance will appear when campaign and analytics data are available." />
+                )}
+              </section>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.65fr)]">
+            <section className="min-w-0 rounded-xl border border-line bg-white p-5">
+              <h2 className="text-[16.5px] font-semibold text-deep-navy">Platform Health</h2>
+              <ul className="mt-3 divide-y divide-line">
+                {d.health.map((h) => (
+                  <li key={h.label} className="py-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <Link href={h.href} className="text-[13.5px] font-semibold text-deep-navy hover:text-[#0B5CFF]">{h.label}</Link>
+                      <Pill tone={HEALTH_TONE[h.status]}>{HEALTH_LABEL[h.status]}</Pill>
+                    </div>
+                    <p className="mt-0.5 text-[12px] text-ink-soft">{h.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <section className="min-w-0 rounded-xl border border-line bg-white p-5">
+              <h2 className="text-[16.5px] font-semibold text-deep-navy">Recommendations</h2>
+              {d.recommendations.length ? (
+                <>
+                  <ul className="mt-3 space-y-2.5">
+                    {d.recommendations.map((r) => (
+                      <li key={r.title}>
+                        <Link href={r.href} className="group flex items-start justify-between gap-3 rounded-lg border border-line px-3.5 py-3 hover:border-[#0B5CFF]/40">
+                          <div><div className="text-[13.5px] font-semibold text-deep-navy">{r.title}</div><div className="text-[12px] text-ink-soft">{r.detail}</div></div>
+                          <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-ink-muted group-hover:text-[#0B5CFF]" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 text-[11.5px] text-ink-muted">Rule-based checks on your workspace data.</p>
+                </>
+              ) : (
+                <EmptyState icon={Star} title="No recommendations yet" body="Recommendations will appear when sufficient source data is available." />
+              )}
+            </section>
+            <section className="min-w-0 rounded-xl border border-line bg-white p-5">
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="text-[16.5px] font-semibold text-deep-navy">Recent Activity</h2>
+                {d.activity.length > 0 && <Link href="/app/settings/audit" className="text-[12.5px] font-semibold text-[#0B5CFF]">View all</Link>}
+              </div>
+              {d.activity.length ? (
+                <ul className="mt-3 divide-y divide-line">
+                  {d.activity.map((a) => (
+                    <li key={a.id} className="py-2.5">
+                      <div className="text-[13px] font-semibold capitalize text-deep-navy">{actionLabel(a.action)}</div>
+                      <div className="text-[11.5px] text-ink-soft">{[a.resourceType, a.actor, fmtDateTime(a.createdAt)].filter(Boolean).join(" · ")}</div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState icon={Activity} title="No recent activity" body="Cross-module activity will appear as workspace events occur." />
+              )}
+            </section>
+            <section className="min-w-0 rounded-xl border border-line bg-white p-5">
+              <h2 className="text-[16.5px] font-semibold text-deep-navy">Quick Actions</h2>
+              <div className="mt-4 space-y-3">
+                <FormDialog title="Create Campaign" label="Create Campaign" className={cn(kitOutline, "w-full")} action={createCampaign} disabled={!c.canEdit} goTo="/app/marketing/campaigns?c=" submitLabel="Create campaign" fields={[{ name: "name", label: "Campaign name", kind: "text", required: true }, { name: "channel", label: "Channel", kind: "select", options: CAMPAIGN_CHANNELS, placeholder: "Select" }, { name: "goal", label: "Goal", kind: "select", options: CAMPAIGN_GOALS, placeholder: "Select" }, { name: "startDate", label: "Start date", kind: "date" }, { name: "endDate", label: "End date", kind: "date" }]} />
+                <Link href="/app/crm/deals" className={cn(kitOutline, "w-full")}>Add Deal</Link>
+                <Link href="/app/analytics" className={cn(kitOutline, "w-full")}>Open Analytics</Link>
+                <Link href="/app/integrations" className={cn(kitOutline, "w-full")}>Connect Data</Link>
+              </div>
+            </section>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Link href="/app/content-intelligence/competitors" className="group flex items-center gap-4 rounded-xl border border-line bg-white p-4 transition hover:border-[#0B5CFF]/40">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-royal-tint text-[#3B3FD8]"><Users2 className="h-5 w-5" /></span>
+              <div className="min-w-0 flex-1">
+                <div className="text-[14px] font-semibold text-deep-navy">Competitor Watch</div>
+                <p className="text-[12px] text-ink-soft">{entry.competitors == null ? "Discover and monitor competitors." : entry.competitors === 0 ? "No competitors tracked yet." : `${entry.competitors} competitor${entry.competitors === 1 ? "" : "s"} tracked.`}</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-ink-muted group-hover:text-[#0B5CFF]" />
+            </Link>
+            <Link href="/app/marketplace" className="group flex items-center gap-4 rounded-xl border border-line bg-white p-4 transition hover:border-[#0B5CFF]/40">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet/10 text-violet"><Store className="h-5 w-5" /></span>
+              <div className="min-w-0 flex-1">
+                <div className="text-[14px] font-semibold text-deep-navy">Marketplace</div>
+                <p className="text-[12px] text-ink-soft">{entry.products == null ? "Templates, playbooks and tools from sellers." : entry.products === 0 ? "No products are published yet." : `${entry.products} published product${entry.products === 1 ? "" : "s"} to browse.`}</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-ink-muted group-hover:text-[#0B5CFF]" />
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { createHmac } from "crypto";
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
+import { notify } from "@/lib/notifications";
 import { db } from "@/lib/db";
 
 /** Events Amplivanta currently emits. Subscriptions are limited to these. */
@@ -35,7 +36,12 @@ export function signPayload(secret: string, body: string): string {
   return "sha256=" + createHmac("sha256", secret).update(body).digest("hex");
 }
 
-async function deliverOne(webhook: { id: string; url: string; signingSecret: string }, event: string, body: string) {
+async function deliveryFailed(webhook: { id: string; url: string; workspaceId?: string }, event: string, detail: string) {
+  if (!webhook.workspaceId || event === "webhook.test") return;
+  await notify({ workspaceId: webhook.workspaceId, category: "integrations", severity: "warning", title: "Webhook delivery failed", body: `${event} to ${new URL(webhook.url).host}: ${detail}.`, link: "/app/integrations/webhooks", resourceType: "Webhook", resourceId: webhook.id, dedupeKey: `webhook-failed:${webhook.id}` });
+}
+
+async function deliverOne(webhook: { id: string; url: string; signingSecret: string; workspaceId?: string }, event: string, body: string) {
   const started = Date.now();
   let responseCode: number | null = null;
   let attempts = 0;
@@ -45,6 +51,7 @@ async function deliverOne(webhook: { id: string; url: string; signingSecret: str
     await assertPublicEndpoint(webhook.url);
   } catch {
     await db.webhookDelivery.create({ data: { webhookId: webhook.id, event, responseCode: 0, latencyMs: 0, attempts: 0 } }).catch(() => null);
+    await deliveryFailed(webhook, event, "the endpoint is not a public https address");
     return;
   }
 
@@ -79,6 +86,7 @@ async function deliverOne(webhook: { id: string; url: string; signingSecret: str
       attempts,
     },
   });
+  if (!responseCode || responseCode >= 300) await deliveryFailed(webhook, event, responseCode ? `HTTP ${responseCode} after ${attempts} attempts` : `no response after ${attempts} attempts`);
 }
 
 /** Dispatch an event to all matching webhooks in a workspace. Call with `void` to avoid blocking a request. */
