@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, Lock, Mail, XCircle } from "lucide-react";
 
-const card = "rounded-2xl border border-line bg-white p-6 shadow-card lg:p-8";
-const field = "flex h-12 items-center gap-2 rounded-xl border border-line bg-white px-3 focus-within:border-royal-blue focus-within:ring-2 focus-within:ring-royal-blue/20";
-const input = "min-w-0 flex-1 bg-transparent text-[14px] focus:outline-none";
-const primary = "inline-flex h-12 w-full items-center justify-center rounded-xl bg-royal-blue text-[15px] font-bold text-white transition hover:bg-royal-soft disabled:opacity-60";
+const card = "";
+const field = "flex items-center gap-2 rounded-xl border border-line bg-white px-3.5 py-3 focus-within:border-violet";
+const input = "min-w-0 flex-1 bg-transparent text-[13.5px] focus:outline-none";
+const primary = "flex w-full items-center justify-center gap-2 rounded-xl bg-orange-cta px-5 py-3.5 text-[14px] font-bold text-white transition hover:bg-orange-cta-hover disabled:opacity-60";
 
 async function post(url: string, body: unknown) {
   const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -26,7 +26,7 @@ export function ForgotPasswordForm() {
   if (state === "sent") {
     return (
       <div className={card}>
-        <h2 className="flex items-center gap-2 text-[20px] font-bold text-deep-navy"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Check your email</h2>
+        <h2 className="flex items-center gap-2 font-display text-[26px] font-extrabold text-ink"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Check your email</h2>
         <p className="mt-3 text-[13.5px] leading-relaxed text-ink-soft">
           If an Amplivanta account uses that address, a reset link is on its way. The link works once and expires in an hour.
         </p>
@@ -38,8 +38,8 @@ export function ForgotPasswordForm() {
 
   return (
     <div className={card}>
-      <h2 className="text-[20px] font-bold text-deep-navy">Reset your password</h2>
-      <p className="mt-1.5 text-[13.5px] text-ink-soft">Enter the email address on your account and we will send a reset link.</p>
+      <h2 className="font-display text-[26px] font-extrabold text-ink">Reset your password</h2>
+      <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-soft">Enter the email address on your account and we will send a secure reset link.</p>
       <form
         className="mt-6 space-y-5"
         onSubmit={async (e) => {
@@ -59,7 +59,7 @@ export function ForgotPasswordForm() {
       >
         {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-[13px] text-red-700">{error}</div>}
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-semibold text-deep-navy">Email address</span>
+          <span className="mb-1.5 block text-[12.5px] font-bold text-ink">Email address</span>
           <span className={field}><Mail className="h-4 w-4 text-ink-muted" /><input name="email" type="email" required autoComplete="email" placeholder="you@company.com" className={input} /></span>
         </label>
         <button type="submit" className={primary} disabled={state === "sending"}>{state === "sending" ? <Loader2 className="h-5 w-5 animate-spin" /> : "Send reset link"}</button>
@@ -81,7 +81,7 @@ export function ResetPasswordForm() {
   if (!token) {
     return (
       <div className={card}>
-        <h2 className="flex items-center gap-2 text-[20px] font-bold text-deep-navy"><XCircle className="h-5 w-5 text-red-600" /> Link incomplete</h2>
+        <h2 className="flex items-center gap-2 font-display text-[26px] font-extrabold text-ink"><XCircle className="h-5 w-5 text-red-600" /> Link incomplete</h2>
         <p className="mt-3 text-[13.5px] text-ink-soft">This page needs the link from your reset email. Request a new one and open it from your inbox.</p>
         <Link href="/forgot-password" className="mt-5 inline-block text-[13px] font-semibold text-royal-blue hover:underline">Request a new link</Link>
       </div>
@@ -91,7 +91,7 @@ export function ResetPasswordForm() {
   if (done) {
     return (
       <div className={card}>
-        <h2 className="flex items-center gap-2 text-[20px] font-bold text-deep-navy"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Password updated</h2>
+        <h2 className="flex items-center gap-2 font-display text-[26px] font-extrabold text-ink"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Password updated</h2>
         <p className="mt-3 text-[13.5px] text-ink-soft">Sign in with your new password. Other sessions on this account were signed out.</p>
         <Link href="/login" className="mt-5 inline-block text-[13px] font-semibold text-royal-blue hover:underline">Go to sign in</Link>
       </div>
@@ -100,7 +100,7 @@ export function ResetPasswordForm() {
 
   return (
     <div className={card}>
-      <h2 className="text-[20px] font-bold text-deep-navy">Choose a new password</h2>
+      <h2 className="font-display text-[26px] font-extrabold text-ink">Choose a new password</h2>
       <form
         className="mt-6 space-y-5"
         onSubmit={async (e) => {
@@ -126,11 +126,11 @@ export function ResetPasswordForm() {
       >
         {error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-[13px] text-red-700">{error}</div>}
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-semibold text-deep-navy">New password</span>
+          <span className="mb-1.5 block text-[12.5px] font-bold text-ink">New password</span>
           <span className={field}><Lock className="h-4 w-4 text-ink-muted" /><input name="password" type="password" required minLength={8} autoComplete="new-password" placeholder="At least 8 characters" className={input} /></span>
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-[13px] font-semibold text-deep-navy">Confirm new password</span>
+          <span className="mb-1.5 block text-[12.5px] font-bold text-ink">Confirm new password</span>
           <span className={field}><Lock className="h-4 w-4 text-ink-muted" /><input name="confirm" type="password" required minLength={8} autoComplete="new-password" placeholder="Repeat the password" className={input} /></span>
         </label>
         <button type="submit" className={primary} disabled={busy}>{busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "Update password"}</button>
@@ -166,14 +166,14 @@ export function VerifyEmailPanel() {
       {state === "checking" && <p className="flex items-center gap-2 text-[14px] text-ink-soft"><Loader2 className="h-4 w-4 animate-spin" /> Confirming your email address…</p>}
       {state === "done" && (
         <>
-          <h2 className="flex items-center gap-2 text-[20px] font-bold text-deep-navy"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Email confirmed</h2>
+          <h2 className="flex items-center gap-2 font-display text-[26px] font-extrabold text-ink"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Email confirmed</h2>
           <p className="mt-3 text-[13.5px] text-ink-soft">Thanks — your address is verified. You can head into the workspace.</p>
           <Link href="/app" className="mt-5 inline-block text-[13px] font-semibold text-royal-blue hover:underline">Open Amplivanta</Link>
         </>
       )}
       {(state === "error" || state === "missing") && (
         <>
-          <h2 className="flex items-center gap-2 text-[20px] font-bold text-deep-navy"><XCircle className="h-5 w-5 text-red-600" /> {state === "missing" ? "Link incomplete" : "Link not valid"}</h2>
+          <h2 className="flex items-center gap-2 font-display text-[26px] font-extrabold text-ink"><XCircle className="h-5 w-5 text-red-600" /> {state === "missing" ? "Link incomplete" : "Link not valid"}</h2>
           <p className="mt-3 text-[13.5px] text-ink-soft">{state === "missing" ? "Open the confirmation link from your email." : message}</p>
           <p className="mt-3 text-[13px] text-ink-soft">Signed in? You can send a fresh link from the banner at the top of the app.</p>
           <Link href="/app" className="mt-5 inline-block text-[13px] font-semibold text-royal-blue hover:underline">Go to Amplivanta</Link>
