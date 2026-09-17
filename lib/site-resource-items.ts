@@ -7,8 +7,7 @@
  * is added here (or a CMS replaces this module), each section renders its
  * neutral state and every detail URL returns 404.
  *
- * lib/resources-data.ts holds fixtures for the signed-in app; it must not be
- * used for the public site.
+ * The signed-in Resources pages read these same lists (lib/server/resources-hub).
  */
 
 export type VideoItem = {
