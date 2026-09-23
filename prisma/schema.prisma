@@ -2984,3 +2984,71 @@ model GrowthScoreSnapshot {
 
   @@index([workspaceId, createdAt])
 }
+
+/// Platform message composed in Super Admin → Communications.
+model Communication {
+  id             String                   @id @default(cuid())
+  /// administrative | announcement | product_update | support
+  type           String
+  subject        String
+  body           String                   @db.Text
+  /// all_users | admins | sub_admins | workspace | role
+  audienceScope  String
+  /// Workspace or role the scope points at.
+  audienceRef    String?
+  templateId     String?
+  template       CommunicationTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  /// Reply-to address shown to recipients.
+  replyTo        String?
+  /// DRAFT | SCHEDULED | QUEUED | SENDING | SENT | PARTIAL | FAILED | CANCELLED
+  status         String                   @default("DRAFT")
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  recipientCount Int                      @default(0)
+  sentCount      Int                      @default(0)
+  failedCount    Int                      @default(0)
+  skippedCount   Int                      @default(0)
+  createdById    String?
+  recipients     CommunicationRecipient[]
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  @@index([status, scheduledAt])
+}
+
+/// Audience snapshot: the recipients as they were when the send was queued.
+model CommunicationRecipient {
+  id              String        @id @default(cuid())
+  communicationId String
+  communication   Communication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
+  userId          String?
+  email           String
+  name            String?
+  /// QUEUED | SENT | FAILED | SUPPRESSED | NOT_SENT
+  status          String        @default("QUEUED")
+  error           String?
+  sentAt          DateTime?
+  createdAt       DateTime      @default(now())
+
+  @@unique([communicationId, email])
+  @@index([communicationId, status])
+}
+
+/// Reusable message template for platform communications.
+model CommunicationTemplate {
+  id             String          @id @default(cuid())
+  name           String
+  /// administrative | announcement | support
+  category       String
+  subject        String
+  body           String          @db.Text
+  /// draft | active | archived
+  status         String          @default("draft")
+  description    String?
+  createdById    String?
+  communications Communication[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([category, status])
+}

@@ -61,6 +61,8 @@ export interface EmailMessage {
   text?: string;
   /** Marketing mail is also held back by unsubscribes; transactional is not. */
   category?: "transactional" | "marketing";
+  /** Address replies should go to, when it differs from the sender. */
+  replyTo?: string;
 }
 
 export type SendResult = { sent: true } | { sent: false; reason: "suppressed" | "not_configured" };
@@ -101,6 +103,7 @@ export async function sendEmail(msg: EmailMessage): Promise<SendResult> {
   }
   await transport.transporter.sendMail({
     from: FROM,
+    ...(msg.replyTo ? { replyTo: msg.replyTo } : {}),
     to: msg.to,
     subject: msg.subject,
     html: msg.html,

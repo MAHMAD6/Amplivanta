@@ -1,5 +1,6 @@
 import { notify } from "@/lib/notifications";
 import { refreshGrowthScoresDaily } from "@/lib/server/growth-score";
+import { processDueCommunications } from "@/lib/server/communications";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { enqueueWorkflowRun } from "@/lib/queue";
@@ -115,7 +116,10 @@ export async function marketingTick() {
     const page = await db.landingPage.update({ where: { id: p.id }, data: { status: "published", isPublished: true, publishedAt: now, scheduledAt: null }, select: { id: true, title: true } });
     await notify({ workspaceId: p.workspaceId, category: "publishing", severity: "success", title: `Scheduled page "${page.title}" is live`, body: "The landing page was published at its scheduled time.", link: `/app/marketing/publishing?page=${page.id}`, resourceType: "LandingPage", resourceId: page.id });
   }
+  // Scheduled platform communications and in-flight sends.
+  const comms = await processDueCommunications().catch(() => ({ due: 0, inFlight: 0 }));
+
   // Daily Growth Score snapshot and opportunity refresh per workspace.
   const scored = await refreshGrowthScoresDaily().catch(() => 0);
-  return { scheduledCampaigns: scheduled.length, emailsProcessed: sent, workflowRuns: due.length, pagesPublished: pages.length, growthScores: scored };
+  return { scheduledCampaigns: scheduled.length, emailsProcessed: sent, workflowRuns: due.length, pagesPublished: pages.length, growthScores: scored, communications: comms };
 }
