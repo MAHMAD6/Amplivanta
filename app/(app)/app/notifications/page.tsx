@@ -120,7 +120,7 @@ export default async function NotificationCenterPage({ searchParams }: { searchP
             </p>
           )}
           <div className="mt-auto flex justify-center pt-8">
-            <Link href="/app/settings/notifications" className={`${kitOutline} min-w-[280px]`}>Notification Settings</Link>
+            <Link href="/app/settings/notifications" className={`${kitOutline} w-full sm:w-auto sm:min-w-[280px]`}>Notification Settings</Link>
           </div>
         </aside>
       </div>

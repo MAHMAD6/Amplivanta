@@ -77,12 +77,12 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
         {[["all", "All Projects"], ["starred", "Starred"], ["shared", "Shared with Me"]].map(([k, l]) => (
           <Link key={k} href={k === "all" ? BASE : `${BASE}?view=${k}`} className={cn("rounded-full border px-3.5 py-1.5 text-[12.5px]", view === k ? "border-[#0B5CFF] bg-royal-tint font-semibold text-[#0B5CFF]" : "border-line bg-bg-soft/60 text-ink-soft hover:text-deep-navy")}>{l}</Link>
         ))}
-        <form method="get" className="ml-auto flex items-center gap-3">
+        <form method="get" className="ml-auto flex w-full sm:w-auto items-center gap-3">
           {view !== "all" && <input type="hidden" name="view" value={view} />}
-          <label className="relative">
+          <label className="relative w-full sm:w-auto">
             <span className="sr-only">Search projects</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
-            <input name="q" defaultValue={sp.q ?? ""} placeholder="Search projects..." className={cn(kitField, "h-11 w-[300px] pl-9")} />
+            <input name="q" defaultValue={sp.q ?? ""} placeholder="Search projects..." className={cn(kitField, "h-11 w-full sm:w-[300px] pl-9")} />
           </label>
         </form>
         {create("Create Project", "inline-flex h-11 items-center rounded-md bg-[#0B5CFF] px-10 text-[13.5px] font-semibold text-white hover:bg-[#0A4FE0] disabled:opacity-50")}

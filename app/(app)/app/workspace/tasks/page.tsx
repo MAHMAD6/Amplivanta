@@ -140,20 +140,22 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               <span className="text-[15px] font-semibold text-deep-navy">{new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(month)}</span>
               <Link href={qs({ month: ym(new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1))) })} className="rounded-md border border-line px-3 py-1.5 text-[13px]">Next</Link>
             </div>
-            <div className="grid grid-cols-7 overflow-x-auto">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => <div key={d} className="border-b border-line py-2 text-center text-[12.5px] font-semibold text-deep-navy">{d}</div>)}
-              {Array.from({ length: cells }, (_, i) => {
-                const day = new Date(gridStart.getTime() + i * 86400000);
-                const key = day.toISOString().slice(0, 10);
-                const due = rows.filter((r) => r.dueDate?.toISOString().slice(0, 10) === key);
-                return (
-                  <div key={key} className={cn("min-h-[92px] border-b border-r border-line p-1.5", day.getUTCMonth() !== month.getUTCMonth() && "bg-bg-soft/40")}>
-                    <div className="text-right text-[11.5px] text-ink-muted">{day.getUTCDate()}</div>
-                    {due.slice(0, 3).map((r) => <div key={r.id} className={cn("truncate rounded px-1 py-0.5 text-[11px]", r.status === "done" ? "bg-emerald-50 text-emerald-700 line-through" : "bg-royal-tint/60 text-deep-navy")} title={r.title}>{r.title}</div>)}
-                    {due.length > 3 && <div className="text-[11px] text-ink-muted">+{due.length - 3} more</div>}
-                  </div>
-                );
-              })}
+            <div className="overflow-x-auto">
+              <div className="grid min-w-[640px] grid-cols-7">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => <div key={d} className="border-b border-line py-2 text-center text-[12.5px] font-semibold text-deep-navy">{d}</div>)}
+                {Array.from({ length: cells }, (_, i) => {
+                  const day = new Date(gridStart.getTime() + i * 86400000);
+                  const key = day.toISOString().slice(0, 10);
+                  const due = rows.filter((r) => r.dueDate?.toISOString().slice(0, 10) === key);
+                  return (
+                    <div key={key} className={cn("min-h-[92px] border-b border-r border-line p-1.5", day.getUTCMonth() !== month.getUTCMonth() && "bg-bg-soft/40")}>
+                      <div className="text-right text-[11.5px] text-ink-muted">{day.getUTCDate()}</div>
+                      {due.slice(0, 3).map((r) => <div key={r.id} className={cn("truncate rounded px-1 py-0.5 text-[11px]", r.status === "done" ? "bg-emerald-50 text-emerald-700 line-through" : "bg-royal-tint/60 text-deep-navy")} title={r.title}>{r.title}</div>)}
+                      {due.length > 3 && <div className="text-[11px] text-ink-muted">+{due.length - 3} more</div>}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </>
         ) : (

@@ -49,7 +49,7 @@ export default async function SocialIntegrationsPage({ searchParams }: { searchP
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
               <input name="q" defaultValue={sp.q ?? ""} placeholder="Search integrations..." className={cn(kitField, "h-11 pl-9")} />
             </label>
-            <select name="category" defaultValue={sp.category ?? ""} aria-label="Category" className={cn(kitField, "h-11 w-[300px]")}>
+            <select name="category" defaultValue={sp.category ?? ""} aria-label="Category" className={cn(kitField, "h-11 w-full sm:w-[300px]")}>
               <option value="">All Categories</option>
               {["Publishing", "Media", "Links", "Notifications"].map((x) => <option key={x}>{x}</option>)}
             </select>

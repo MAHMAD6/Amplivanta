@@ -200,7 +200,7 @@ function SidebarBody({
   return (
     <>
           {/* Brand */}
-          <div className="flex h-[78px] shrink-0 items-center gap-3 border-b border-white/10 px-5">
+          <div className="flex h-[78px] shrink-0 items-center gap-3 border-b border-white/10 px-5 pr-12 lg:pr-5">
             <LogoMark className="h-9 w-9 shrink-0" gradientId="amp-mark-super" />
             {!collapsed && (
               <div className="min-w-0 flex-1">
@@ -210,14 +210,16 @@ function SidebarBody({
                 </div>
               </div>
             )}
-            <button
-              type="button"
-              onClick={onToggleCollapse}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-            >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
-            </button>
+            {onToggleCollapse && (
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+              >
+                <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+              </button>
+            )}
           </div>
 
           {/* Navigation */}
@@ -300,7 +302,6 @@ export function AdminShell({
 
         <SheetContent
           side="left"
-          hideClose
           className="border-r-0 bg-admin-navy p-0 text-white lg:hidden"
         >
           {/* Radix announces the dialog by its title; the panel shows none. */}

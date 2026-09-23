@@ -83,7 +83,7 @@ export function OnboardingClient() {
                 <div className={cn("flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold transition", i < step ? "bg-emerald-500 text-white" : i === step ? "bg-grad-brand text-white shadow-violet" : "border-2 border-line bg-white text-ink-muted")}>
                   {i < step ? <Check className="h-4 w-4" /> : i + 1}
                 </div>
-                <span className={cn("mt-1.5 whitespace-nowrap text-[11px] font-medium", i === step ? "text-violet" : "text-ink-muted")}>{s}</span>
+                <span className={cn("mt-1.5 text-center text-[11px] font-medium", i === step ? "text-violet font-semibold" : "hidden sm:inline text-ink-muted")}>{s}</span>
               </div>
               {i < STEPS.length - 1 && <div className={cn("mx-2 h-0.5 flex-1 rounded-full", i < step ? "bg-emerald-500" : "bg-line")} />}
             </div>
@@ -191,18 +191,18 @@ export function OnboardingClient() {
         </div>
 
         {/* Actions */}
-        <div className="mt-10 flex items-center justify-between">
-          <button className="inline-flex h-11 items-center gap-2 rounded-xl border border-line bg-white px-5 text-[13px] font-semibold text-ink hover:border-ink/30" onClick={() => { persist({ step }); }}>
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
+          <button className="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-line bg-white px-5 text-[13px] font-semibold text-ink hover:border-ink/30" onClick={() => { persist({ step }); }}>
             <Bookmark className="h-4 w-4" /> Save &amp; Continue Later
           </button>
-          <div className="flex gap-2">
+          <div className="flex w-full sm:w-auto justify-end gap-2">
             {step > 0 && <button className="h-11 rounded-xl border border-line bg-white px-5 text-[13px] font-semibold text-ink hover:border-ink/30" onClick={() => { const n = step - 1; setStep(n); persist({ step: n }); }}>Back</button>}
             {step < STEPS.length - 1 ? (
-              <button className="inline-flex h-11 items-center gap-2 rounded-xl bg-grad-cta px-6 text-[13px] font-bold text-white shadow-violet" onClick={() => { const n = step + 1; setStep(n); persist({ step: n }); }}>
+              <button className="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-grad-cta px-6 text-[13px] font-bold text-white shadow-violet" onClick={() => { const n = step + 1; setStep(n); persist({ step: n }); }}>
                 {step === 0 ? "Start Engineering Growth" : "Continue"} <ArrowRight className="h-4 w-4" />
               </button>
             ) : (
-              <button disabled={saving} className="inline-flex h-11 items-center gap-2 rounded-xl bg-grad-cta px-6 text-[13px] font-bold text-white shadow-violet disabled:opacity-60" onClick={finish}>
+              <button disabled={saving} className="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-grad-cta px-6 text-[13px] font-bold text-white shadow-violet disabled:opacity-60" onClick={finish}>
                 {saving ? "Launching…" : "Launch Workspace"} <ArrowRight className="h-4 w-4" />
               </button>
             )}

@@ -15,7 +15,7 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-line px-6 py-3.5 lg:px-10">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-6 py-3.5 lg:px-10">
         <Link href="/" className="flex items-center gap-2.5">
           <LogoMark className="h-9 w-9" />
           <div><span className="text-[17px] font-extrabold tracking-wide text-deep-navy">AMPLIVANTA</span><div className="text-[8.5px] font-semibold uppercase tracking-[0.2em] text-royal-blue">Engineering Growth</div></div>
@@ -27,7 +27,7 @@ export default function SignupPage() {
         {/* Left brand panel */}
         <aside className="flex w-full flex-col justify-between bg-deep-navy px-8 py-10 text-white lg:w-[380px]">
           <div>
-            <h1 className="font-display text-[40px] font-extrabold leading-[1.05]">Engineer <span className="text-royal-soft">Smarter Growth.</span> Built for Action.</h1>
+            <h1 className="font-display text-[28px] sm:text-[34px] lg:text-[40px] font-extrabold leading-[1.05]">Engineer <span className="text-royal-soft">Smarter Growth.</span> Built for Action.</h1>
             <p className="mt-5 text-[14px] leading-relaxed text-white/70">Automate marketing, manage customer relationships, analyze performance, and turn insights into action—all from one connected platform.</p>
             <div className="mt-8 space-y-6 border-t border-white/10 pt-8">
               {POINTS.map((p) => (

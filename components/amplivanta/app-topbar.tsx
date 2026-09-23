@@ -32,7 +32,7 @@ export function AppTopbar({ user, unreadNotifications }: { user?: { name?: strin
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-line bg-white px-4 sm:px-6 lg:px-8">
-      <form action="/app/search" method="get" role="search" className="w-full max-w-[490px]">
+      <form action="/app/search" method="get" role="search" className="min-w-0 w-full max-w-[490px]">
         <label className="relative block">
           <span className="sr-only">Search Amplivanta</span>
           <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
@@ -45,7 +45,7 @@ export function AppTopbar({ user, unreadNotifications }: { user?: { name?: strin
         </label>
       </form>
 
-      <div className="flex items-center gap-2.5">
+      <div className="flex shrink-0 items-center gap-2.5">
         <Link href="/app/help" aria-label="Help & Support" className={iconBtn}>
           <HelpCircle className="h-4 w-4" />
         </Link>

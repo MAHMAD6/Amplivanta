@@ -87,7 +87,7 @@ export function SolutionPage(p: SolutionPageProps) {
             <div className="mt-5 text-[11.5px] font-bold uppercase tracking-[0.16em] text-royal-blue">
               {p.name}
             </div>
-            <h1 className="mt-3 font-display text-[44px] font-extrabold leading-[1.08] tracking-tight text-deep-navy lg:text-[52px]">
+            <h1 className="mt-3 font-display text-[30px] sm:text-[40px] font-extrabold leading-[1.08] tracking-tight text-deep-navy lg:text-[52px]">
               {p.headline}
             </h1>
             <p className="mt-5 max-w-md text-[15px] leading-relaxed text-ink-soft">{p.subtitle}</p>
@@ -141,13 +141,13 @@ export function SolutionPage(p: SolutionPageProps) {
             </p>
           </div>
 
-          <ol className="mt-12 grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-6">
+          <ol className="mt-12 grid grid-cols-1 gap-x-4 gap-y-10 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {p.chain.map((s, i) => (
               <li key={s.title} className="relative text-center">
                 {i < p.chain.length - 1 && (
                   <span
                     aria-hidden
-                    className="absolute left-[calc(50%+40px)] right-[calc(-50%+40px)] top-8 hidden border-t border-dashed border-ink-muted/40 lg:block"
+                    className="absolute left-[calc(50%+40px)] right-[calc(-50%+40px)] top-8 hidden border-t border-dashed border-ink-muted/40 xl:block"
                   />
                 )}
                 <span
@@ -278,7 +278,7 @@ export function SolutionPage(p: SolutionPageProps) {
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white">
                 <Rocket className="h-6 w-6" />
               </span>
-              <div className="min-w-[260px] flex-1">
+              <div className="min-w-0 sm:min-w-[260px] flex-1">
                 <h2 className="font-display text-[26px] font-extrabold leading-tight text-white">
                   {p.ctaTitle}
                 </h2>
@@ -305,7 +305,7 @@ export function SolutionPage(p: SolutionPageProps) {
 
       {/* Trust strip */}
       <section className="border-t border-line bg-white py-8">
-        <ul className="mx-auto grid grid-cols-1 max-w-[1280px] gap-6 px-4 sm:grid-cols-2 lg:grid-cols-5 lg:px-8">
+        <ul className="mx-auto grid grid-cols-1 max-w-[1280px] gap-6 px-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:px-8">
           {TRUST.map((t, i) => (
             <li
               key={t.title}

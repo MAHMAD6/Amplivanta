@@ -31,12 +31,12 @@ export function ProductGallery({ images, title }: { images: GalleryImage[]; titl
 
   return (
     <>
-      <div className="flex gap-3">
+      <div className="flex flex-col-reverse sm:flex-row gap-3">
         {images.length > 1 && (
           <div
             role="tablist"
             aria-label={`${title} images`}
-            className="flex w-[76px] shrink-0 flex-col gap-2.5"
+            className="flex w-full sm:w-[76px] shrink-0 flex-row sm:flex-col gap-2.5 overflow-x-auto pb-1 sm:pb-0"
           >
             {images.map((img, i) => (
               <button
@@ -47,7 +47,7 @@ export function ProductGallery({ images, title }: { images: GalleryImage[]; titl
                 aria-label={`Image ${i + 1} of ${images.length}`}
                 onClick={() => setActive(i)}
                 className={cn(
-                  "aspect-square overflow-hidden rounded-xl border-2 bg-white transition",
+                  "h-16 w-16 sm:h-auto sm:w-auto shrink-0 aspect-square overflow-hidden rounded-xl border-2 bg-white transition",
                   i === active ? "border-royal-blue" : "border-line hover:border-royal-blue/40",
                 )}
               >

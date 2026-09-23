@@ -82,7 +82,7 @@ export function MarketingNav() {
 
       {openMobile && (
         <div className={cn("border-t border-line bg-white lg:hidden")}>
-          <div className="mx-auto max-w-[1280px] space-y-1 px-4 py-4">
+          <div className="mx-auto max-h-[calc(100vh-64px)] max-w-[1280px] space-y-1 overflow-y-auto px-4 py-4">
             {NAV_LINKS.map((link) => (
               <div key={link.label}>
                 <Link
@@ -104,7 +104,7 @@ export function MarketingNav() {
                 ))}
               </div>
             ))}
-            <div className="flex gap-2 pt-3">
+            <div className="flex flex-col sm:flex-row gap-2 pt-3">
               <Link
                 href="/login"
                 className="flex-1 rounded-lg border border-line py-2 text-center text-sm font-medium text-deep-navy"

@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
         <div className="flex items-center gap-3 text-[11.5px] text-ink-muted">
           <span className="h-px flex-1 bg-line" /> How it works <span className="h-px flex-1 bg-line" />
         </div>
-        <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-3">
           {STEPS.map((s) => (
             <div key={s.n} className="text-center">
               <span className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-royal-tint text-[12px] font-bold text-royal-blue">{s.n}</span>

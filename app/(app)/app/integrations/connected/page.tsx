@@ -83,11 +83,11 @@ export default async function ConnectedAppsPage({ searchParams }: { searchParams
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-muted" />
             <input name="q" defaultValue={sp.q ?? ""} placeholder="Search connected apps..." className="h-10 w-full rounded-md border border-line pl-8 pr-3 text-[14px] focus:border-[#0B5CFF] focus:outline-none" />
           </label>
-          <select name="status" defaultValue={sp.status ?? ""} aria-label="Status" className="h-10 w-[192px] rounded-md border border-line bg-white px-3 text-[13px] font-semibold text-deep-navy">
+          <select name="status" defaultValue={sp.status ?? ""} aria-label="Status" className="h-10 w-full sm:w-[192px] rounded-md border border-line bg-white px-3 text-[13px] font-semibold text-deep-navy">
             <option value="">All Statuses</option>
             {Object.entries(STATUS_LABEL).map(([k, [l]]) => <option key={k} value={k}>{l}</option>)}
           </select>
-          <select name="owner" defaultValue={sp.owner ?? ""} aria-label="Owner" className="h-10 w-[200px] rounded-md border border-line bg-white px-3 text-[13px] font-semibold text-deep-navy">
+          <select name="owner" defaultValue={sp.owner ?? ""} aria-label="Owner" className="h-10 w-full sm:w-[200px] rounded-md border border-line bg-white px-3 text-[13px] font-semibold text-deep-navy">
             <option value="">All Owners</option>
             {screen.owners.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </select>

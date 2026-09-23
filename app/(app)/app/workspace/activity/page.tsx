@@ -54,9 +54,9 @@ export default async function ActivityHistoryPage({ searchParams }: { searchPara
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
           <input name="q" defaultValue={sp.q ?? ""} placeholder="Search activity..." className={cn(kitField, "h-11 pl-9")} />
         </label>
-        <select name="module" defaultValue={sp.module ?? ""} aria-label="Module" className={cn(kitField, "h-11 w-[210px]")}><option value="">All Modules</option>{MODULES.map(([p, l]) => <option key={p} value={p}>{l}</option>)}</select>
-        <select name="user" defaultValue={sp.user ?? ""} aria-label="User" className={cn(kitField, "h-11 w-[210px]")}><option value="">All Users</option>{members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
-        <select name="range" defaultValue={sp.range ?? ""} aria-label="Date range" className={cn(kitField, "h-11 w-[170px]")}><option value="">Date Range</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select>
+        <select name="module" defaultValue={sp.module ?? ""} aria-label="Module" className={cn(kitField, "h-11 w-full sm:w-[210px]")}><option value="">All Modules</option>{MODULES.map(([p, l]) => <option key={p} value={p}>{l}</option>)}</select>
+        <select name="user" defaultValue={sp.user ?? ""} aria-label="User" className={cn(kitField, "h-11 w-full sm:w-[210px]")}><option value="">All Users</option>{members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
+        <select name="range" defaultValue={sp.range ?? ""} aria-label="Date range" className={cn(kitField, "h-11 w-full sm:w-[170px]")}><option value="">Date Range</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select>
         <button type="submit" className="h-11 rounded-md border border-line px-5 text-[13.5px] font-semibold text-deep-navy hover:bg-bg-soft">Apply</button>
         {c?.isAdmin && events.length > 0 ? (
           <a href={`/api/audit-logs/export${qs ? `?${qs}` : ""}`} className="ml-auto inline-flex h-11 items-center rounded-md border border-line bg-white px-8 text-[15px] font-semibold text-deep-navy hover:bg-bg-soft">Export</a>

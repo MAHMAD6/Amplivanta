@@ -79,10 +79,12 @@ export default async function LandingPageAnalyticsPage({ searchParams }: { searc
             </Panel>
             <Panel title="Top Landing Pages">
               {top.length ? (
-                <table className="w-full text-left text-[12.5px]">
-                  <thead><tr className="border-b border-line bg-bg-soft/70 text-deep-navy">{["Landing Page", "Visits", "Conversions", "Rate"].map((h) => <th key={h} className="px-3 py-2.5 font-semibold">{h}</th>)}</tr></thead>
-                  <tbody>{top.slice(0, 10).map((p) => <tr key={p.id} className="border-b border-line last:border-0"><td className="px-3 py-2.5"><Link href={`?page=${p.id}&days=${days}`} className="font-semibold text-deep-navy hover:text-[#0B5CFF]">{p.title}</Link></td><td className="px-3 py-2.5">{p.n}</td><td className="px-3 py-2.5">{p.c}</td><td className="px-3 py-2.5">{pct(p.c, p.n)}</td></tr>)}</tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[500px] text-left text-[12.5px]">
+                    <thead><tr className="border-b border-line bg-bg-soft/70 text-deep-navy">{["Landing Page", "Visits", "Conversions", "Rate"].map((h) => <th key={h} className="px-3 py-2.5 font-semibold">{h}</th>)}</tr></thead>
+                    <tbody>{top.slice(0, 10).map((p) => <tr key={p.id} className="border-b border-line last:border-0"><td className="px-3 py-2.5"><Link href={`?page=${p.id}&days=${days}`} className="font-semibold text-deep-navy hover:text-[#0B5CFF]">{p.title}</Link></td><td className="px-3 py-2.5">{p.n}</td><td className="px-3 py-2.5">{p.c}</td><td className="px-3 py-2.5">{pct(p.c, p.n)}</td></tr>)}</tbody>
+                  </table>
+                </div>
               ) : (
                 <EmptyState icon={FileText} title="No landing page data yet" body="Published landing pages with visits will appear here." />
               )}

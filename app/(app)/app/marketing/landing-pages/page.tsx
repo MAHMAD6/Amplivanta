@@ -159,10 +159,12 @@ export default async function LandingPagesPage({ searchParams }: { searchParams:
         </Panel>
         <Panel title="Page Performance" subtitle="Last 30 days">
           {perf.length ? (
-            <table className="w-full text-left text-[12.5px]">
-              <thead><tr className="border-b border-line text-deep-navy">{["Page", "Visits", "Conversions", "Rate"].map((h) => <th key={h} className="py-2 font-semibold">{h}</th>)}</tr></thead>
-              <tbody>{perf.slice(0, 8).map((p) => <tr key={p.id} className="border-b border-line last:border-0"><td className="py-2 font-semibold text-deep-navy">{title(p.id)}</td><td className="py-2">{p.visits}</td><td className="py-2">{p.conv}</td><td className="py-2">{pct(p.conv, p.visits)}</td></tr>)}</tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[500px] text-left text-[12.5px]">
+                <thead><tr className="border-b border-line text-deep-navy">{["Page", "Visits", "Conversions", "Rate"].map((h) => <th key={h} className="py-2 font-semibold">{h}</th>)}</tr></thead>
+                <tbody>{perf.slice(0, 8).map((p) => <tr key={p.id} className="border-b border-line last:border-0"><td className="py-2 font-semibold text-deep-navy">{title(p.id)}</td><td className="py-2">{p.visits}</td><td className="py-2">{p.conv}</td><td className="py-2">{pct(p.conv, p.visits)}</td></tr>)}</tbody>
+              </table>
+            </div>
           ) : (
             <EmptyState icon={FileText} title="No performance data yet" body="Performance appears after a landing page is published and receives traffic." />
           )}

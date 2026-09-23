@@ -133,15 +133,17 @@ export default async function ABTestingPage({ searchParams }: { searchParams: Pr
         <Panel title="Results / Significance">
           {selected && results.some((r) => r.visits > 0) ? (
             <>
-              <table className="w-full text-left text-[12.5px]">
-                <thead><tr className="border-b border-line text-deep-navy">{["Variant", "Visits", "Conv.", "Rate", "Lift", "Confidence"].map((h) => <th key={h} className="py-1.5 font-semibold">{h}</th>)}</tr></thead>
-                <tbody>
-                  {results.map((r) => {
-                    const sig = r.key === "A" || !control ? null : significance(control, r);
-                    return <tr key={r.key} className="border-b border-line last:border-0"><td className="py-1.5 font-semibold">{r.key}{selected.winner === r.key ? " ★" : ""}</td><td>{r.visits}</td><td>{r.conversions}</td><td>{r.visits ? `${((r.conversions / r.visits) * 100).toFixed(1)}%` : "—"}</td><td>{sig?.lift != null ? `${sig.lift > 0 ? "+" : ""}${sig.lift.toFixed(1)}%` : r.key === "A" ? "control" : "—"}</td><td>{sig?.confidence != null ? `${sig.confidence}%` : "—"}</td></tr>;
-                  })}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[520px] text-left text-[12.5px]">
+                  <thead><tr className="border-b border-line text-deep-navy">{["Variant", "Visits", "Conv.", "Rate", "Lift", "Confidence"].map((h) => <th key={h} className="py-1.5 font-semibold">{h}</th>)}</tr></thead>
+                  <tbody>
+                    {results.map((r) => {
+                      const sig = r.key === "A" || !control ? null : significance(control, r);
+                      return <tr key={r.key} className="border-b border-line last:border-0"><td className="py-1.5 font-semibold">{r.key}{selected.winner === r.key ? " ★" : ""}</td><td>{r.visits}</td><td>{r.conversions}</td><td>{r.visits ? `${((r.conversions / r.visits) * 100).toFixed(1)}%` : "—"}</td><td>{sig?.lift != null ? `${sig.lift > 0 ? "+" : ""}${sig.lift.toFixed(1)}%` : r.key === "A" ? "control" : "—"}</td><td>{sig?.confidence != null ? `${sig.confidence}%` : "—"}</td></tr>;
+                    })}
+                  </tbody>
+                </table>
+              </div>
               <p className="mt-2 text-[12px] text-ink-muted">{sampleReached ? "Minimum sample reached." : `Waiting for ${selected.minSampleSize} visits per variant before drawing conclusions.`}</p>
               {canEdit && selected.status !== "draft" && !selected.winner && <div className="mt-2 flex flex-wrap gap-1.5">{results.map((r) => <ActButton key={r.key} action={declareWinner.bind(null, selected.id, r.key)} confirm={`Mark variant ${r.key} as the winner and end the test?`}>Declare {r.key} winner</ActButton>)}</div>}
             </>

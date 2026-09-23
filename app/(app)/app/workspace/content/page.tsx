@@ -71,7 +71,7 @@ export default async function ContentHubPage({ searchParams }: { searchParams: P
             <input name="q" defaultValue={sp.q ?? ""} placeholder="Search content..." className={cn(kitField, "h-11 pr-9")} />
             <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
           </label>
-          <select name="type" defaultValue={sp.type ?? ""} aria-label="Type" className={cn(kitField, "h-11 w-[280px]")}>
+          <select name="type" defaultValue={sp.type ?? ""} aria-label="Type" className={cn(kitField, "h-11 w-full sm:w-[280px]")}>
             <option value="">All Types</option>
             {["Document", "Social post", "Email"].map((t) => <option key={t}>{t}</option>)}
           </select>

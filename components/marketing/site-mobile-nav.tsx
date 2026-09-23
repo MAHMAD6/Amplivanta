@@ -19,12 +19,12 @@ export function SiteMobileNav({ active }: { active?: NavKey }) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         aria-label="Open menu"
-        className="ml-auto rounded-lg p-2 text-site-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-site-purple lg:hidden"
+        className="ml-auto rounded-lg p-2 text-site-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-site-purple xl:hidden"
       >
         <Menu className="h-6 w-6" />
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-[300px] p-0 lg:hidden">
+      <SheetContent side="right" className="flex h-full w-[300px] flex-col p-0 xl:hidden">
         <SheetTitle className="border-b border-site-line px-5 py-4 text-[15px] font-extrabold text-site-ink">
           Menu
         </SheetTitle>
@@ -46,7 +46,7 @@ export function SiteMobileNav({ active }: { active?: NavKey }) {
           ))}
         </nav>
 
-        <div className="space-y-2.5 border-t border-site-line p-4">
+        <div className="mt-auto space-y-2.5 border-t border-site-line p-4">
           <Link
             href="/login"
             onClick={() => setOpen(false)}

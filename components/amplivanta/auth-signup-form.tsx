@@ -57,14 +57,14 @@ export function AuthSignupForm() {
 
       {/* Free plan card */}
       <div className="mt-4 rounded-2xl border border-line bg-bg-soft/40 p-5">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
           <div>
             <div className="text-[17px] font-bold text-deep-navy">Free Plan</div>
             <div className="text-[12.5px] text-ink-soft">Explore the platform and get started.</div>
           </div>
-          <div className="text-right"><span className="text-[28px] font-extrabold text-deep-navy">$0</span><span className="text-[12px] text-ink-muted">/month</span><div className="text-[11px] text-ink-muted">No credit card required</div></div>
+          <div className="text-left sm:text-right"><span className="text-[28px] font-extrabold text-deep-navy">$0</span><span className="text-[12px] text-ink-muted">/month</span><div className="text-[11px] text-ink-muted">No credit card required</div></div>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5">
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
           {FREE_FEATURES.map((f) => <div key={f} className="flex items-center gap-2 text-[12.5px] text-ink-soft"><Check className="h-3.5 w-3.5 shrink-0 text-royal-blue" /> {f}</div>)}
         </div>
       </div>

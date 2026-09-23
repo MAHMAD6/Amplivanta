@@ -44,7 +44,7 @@ export function PricingTable() {
         <div
           role="radiogroup"
           aria-label="Billing cycle"
-          className="mt-2 inline-flex items-center gap-1 rounded-full border border-site-line bg-white p-1"
+          className="mt-2 inline-flex max-w-full flex-wrap items-center justify-center gap-1 rounded-2xl sm:rounded-full border border-site-line bg-white p-1"
         >
           {[
             ["Monthly", false],
@@ -78,7 +78,7 @@ export function PricingTable() {
       </div>
 
       {/* Plan cards */}
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {PLANS.map((plan) => {
           const perMonth =
             plan.listMonthly === null

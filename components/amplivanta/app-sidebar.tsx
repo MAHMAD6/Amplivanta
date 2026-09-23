@@ -13,7 +13,15 @@ import { cn } from "@/lib/utils";
  * shell, manifest navigation groups, active item in the primary blue, and
  * Log out at the foot. Sub-destinations expand under the active item.
  */
-export function AppSidebar({ navVisibility, onNavigate }: { navVisibility?: Record<string, boolean>; onNavigate?: () => void }) {
+export function AppSidebar({
+  navVisibility,
+  onNavigate,
+  className,
+}: {
+  navVisibility?: Record<string, boolean>;
+  onNavigate?: () => void;
+  className?: string;
+}) {
   const pathname = usePathname();
   const allItems = APP_NAV.flatMap((s) => s.items).filter((i) => !i.visibility || navVisibility?.[i.visibility] === true);
   // A page listed as a sub-destination belongs to that parent; otherwise the most specific prefix wins.
@@ -24,8 +32,8 @@ export function AppSidebar({ navVisibility, onNavigate }: { navVisibility?: Reco
   const activeHref = owner?.href ?? best?.href;
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex w-[248px] flex-col bg-[#071F45] text-white">
-      <Link href="/app" onClick={onNavigate} className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
+    <aside className={cn("flex w-[248px] flex-col bg-[#071F45] text-white", className ?? "fixed inset-y-0 left-0 z-30")}>
+      <Link href="/app" onClick={onNavigate} className="flex items-center gap-3 border-b border-white/10 px-4 py-4 pr-10 lg:pr-4">
         <Image src="/brand/amplivanta-approved-logo-96.png" alt="" width={42} height={42} className="h-[42px] w-[42px] rounded-lg" priority />
         <span className="leading-none">
           <span className="block text-[18px] font-extrabold tracking-wide">AMPLIVANTA</span>

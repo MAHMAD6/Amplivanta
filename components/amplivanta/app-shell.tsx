@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Toaster } from "sonner";
 import { AppSidebar } from "./app-sidebar";
@@ -33,6 +33,20 @@ export function AppShell({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   return (
     <div className="min-h-screen bg-bg-soft">
       <Toaster position="top-right" richColors closeButton />
@@ -56,11 +70,15 @@ export function AppShell({
 
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
-          <div className="absolute inset-0 bg-deep-navy/50" onClick={() => setMobileOpen(false)} />
-          <div className="relative h-full w-[248px]">
-            <AppSidebar navVisibility={navVisibility} onNavigate={() => setMobileOpen(false)} />
-            <button onClick={() => setMobileOpen(false)} className="absolute right-2 top-2 z-50 rounded-lg p-1.5 text-white" aria-label="Close menu">
-              <X className="h-4 w-4" />
+          <div className="fixed inset-0 bg-deep-navy/50 backdrop-blur-sm transition-opacity" onClick={() => setMobileOpen(false)} />
+          <div className="fixed inset-y-0 left-0 z-50 flex h-full w-[248px] flex-col shadow-2xl">
+            <AppSidebar navVisibility={navVisibility} onNavigate={() => setMobileOpen(false)} className="relative h-full w-full" />
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="absolute right-2 top-3 z-50 rounded-lg p-1.5 text-white/80 transition hover:bg-white/10 hover:text-white"
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
             </button>
           </div>
         </div>

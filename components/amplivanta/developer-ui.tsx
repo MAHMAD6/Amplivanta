@@ -12,7 +12,7 @@ const field = "h-10 w-full rounded-md border border-line bg-white px-3 text-[13.
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-deep-navy/40 p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="w-full max-w-[520px] rounded-2xl bg-white p-6 shadow-card">
+      <div className="max-h-[90vh] w-full max-w-[520px] overflow-y-auto rounded-2xl bg-white p-6 shadow-card">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-[18px] font-bold text-deep-navy">{title}</h2>
           <button type="button" onClick={onClose} className="text-[13px] text-ink-muted hover:text-deep-navy">Close</button>
@@ -126,7 +126,7 @@ export function CreateWebhookButton({ events, label = "+ New Webhook", canEdit }
               <label className="block"><span className="mb-1 block text-[13px] font-semibold text-deep-navy">Endpoint URL</span><input name="url" type="url" required placeholder="https://example.com/webhooks/amplivanta" className={field} /></label>
               <fieldset>
                 <legend className="mb-1 text-[13px] font-semibold text-deep-navy">Subscribed events</legend>
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                   {events.map((ev) => (
                     <label key={ev} className="flex items-center gap-2 text-[13px] text-deep-navy"><input type="checkbox" name={`ev_${ev}`} className="accent-[#0B5CFF]" /> {ev}</label>
                   ))}

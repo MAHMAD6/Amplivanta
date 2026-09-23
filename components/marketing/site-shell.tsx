@@ -72,10 +72,10 @@ export function SiteHeader() {
   const active = navKeyForPath(usePathname());
   return (
     <header className="relative z-20 border-b border-site-line bg-white">
-      <div className="flex h-[72px] items-center gap-6 px-4 sm:px-6 lg:h-[112px] lg:gap-11 lg:px-[92px]">
-        <Brand className="shrink-0 [&_span.block:first-child]:text-[20px] lg:[&_span.block:first-child]:text-[28px] [&_svg]:h-10 [&_svg]:w-10 lg:[&_svg]:h-[58px] lg:[&_svg]:w-[58px]" />
+      <div className="flex h-[72px] items-center gap-4 px-4 sm:px-6 lg:h-[112px] lg:gap-6 lg:px-8 xl:gap-11 xl:px-[92px]">
+        <Brand className="shrink-0 [&_span.block:first-child]:text-[20px] lg:[&_span.block:first-child]:text-[24px] xl:[&_span.block:first-child]:text-[28px] [&_svg]:h-10 [&_svg]:w-10 lg:[&_svg]:h-[48px] lg:[&_svg]:w-[48px] xl:[&_svg]:h-[58px] xl:[&_svg]:w-[58px]" />
 
-        <nav className="hidden flex-1 items-center gap-5 xl:gap-7 lg:flex" aria-label="Primary navigation">
+        <nav className="hidden flex-1 items-center gap-4 xl:gap-7 xl:flex" aria-label="Primary navigation">
           {PRIMARY_NAV.map((item) => (
             <Link
               key={item.key}
@@ -92,7 +92,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="ml-auto hidden items-center gap-3 lg:flex">
+        <div className="ml-auto hidden items-center gap-3 xl:flex">
           <Link href="/login" className={cn(btn, btnSmall)}>
             Sign in
           </Link>
@@ -219,9 +219,9 @@ export function SiteFooter() {
         </div>
       </section>
 
-      <div className="px-4 pb-[26px] pt-[38px] sm:px-6 lg:px-[92px]">
-        <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-[1.55fr_repeat(6,1fr)]">
-          <div className="lg:border-r lg:border-white/20 lg:pr-7">
+      <div className="px-4 pb-[26px] pt-[38px] sm:px-6 lg:px-8 xl:px-[92px]">
+        <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-[1.55fr_repeat(6,1fr)]">
+          <div className="xl:border-r xl:border-white/20 xl:pr-7">
             <div className="flex items-center gap-3">
               <LogoMark className="h-[54px] w-[54px] shrink-0 rounded-[10px]" gradientId="amp-mark-site-footer" />
               <div>
