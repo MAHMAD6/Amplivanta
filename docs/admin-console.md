@@ -127,3 +127,25 @@ Gaps closed in this pass:
   flag-gated with no UI.
 - The legacy CMS pages render inside the new console shell but keep their own
   older styling.
+
+## Content operations and communications (September 2026)
+
+From the 58-screen final Super Admin package:
+
+- **Communications** (`/admin/communications`, `/compose`, `/templates`,
+  `/history`): audience snapshot before sending, suppression honoured for
+  announcements and product updates, per-recipient outcomes, scheduled sends
+  handled by the platform scheduler. Delivered/opened are never claimed
+  without provider events.
+- **Content operations**: one `ContentItem` model for blog posts, resources,
+  case studies, videos, webinars, lead magnets and Creative Studio template
+  entries, with `ContentVersion` snapshots, one lifecycle (DRAFT → IN_REVIEW →
+  SCHEDULED → PUBLISHED → ARCHIVED) and publish-time validation per type in
+  `lib/admin/content.ts`.
+- **Media Library** (`MediaAsset` + `MediaUsage`): upload, details, folders,
+  tags, and deletion blocked while an asset is referenced.
+- Categories, Tags and Authors are derived from the content that uses them —
+  renaming updates every item — and SEO, Publishing & Scheduling, Archived
+  Content and Content Analytics read the same records. Content analytics
+  reports what exists and when it was published; no views or engagement are
+  shown because no source is connected.

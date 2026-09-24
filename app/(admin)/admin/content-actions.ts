@@ -255,3 +255,62 @@ export async function deleteMediaAsset(id: string): Promise<ContentResult> {
   revalidatePath("/admin/content-management/media-library");
   return { ok: true, message: "Media deleted" };
 }
+
+/* ------------------------------------------------- taxonomy and authors */
+
+/** Renames or merges a category or tag across every item that carries it. */
+export async function renameTaxonomy(kind: "categories" | "tags", from: string, to: string): Promise<ContentResult> {
+  const a = await actor();
+  if (!a) return denied;
+  const next = to.trim().slice(0, 60);
+  if (!from.trim()) return { ok: false, error: "Choose a value to rename." };
+  if (!next) return { ok: false, error: "Enter the new name." };
+  const items = await prisma.contentItem.findMany({ where: kind === "categories" ? { categories: { has: from } } : { tags: { has: from } }, select: { id: true, categories: true, tags: true } });
+  for (const item of items) {
+    const values = kind === "categories" ? item.categories : item.tags;
+    const updated = [...new Set(values.map((v) => (v === from ? next : v)))];
+    await prisma.contentItem.update({ where: { id: item.id }, data: kind === "categories" ? { categories: updated } : { tags: updated } });
+  }
+  await audit(a.id, `content.${kind === "categories" ? "category" : "tag"}_renamed`, undefined, { from, to: next, items: items.length });
+  revalidatePath("/admin/content-management", "layout");
+  return { ok: true, message: items.length ? `Renamed on ${items.length} item${items.length === 1 ? "" : "s"}` : "Nothing used that value" };
+}
+
+/** Removes a category or tag from every item. */
+export async function removeTaxonomy(kind: "categories" | "tags", value: string): Promise<ContentResult> {
+  const a = await actor();
+  if (!a) return denied;
+  const items = await prisma.contentItem.findMany({ where: kind === "categories" ? { categories: { has: value } } : { tags: { has: value } }, select: { id: true, categories: true, tags: true } });
+  for (const item of items) {
+    const values = (kind === "categories" ? item.categories : item.tags).filter((v) => v !== value);
+    await prisma.contentItem.update({ where: { id: item.id }, data: kind === "categories" ? { categories: values } : { tags: values } });
+  }
+  await audit(a.id, `content.${kind === "categories" ? "category" : "tag"}_removed`, undefined, { value, items: items.length });
+  revalidatePath("/admin/content-management", "layout");
+  return { ok: true, message: items.length ? `Removed from ${items.length} item${items.length === 1 ? "" : "s"}` : "Nothing used that value" };
+}
+
+/** Renames an author across their content. */
+export async function renameAuthor(from: string, to: string): Promise<ContentResult> {
+  const a = await actor();
+  if (!a) return denied;
+  const next = to.trim().slice(0, 120);
+  if (!next) return { ok: false, error: "Enter the new author name." };
+  const r = await prisma.contentItem.updateMany({ where: { authorName: from }, data: { authorName: next } });
+  await audit(a.id, "content.author_renamed", undefined, { from, to: next, items: r.count });
+  revalidatePath("/admin/content-management", "layout");
+  return { ok: true, message: r.count ? `Updated ${r.count} item${r.count === 1 ? "" : "s"}` : "No content credited that author" };
+}
+
+/** Saves SEO fields from the SEO & Metadata screen without opening the editor. */
+export async function saveSeoFields(id: string, seoTitle: string, seoDescription: string): Promise<ContentResult> {
+  const a = await actor();
+  if (!a) return denied;
+  const item = await prisma.contentItem.findUnique({ where: { id }, select: { id: true, status: true } });
+  if (!item) return { ok: false, error: "That item no longer exists." };
+  if (item.status === "PUBLISHED") await snapshot(id, a.id);
+  await prisma.contentItem.update({ where: { id }, data: { seoTitle: seoTitle.trim().slice(0, 200) || null, seoDescription: seoDescription.trim().slice(0, 400) || null, updatedById: a.id } });
+  await audit(a.id, "content.seo_updated", id, {});
+  revalidatePath("/admin/content-management/seo-settings");
+  return { ok: true, message: "SEO fields saved" };
+}
