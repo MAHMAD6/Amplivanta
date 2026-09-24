@@ -3052,3 +3052,96 @@ model CommunicationTemplate {
 
   @@index([category, status])
 }
+
+/// Unified content record behind the Super Admin content operations editors:
+/// blog posts, articles, case studies, videos, webinars, lead magnets and
+/// Creative Studio template entries.
+model ContentItem {
+  id              String           @id @default(cuid())
+  /// blog_post | article | case_study | video | webinar | lead_magnet | template
+  contentType     String
+  title           String
+  slug            String
+  excerpt         String?          @db.Text
+  body            String?          @db.Text
+  /// DRAFT | IN_REVIEW | SCHEDULED | PUBLISHED | ARCHIVED
+  status          String           @default("DRAFT")
+  /// public | members | private
+  visibility      String           @default("public")
+  authorName      String?
+  featuredMediaId String?
+  featuredMedia   MediaAsset?      @relation("ContentFeaturedMedia", fields: [featuredMediaId], references: [id], onDelete: SetNull)
+  categories      String[]         @default([])
+  tags            String[]         @default([])
+  seoTitle        String?
+  seoDescription  String?          @db.Text
+  /// Type-specific fields: event schedule, lead magnet settings, template metadata.
+  data            Json?
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  createdById     String?
+  updatedById     String?
+  versions        ContentVersion[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([contentType, slug])
+  @@index([contentType, status])
+  @@index([status, scheduledAt])
+}
+
+/// Immutable snapshot taken whenever published content changes.
+model ContentVersion {
+  id            String      @id @default(cuid())
+  contentItemId String
+  contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  version       Int
+  title         String
+  body          String?     @db.Text
+  data          Json?
+  status        String
+  createdById   String?
+  createdAt     DateTime    @default(now())
+
+  @@unique([contentItemId, version])
+}
+
+/// Central media library for platform content (images, video, documents, files).
+model MediaAsset {
+  id          String        @id @default(cuid())
+  /// Object storage key, or a local path when storage is not configured.
+  storageKey  String
+  url         String?
+  fileName    String
+  mimeType    String
+  fileSize    Int           @default(0)
+  width       Int?
+  height      Int?
+  duration    Int?
+  altText     String?
+  caption     String?
+  description String?       @db.Text
+  folder      String?
+  tags        String[]      @default([])
+  createdById String?
+  usages      MediaUsage[]
+  featuredOn  ContentItem[] @relation("ContentFeaturedMedia")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([folder])
+}
+
+/// Where a media asset is referenced, so deletion can be blocked or warned on.
+model MediaUsage {
+  id           String     @id @default(cuid())
+  mediaId      String
+  media        MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  resourceType String
+  resourceId   String
+  field        String
+  createdAt    DateTime   @default(now())
+
+  @@unique([mediaId, resourceType, resourceId, field])
+  @@index([resourceType, resourceId])
+}

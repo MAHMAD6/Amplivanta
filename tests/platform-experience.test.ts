@@ -219,3 +219,65 @@ describe("opportunity detection", () => {
     expect(keys).toContain("no-capture-surface");
   });
 });
+
+import { ALLOWED_TRANSITIONS, canTransition, contentTypeMeta, slugify, validateContent, type ContentInput } from "@/lib/admin/content";
+
+const base: ContentInput = {
+  contentType: "blog_post",
+  title: "How growth loops compound",
+  slug: "how-growth-loops-compound",
+  excerpt: "A short summary.",
+  body: "Body copy.",
+  status: "DRAFT",
+  visibility: "public",
+  categories: [],
+  tags: [],
+  scheduledAt: null,
+  data: {},
+};
+
+describe("content operations", () => {
+  it("slugifies titles safely", () => {
+    expect(slugify("Grüße, Wörld! -- 2026 ")).toBe("grusse-world-2026");
+    expect(slugify("///")).toBe("");
+    expect(slugify("a".repeat(200)).length).toBe(80);
+  });
+
+  it("keeps the publishing lifecycle to allowed transitions", () => {
+    expect(canTransition("DRAFT", "PUBLISHED")).toBe(true);
+    expect(canTransition("PUBLISHED", "SCHEDULED")).toBe(false);
+    expect(canTransition("ARCHIVED", "PUBLISHED")).toBe(false);
+    expect(canTransition("ARCHIVED", "DRAFT")).toBe(true);
+    expect(Object.keys(ALLOWED_TRANSITIONS)).toHaveLength(5);
+  });
+
+  it("accepts a draft but holds publishing to the stricter rules", () => {
+    expect(validateContent(base)).toBeNull();
+    expect(validateContent({ ...base, excerpt: "" })).toBeNull();
+    expect(validateContent({ ...base, excerpt: "", status: "PUBLISHED" })).toBe("Add a short excerpt before publishing.");
+    expect(validateContent({ ...base, slug: "Not A Slug" })).toMatch(/slug/);
+    expect(validateContent({ ...base, status: "SCHEDULED" })).toBe("Choose when this should publish.");
+    expect(validateContent({ ...base, status: "SCHEDULED", scheduledAt: new Date(Date.now() - 86400000) })).toBe("Schedule a time in the future.");
+  });
+
+  it("applies the event, lead magnet and template rules", () => {
+    const event = { ...base, contentType: "webinar", data: { eventType: "webinar", format: "online" } };
+    expect(validateContent(event)).toBeNull();
+    expect(validateContent({ ...event, status: "PUBLISHED" })).toBe("Enter the event date and start time before publishing.");
+    expect(validateContent({ ...event, data: { ...event.data, registrationEnabled: true } })).toBe("Add the registration link, or turn registration off.");
+
+    const magnet = { ...base, contentType: "lead_magnet", data: { accessMode: "FORM_REQUIRED" } };
+    expect(validateContent(magnet)).toBeNull();
+    expect(validateContent({ ...magnet, status: "PUBLISHED" })).toBe("Select the lead capture form, or switch to direct download.");
+    expect(validateContent({ ...magnet, status: "PUBLISHED", data: { accessMode: "DIRECT_DOWNLOAD" } })).toBe("Upload the downloadable file before publishing.");
+
+    const template = { ...base, contentType: "template", excerpt: "", data: { templateType: "social_post" } };
+    expect(validateContent(template)).toBeNull();
+    expect(validateContent({ ...template, status: "PUBLISHED" })).toBe("Link the Creative Studio template before publishing.");
+  });
+
+  it("knows every content type's destination", () => {
+    expect(contentTypeMeta("blog_post")?.href).toBe("/admin/content-management/blog-posts");
+    expect(contentTypeMeta("nope")).toBeNull();
+  });
+});
