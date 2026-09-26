@@ -1125,6 +1125,128 @@ const SPECS: Record<string, TableSpec> = {
       ];
     },
   },
+
+  /* ------------------------------------------- content & resources admin */
+  "content-management-content-and-resources-admin": {
+    model: "contentItem",
+    orderBy: { updatedAt: "desc" },
+    search: ["title", "slug"],
+    map: (r) => [
+      r.title as string,
+      label(r.status as string),
+      (r.authorName as string) ?? null,
+      fmtDate(r.updatedAt as Date),
+      "Open",
+    ],
+  },
+
+  /* ------------------------------------------------- security & sessions */
+  "security-and-compliance-security-and-2fa": {
+    model: "user",
+    orderBy: { updatedAt: "desc" },
+    search: ["name", "email"],
+    map: (r) => [
+      (r.name as string) ?? (r.email as string),
+      r.twoFactorEnabledAt ? "Two-factor enabled" : "Two-factor not enabled",
+      (r.email as string) ?? null,
+      fmtDate(r.updatedAt as Date),
+      "Manage",
+    ],
+  },
+
+  /* ------------------------------------------------------ data lifecycle */
+  "security-and-compliance-data-management": {
+    model: "dataTransferJob",
+    orderBy: { startedAt: "desc" },
+    search: ["entity", "fileName"],
+    include: { workspace: true },
+    map: (r) => {
+      const w = r.workspace as Row | null;
+      return [
+        `${label(r.kind as string)} — ${(r.entity as string).replace(/_/g, " ")}`,
+        label(r.status as string),
+        (w?.name as string) ?? null,
+        fmtDate((r.completedAt as Date) ?? (r.startedAt as Date)),
+        "View",
+      ];
+    },
+  },
+
+  /* ------------------------------------------- cookie & tracking consent */
+  "security-and-compliance-cookie-tracking-preferences": {
+    model: "consentRecord",
+    orderBy: { recordedAt: "desc" },
+    search: ["subjectEmail", "consentType"],
+    map: (r) => [
+      r.subjectEmail as string,
+      r.granted ? "Granted" : "Declined",
+      (r.consentType as string) ?? null,
+      fmtDate(r.recordedAt as Date),
+      (r.source as string) ?? null,
+    ],
+  },
+
+  /* ------------------------------------------------ partner recruitment */
+  "partner-marketplace-recruitment-and-matching": {
+    model: "partnerApplication",
+    orderBy: { createdAt: "desc" },
+    search: ["companyName", "contactEmail"],
+    map: (r) => [
+      r.companyName as string,
+      label(r.status as string),
+      (r.contactEmail as string) ?? null,
+      fmtDate((r.reviewedAt as Date) ?? (r.createdAt as Date)),
+      "Review",
+    ],
+  },
+
+  /* --------------------------------------------- partner attribution --- */
+  "partner-marketplace-tracking-and-attribution": {
+    model: "referral",
+    orderBy: { landedAt: "desc" },
+    search: ["source", "visitorId"],
+    include: { affiliate: true, organization: true },
+    map: (r) => {
+      const a = r.affiliate as Row | null;
+      const o = r.organization as Row | null;
+      return [
+        `${(a?.name as string) ?? "Unattributed"}${r.source ? ` — ${r.source as string}` : ""}`,
+        r.convertedAt ? "Converted" : label(r.status as string),
+        (o?.name as string) ?? null,
+        fmtDate((r.convertedAt as Date) ?? (r.landedAt as Date)),
+        "View",
+      ];
+    },
+  },
+
+  "partner-marketplace-commissions-and-payouts": {
+    model: "payout",
+    orderBy: { createdAt: "desc" },
+    include: { affiliate: true },
+    map: (r) => {
+      const a = r.affiliate as Row | null;
+      return [
+        (a?.name as string) ?? null,
+        fmtMoney(r.amount as number, (r.currency as string) ?? "USD"),
+        label(r.status as string),
+        (r.method as string) ?? null,
+        fmtDate((r.processedAt as Date) ?? null),
+      ];
+    },
+  },
+
+  "partner-marketplace-trust-risk-and-governance": {
+    model: "fraudSignal",
+    orderBy: { createdAt: "desc" },
+    search: ["signal"],
+    map: (r) => [
+      r.signal as string,
+      r.resolvedAt ? "Resolved" : label(r.severity as string),
+      (r.affiliateId as string) ?? null,
+      fmtDate((r.resolvedAt as Date) ?? (r.createdAt as Date)),
+      "Review",
+    ],
+  },
 };
 
 /* ----------------------------------------------------------------- runtime */

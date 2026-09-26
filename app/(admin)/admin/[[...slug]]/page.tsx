@@ -79,6 +79,31 @@ import { loadAffiliateAdminData, loadPartnerAdminData } from "@/app/(admin)/admi
 import { detailParent, findAdminPage, ADMIN_PAGE_BY_KEY, type AdminPage } from "@/lib/admin/registry";
 import { importableHeaders } from "@/app/(admin)/admin/actions";
 import { hasLoader, loadAdminPage, loadAdminRecord, type AdminResult } from "@/lib/server/admin-queries";
+import {
+  loadAffiliateCommandCenter,
+  loadAffiliateProgramSettings,
+  loadAnalyticsHub,
+  loadCampaignAnalytics,
+  loadConversionFunnel,
+  loadExecutiveSummary,
+  loadGeneralSettings,
+  loadNotificationOverview,
+  loadPartnerInsights,
+  loadRevenueAttribution,
+  loadTrafficAnalytics,
+} from "@/lib/server/admin-insights";
+import {
+  AffiliateCommandCenterPanel,
+  AnalyticsHubPanel,
+  AttributionPanel,
+  CampaignAnalyticsPanel,
+  ExecutivePanel,
+  FunnelPanel,
+  NotificationOverviewPanel,
+  PartnerGrowthPanel,
+  StoredSettingsPanel,
+  TrafficPanel,
+} from "@/components/admin/insight-panels";
 
 type Params = { slug?: string[] };
 type Search = Record<string, string | string[] | undefined>;
@@ -535,6 +560,86 @@ export default async function SuperCatchAllPage({
         <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
       </>
     );
+  }
+
+  // ---- Board and settings screens that summarise many tables at once. Each
+  // loader reports whether the database answered, so a failure reads as
+  // "Data source unavailable" rather than as a real zero.
+  if (page.canonical === "dashboard-platform-home-executive-dashboard") {
+    const data = await loadExecutiveSummary();
+    return (<><ExecutivePanel data={data} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "affiliate-management-affiliate-command-center") {
+    const data = await loadAffiliateCommandCenter();
+    return (<><AffiliateCommandCenterPanel data={data} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "affiliate-management-program-settings") {
+    const data = await loadAffiliateProgramSettings();
+    return (
+      <>
+        <StoredSettingsPanel
+          title="Affiliate program rules"
+          description="Stored in AffiliateProgramSetting. A rule that has never been written shows as not configured, because no default is silently in effect."
+          settings={data.settings}
+          connected={data.connected}
+        />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "partner-marketplace-partner-growth-dashboard" || page.canonical === "partner-marketplace-partner-analytics") {
+    const data = await loadPartnerInsights();
+    return (
+      <>
+        <PartnerGrowthPanel data={data} view={page.canonical === "partner-marketplace-partner-analytics" ? "analytics" : "growth"} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "reports-and-analytics-analytics-dashboard") {
+    const data = await loadAnalyticsHub();
+    return (
+      <>
+        <AnalyticsHubPanel rows={data.rows} connected={data.connected} columns={page.columns} />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "reports-and-analytics-traffic-analytics") {
+    const data = await loadTrafficAnalytics();
+    return (<><TrafficPanel data={data} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "reports-and-analytics-campaign-analytics") {
+    const data = await loadCampaignAnalytics();
+    return (<><CampaignAnalyticsPanel data={data} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "reports-and-analytics-conversion-funnel") {
+    const data = await loadConversionFunnel();
+    return (<><FunnelPanel data={data} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "reports-and-analytics-revenue-attribution") {
+    const data = await loadRevenueAttribution();
+    return (<><AttributionPanel data={data} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
+  }
+  if (page.canonical === "settings-general-settings") {
+    const data = await loadGeneralSettings();
+    return (
+      <>
+        <StoredSettingsPanel
+          title="Platform settings"
+          description="Stored in SiteSetting and applied across the platform."
+          settings={data.settings}
+          connected={data.connected}
+          scope={data.scope}
+          otherKeys={data.otherKeys}
+        />
+        <SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote>
+      </>
+    );
+  }
+  if (page.canonical === "settings-notification-settings") {
+    const data = await loadNotificationOverview();
+    return (<><NotificationOverviewPanel data={data} /><SuperInfoNote title={`About ${page.page}`}>{page.objective}</SuperInfoNote></>);
   }
 
   if (page.kind === "detail") return <DetailPage page={page} recordId={recordId} />;
