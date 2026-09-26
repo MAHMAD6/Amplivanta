@@ -38,6 +38,34 @@ const refresh = (contentType?: string) => {
   if (meta) revalidatePath(meta.href);
 };
 
+/**
+ * Records which media a content item points at from its type-specific fields
+ * (a lead magnet's download, a template's thumbnail). The featured image is
+ * already a column, but these live inside `data`, so without a usage row the
+ * media library would let someone delete a file content still needs.
+ */
+async function syncMediaUsage(contentType: string, contentItemId: string, data: Record<string, unknown>) {
+  const mediaFields = ["fileMediaId", "thumbnailMediaId"].filter((f) => (DATA_FIELDS[contentType] ?? []).includes(f));
+  const wanted = mediaFields
+    .map((field) => ({ field, mediaId: String(data[field] ?? "").trim() }))
+    .filter((r) => r.mediaId);
+
+  const existing = await prisma.mediaUsage.findMany({ where: { resourceType: "ContentItem", resourceId: contentItemId } });
+  const stale = existing.filter((e) => !wanted.some((w) => w.field === e.field && w.mediaId === e.mediaId));
+  if (stale.length) await prisma.mediaUsage.deleteMany({ where: { id: { in: stale.map((s) => s.id) } } });
+
+  for (const { field, mediaId } of wanted) {
+    await prisma.mediaUsage
+      .upsert({
+        where: { mediaId_resourceType_resourceId_field: { mediaId, resourceType: "ContentItem", resourceId: contentItemId, field } },
+        update: {},
+        create: { mediaId, resourceType: "ContentItem", resourceId: contentItemId, field },
+      })
+      // A missing media row means the reference is already invalid; the item still saves.
+      .catch(() => null);
+  }
+}
+
 /** Collects the type-specific fields the editor posted. */
 function readData(fd: FormData, contentType: string): Record<string, unknown> {
   const out: Record<string, unknown> = {};
@@ -120,12 +148,14 @@ export async function saveContentItem(fd: FormData): Promise<ContentResult> {
       where: { id },
       data: { ...fields, publishedAt: input.status === "PUBLISHED" ? existing.publishedAt ?? new Date() : input.status === "ARCHIVED" ? existing.publishedAt : fields.publishedAt },
     });
+    await syncMediaUsage(contentType, row.id, input.data);
     await audit(a.id, "content.updated", row.id, { contentType, status: row.status });
     refresh(contentType);
     return { ok: true, message: `${meta.label} saved`, id: row.id };
   }
 
   const row = await prisma.contentItem.create({ data: { ...fields, createdById: a.id } });
+  await syncMediaUsage(contentType, row.id, input.data);
   await audit(a.id, "content.created", row.id, { contentType, status: row.status });
   refresh(contentType);
   return { ok: true, message: `${meta.label} created`, id: row.id };
@@ -189,6 +219,9 @@ export async function deleteContentItem(id: string): Promise<ContentResult> {
   if (!item) return { ok: false, error: "That item no longer exists." };
   if (item.status === "PUBLISHED") return { ok: false, error: "Archive the item before deleting it, so published content is never removed by accident." };
   await prisma.contentItem.delete({ where: { id } });
+  // Usage rows are keyed by resource id, not a foreign key, so they are
+  // released here — otherwise the media they point at could never be deleted.
+  await prisma.mediaUsage.deleteMany({ where: { resourceType: "ContentItem", resourceId: id } }).catch(() => null);
   await audit(a.id, "content.deleted", id, { contentType: item.contentType, title: item.title });
   refresh(item.contentType);
   return { ok: true, message: "Item deleted" };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExternalLink, ImageIcon, Loader2, Upload } from "lucide-react";
@@ -91,6 +91,10 @@ export function ContentEditor({
   if (!meta) return null;
   const editor = meta.editor;
 
+  // Which status the clicked button is saving as. Set on click, read by the
+  // form's submit handler, so both buttons go through one native submit.
+  const pendingStatus = useRef<string | undefined>(undefined);
+
   const submit = (e: React.FormEvent<HTMLFormElement>, nextStatus?: string) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -110,7 +114,14 @@ export function ContentEditor({
   };
 
   return (
-    <form onSubmit={(e) => submit(e)} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        const status = pendingStatus.current;
+        pendingStatus.current = undefined;
+        submit(e, status);
+      }}
+      className="space-y-6"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-[12.5px] text-ink-soft">Content Management / {meta.plural} / {item ? "Edit" : "Create"}</div>
@@ -118,8 +129,8 @@ export function ContentEditor({
         </div>
         <div className="flex flex-wrap gap-2.5">
           <Link href={meta.href} className={btn}>Cancel</Link>
-          <button type="submit" className={btn} disabled={pending} onClick={(e) => submit(e as never, "DRAFT")}>Save draft</button>
-          <button type="submit" className={btnPrimary} disabled={pending} onClick={(e) => submit(e as never, status === "SCHEDULED" ? "SCHEDULED" : "PUBLISHED")}>
+          <button type="submit" className={btn} disabled={pending} onClick={() => { pendingStatus.current = "DRAFT"; }}>Save draft</button>
+          <button type="submit" className={btnPrimary} disabled={pending} onClick={() => { pendingStatus.current = status === "SCHEDULED" ? "SCHEDULED" : "PUBLISHED"; }}>
             {pending && <Loader2 className="h-4 w-4 animate-spin" />} {status === "SCHEDULED" ? "Schedule" : "Publish"}
           </button>
         </div>
